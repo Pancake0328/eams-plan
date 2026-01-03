@@ -1,0 +1,94 @@
+# 服务器配置
+server:
+  port: 8080
+  servlet:
+    context-path: /api
+
+# Spring 配置
+spring:
+  application:
+    name: eams-backend
+  
+  # 数据源配置
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/eams_plan?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true
+    username: root
+    password: root
+    
+  # Redis 配置
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      password: 
+      database: 0
+      lettuce:
+        pool:
+          max-active: 8
+          max-idle: 8
+          min-idle: 0
+          max-wait: 1000ms
+      timeout: 3000ms
+
+  # Jackson 配置
+  jackson:
+    time-zone: GMT+8
+    date-format: yyyy-MM-dd HH:mm:ss
+    serialization:
+      write-dates-as-timestamps: false
+
+# MyBatis Plus 配置
+mybatis-plus:
+  configuration:
+    # 日志输出
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+    # 驼峰命名转换
+    map-underscore-to-camel-case: true
+  # 实体类扫描包路径
+  type-aliases-package: com.eams.**.entity
+  # Mapper XML 文件路径
+  mapper-locations: classpath*:mapper/**/*Mapper.xml
+  # 全局配置
+  global-config:
+    db-config:
+      # 主键类型
+      id-type: auto
+      # 逻辑删除字段
+      logic-delete-field: deleted
+      logic-delete-value: 1
+      logic-not-delete-value: 0
+
+# SpringDoc 配置 (Swagger 3)
+springdoc:
+  api-docs:
+    enabled: true
+    path: /v3/api-docs
+  swagger-ui:
+    enabled: true
+    path: /swagger-ui.html
+    tags-sorter: alpha
+    operations-sorter: alpha
+  group-configs:
+    - group: 'all'
+      paths-to-match: '/**'
+      packages-to-scan: com.eams
+
+# JWT 配置
+jwt:
+  # 密钥（生产环境应使用更强的密钥并存储在安全位置）
+  secret: eams-jwt-secret-key-for-token-signature-2026-enterprise-asset-management-system
+  # Token 有效期（单位：秒，默认7天）
+  expiration: 604800
+  # Token 前缀
+  token-prefix: Bearer 
+  # Token 请求头名称
+  header-name: Authorization
+
+# 日志配置
+logging:
+  level:
+    root: INFO
+    com.eams: DEBUG
+  pattern:
+    console: '%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{50} - %msg%n'
