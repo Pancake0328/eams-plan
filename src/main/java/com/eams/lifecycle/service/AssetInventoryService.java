@@ -11,8 +11,7 @@ import com.eams.lifecycle.vo.InventoryVO;
  * @author EAMS Team
  * @since 2026-01-03
  */
-public interface Asset InventoryService
-{
+public interface AssetInventoryService {
 
     /**
      * 创建盘点计划

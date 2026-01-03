@@ -2,8 +2,8 @@ package com.eams.lifecycle.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.eams.asset.entity.Asset;
-import com.eams.asset.mapper.AssetMapper;
+import com.eams.asset.entity.AssetInfo;
+import com.eams.asset.mapper.AssetInfoMapper;
 import com.eams.common.exception.BusinessException;
 import com.eams.lifecycle.dto.InventoryCreateRequest;
 import com.eams.lifecycle.dto.InventoryExecuteRequest;
@@ -38,7 +38,7 @@ public class AssetInventoryServiceImpl implements AssetInventoryService {
 
     private final AssetInventoryMapper inventoryMapper;
     private final AssetInventoryDetailMapper detailMapper;
-    private final AssetMapper assetMapper;
+    private final AssetInfoMapper assetMapper;
 
     private static final Map<Integer, String> TYPE_MAP = new HashMap<>();
     private static final Map<Integer, String> STATUS_MAP = new HashMap<>();
@@ -76,17 +76,17 @@ public class AssetInventoryServiceImpl implements AssetInventoryService {
         inventoryMapper.insert(inventory);
 
         // 创建盘点明细（根据盘点类型查询资产）
-        List<Asset> assets = getAssetsByInventoryType(request.getInventoryType());
+        List<AssetInfo> assets = getAssetsByInventoryType(request.getInventoryType());
         inventory.setTotalCount(assets.size());
         inventoryMapper.updateById(inventory);
 
-        for (Asset asset : assets) {
+        for (AssetInfo asset : assets) {
             AssetInventoryDetail detail = new AssetInventoryDetail();
             detail.setInventoryId(inventory.getId());
             detail.setAssetId(asset.getId());
             detail.setAssetNumber(asset.getAssetNumber());
             detail.setAssetName(asset.getAssetName());
-            detail.setExpectedLocation(asset.getLocation());
+            detail.setExpectedLocation(asset.getDepartment()); // 使用部门作为预期位置
             detail.setInventoryResult(1); // 未盘点
 
             detailMapper.insert(detail);
@@ -226,8 +226,8 @@ public class AssetInventoryServiceImpl implements AssetInventoryService {
     /**
      * 根据盘点类型获取资产列表
      */
-    private List<Asset> getAssetsByInventoryType(Integer inventoryType) {
-        LambdaQueryWrapper<Asset> wrapper = new LambdaQueryWrapper<>();
+    private List<AssetInfo> getAssetsByInventoryType(Integer inventoryType) {
+        LambdaQueryWrapper<AssetInfo> wrapper = new LambdaQueryWrapper<>();
 
         if (inventoryType == 2) {
             // 抽样盘点：随机抽取部分资产

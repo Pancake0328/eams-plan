@@ -2,8 +2,8 @@ package com.eams.lifecycle.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.eams.asset.entity.Asset;
-import com.eams.asset.mapper.AssetMapper;
+import com.eams.asset.entity.AssetInfo;
+import com.eams.asset.mapper.AssetInfoMapper;
 import com.eams.common.exception.BusinessException;
 import com.eams.lifecycle.dto.LifecycleCreateRequest;
 import com.eams.lifecycle.entity.AssetLifecycle;
@@ -31,7 +31,7 @@ import java.util.Map;
 public class AssetLifecycleServiceImpl implements AssetLifecycleService {
 
     private final AssetLifecycleMapper lifecycleMapper;
-    private final AssetMapper assetMapper;
+    private final AssetInfoMapper assetMapper;
 
     private static final Map<Integer, String> STAGE_MAP = new HashMap<>();
 
@@ -47,7 +47,7 @@ public class AssetLifecycleServiceImpl implements AssetLifecycleService {
     @Transactional(rollbackFor = Exception.class)
     public Long createLifecycle(LifecycleCreateRequest request) {
         // 验证资产存在
-        Asset asset = assetMapper.selectById(request.getAssetId());
+        AssetInfo asset = assetMapper.selectById(request.getAssetId());
         if (asset == null) {
             throw new BusinessException("资产不存在");
         }
@@ -159,7 +159,7 @@ public class AssetLifecycleServiceImpl implements AssetLifecycleService {
         BeanUtils.copyProperties(lifecycle, vo);
 
         // 查询资产信息
-        Asset asset = assetMapper.selectById(lifecycle.getAssetId());
+        AssetInfo asset = assetMapper.selectById(lifecycle.getAssetId());
         if (asset != null) {
             vo.setAssetNumber(asset.getAssetNumber());
             vo.setAssetName(asset.getAssetName());

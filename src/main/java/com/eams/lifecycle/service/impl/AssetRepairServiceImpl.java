@@ -2,8 +2,8 @@ package com.eams.lifecycle.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.eams.asset.entity.Asset;
-import com.eams.asset.mapper.AssetMapper;
+import com.eams.asset.entity.AssetInfo;
+import com.eams.asset.mapper.AssetInfoMapper;
 import com.eams.common.exception.BusinessException;
 import com.eams.lifecycle.dto.RepairCreateRequest;
 import com.eams.lifecycle.entity.AssetRepair;
@@ -34,7 +34,7 @@ import java.util.Map;
 public class AssetRepairServiceImpl implements AssetRepairService {
 
     private final AssetRepairMapper repairMapper;
-    private final AssetMapper assetMapper;
+    private final AssetInfoMapper assetMapper;
 
     private static final Map<Integer, String> TYPE_MAP = new HashMap<>();
     private static final Map<Integer, String> PRIORITY_MAP = new HashMap<>();
@@ -60,7 +60,7 @@ public class AssetRepairServiceImpl implements AssetRepairService {
     @Transactional(rollbackFor = Exception.class)
     public Long createRepair(RepairCreateRequest request) {
         // 验证资产存在
-        Asset asset = assetMapper.selectById(request.getAssetId());
+        AssetInfo asset = assetMapper.selectById(request.getAssetId());
         if (asset == null) {
             throw new BusinessException("资产不存在");
         }
