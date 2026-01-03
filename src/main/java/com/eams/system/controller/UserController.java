@@ -58,7 +58,7 @@ public class UserController {
             @Parameter(description = "用户ID") @PathVariable Long id,
             @Validated @RequestBody UserUpdateRequest request) {
         userService.updateUser(id, request);
-        return Result.success("更新用户成功");
+        return Result.success();
     }
 
     /**
@@ -72,7 +72,7 @@ public class UserController {
     @OperationLog(value = "删除用户", type = "DELETE")
     public Result<Void> deleteUser(@Parameter(description = "用户ID") @PathVariable Long id) {
         userService.deleteUser(id);
-        return Result.success("删除用户成功");
+        return Result.success();
     }
 
     /**
@@ -115,7 +115,7 @@ public class UserController {
             @Parameter(description = "用户ID") @PathVariable Long id,
             @Parameter(description = "状态：0-禁用，1-正常") @RequestParam Integer status) {
         userService.updateUserStatus(id, status);
-        return Result.success("更新用户状态成功");
+        return Result.success();
     }
 
     /**
@@ -132,6 +132,6 @@ public class UserController {
             @Parameter(description = "用户ID") @PathVariable Long id,
             @Validated @RequestBody ResetPasswordRequest request) {
         userService.resetPassword(id, request);
-        return Result.success("重置密码成功");
+        return Result.success();
     }
 }
