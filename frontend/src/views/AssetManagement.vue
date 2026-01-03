@@ -238,9 +238,15 @@
         <el-row :gutter="16">
           <el-col :span="12">
             <el-form-item label="使用部门" prop="department">
-              <el-input
+              <el-tree-select
                 v-model="assetForm.department"
-                placeholder="请输入使用部门"
+                :data="deptTree"
+                :props="{ label: 'deptName', value: 'deptName', children: 'children' }"
+                placeholder="请选择使用部门"
+                check-strictly
+                filterable
+                clearable
+                style="width: 100%"
               />
             </el-form-item>
           </el-col>
@@ -362,9 +368,15 @@
           <el-input :value="currentAsset?.assetName" disabled />
         </el-form-item>
         <el-form-item label="目标部门" prop="toDepartment" v-if="showDepartmentField">
-          <el-input
+          <el-tree-select
             v-model="operationForm.toDepartment"
-            placeholder="请输入目标部门"
+            :data="deptTree"
+            :props="{ label: 'deptName', value: 'deptName', children: 'children' }"
+            placeholder="请选择目标部门"
+            check-strictly
+            filterable
+            clearable
+            style="width: 100%"
           />
         </el-form-item>
         <el-form-item label="目标责任人" prop="toCustodian" v-if="showCustodianField">
@@ -447,7 +459,8 @@ import { assetApi } from '@/api/asset'
 import { categoryApi } from '@/api/category'
 import { recordApi } from '@/api/record'
 import { userApi } from '@/api/user'
-import type { Asset, AssetCreateRequest, AssetUpdateRequest, CategoryTreeNode, RecordCreateRequest, AssetRecord, User } from '@/types'
+import { departmentApi } from '@/api/department'
+import type { Asset, AssetCreateRequest, AssetUpdateRequest, CategoryTreeNode, RecordCreateRequest, AssetRecord, User, Department } from '@/types'
 
 // 列表数据
 const tableData = ref<Asset[]>([])
@@ -475,6 +488,9 @@ const categoryTree = ref<CategoryTreeNode[]>([])
 
 // 用户列表
 const userList = ref<User[]>([])
+
+// 部门树
+const deptTree = ref<Department[]>([])
 
 // 对话框
 const dialogVisible = ref(false)
@@ -601,6 +617,18 @@ const loadUserList = async () => {
     userList.value = res.data.records
   } catch (error) {
     console.error('加载用户列表失败:', error)
+  }
+}
+
+/**
+ * 加载部门树
+ */
+const loadDeptTree = async () => {
+  try {
+    const res = await departmentApi.getDepartmentTree()
+    deptTree.value = res.data
+  } catch (error) {
+    console.error('加载部门树失败:', error)
   }
 }
 
@@ -891,6 +919,7 @@ const getRecordTypeTag = (type: number): string => {
 onMounted(() => {
   loadCategoryTree()
   loadUserList()
+  loadDeptTree()
   loadAssetList()
 })
 </script>
