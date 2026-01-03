@@ -94,14 +94,12 @@ public class SecurityConfig {
 
                 // 配置请求授权
                 .authorizeHttpRequests(auth -> auth
-                        // 允许访问 Swagger 文档
-                        .requestMatchers(
-                                "/v3/api-docs/**",
-                                "/swagger-ui/**",
-                                "/swagger-ui.html")
-                        .permitAll()
-                        // 允许访问登录接口
-                        .requestMatchers("/auth/login").permitAll()
+                        // 登录接口允许匿名访问
+                        .requestMatchers("/auth/**").permitAll()
+                        // Swagger 相关接口允许匿名访问
+                        .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html").permitAll()
+                        // 错误页面允许匿名访问
+                        .requestMatchers("/error").permitAll()
                         // 其他所有请求都需要认证
                         .anyRequest().authenticated())
 
