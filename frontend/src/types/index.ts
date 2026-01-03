@@ -528,3 +528,32 @@ export interface FinanceStatistics {
   totalNetValue: number
   averagePrice: number
 }
+// ==================== 仪表盘统计 ====================
+export interface DashboardStatistics {
+  totalAssets: number
+  totalAmount: number
+  inUseAssets: number
+  idleAssets: number
+  repairingAssets: number
+  scrapAssets: number
+  idleRate: number
+  scrapRate: number
+  usageRate: number
+  currentMonthNewAssets: number
+  pendingRepairs: number
+  ongoingInventories: number
+}
+
+export interface AssetDistribution {
+  name: string
+  count: number
+  amount: number
+  percentage: number
+}
+
+export interface TimeTrendStatistics {
+  period: string
+  newAssets: number
+  scrapAssets: number
+  totalAssets: number
+}

@@ -13,6 +13,11 @@
         :unique-opened="true"
         router
       >
+      <!-- 仪表盘 -->
+      <el-menu-item index="/dashboard">
+        <el-icon><DataLine /></el-icon>
+        <span>仪表盘</span>
+      </el-menu-item>
         <el-menu-item index="/">
           <el-icon><User /></el-icon>
           <template #title>用户管理</template>
@@ -140,7 +145,8 @@ import {
   Fold,
   ArrowDown,
   SwitchButton,
-  Money
+  Money,
+  DataLine
 } from '@element-plus/icons-vue'
 import { useUserStore } from '@/stores/user'
 
