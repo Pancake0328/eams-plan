@@ -246,10 +246,20 @@
           </el-col>
           <el-col :span="12">
             <el-form-item label="责任人" prop="custodian">
-              <el-input
+              <el-select
                 v-model="assetForm.custodian"
-                placeholder="请输入责任人"
-              />
+                placeholder="请选择责任人"
+                filterable
+                clearable
+                style="width: 100%"
+              >
+                <el-option
+                  v-for="user in userList"
+                  :key="user.id"
+                  :label="user.nickname || user.username"
+                  :value="user.username"
+                />
+              </el-select>
             </el-form-item>
           </el-col>
         </el-row>
@@ -358,10 +368,20 @@
           />
         </el-form-item>
         <el-form-item label="目标责任人" prop="toCustodian" v-if="showCustodianField">
-          <el-input
+          <el-select
             v-model="operationForm.toCustodian"
-            placeholder="请输入目标责任人"
-          />
+            placeholder="请选择责任人"
+            filterable
+            clearable
+            style="width: 100%"
+          >
+            <el-option
+              v-for="user in userList"
+              :key="user.id"
+              :label="user.nickname || user.username"
+              :value="user.username"
+            />
+          </el-select>
         </el-form-item>
         <el-form-item label="备注" prop="remark">
           <el-input
@@ -426,7 +446,8 @@ import {
 import { assetApi } from '@/api/asset'
 import { categoryApi } from '@/api/category'
 import { recordApi } from '@/api/record'
-import type { Asset, AssetCreateRequest, AssetUpdateRequest, CategoryTreeNode, RecordCreateRequest, AssetRecord } from '@/types'
+import { userApi } from '@/api/user'
+import type { Asset, AssetCreateRequest, AssetUpdateRequest, CategoryTreeNode, RecordCreateRequest, AssetRecord, User } from '@/types'
 
 // 列表数据
 const tableData = ref<Asset[]>([])
@@ -451,6 +472,9 @@ const queryForm = reactive({
 
 // 分类树
 const categoryTree = ref<CategoryTreeNode[]>([])
+
+// 用户列表
+const userList = ref<User[]>([])
 
 // 对话框
 const dialogVisible = ref(false)
@@ -565,6 +589,18 @@ const loadCategoryTree = async () => {
     categoryTree.value = res.data
   } catch (error) {
     console.error('加载分类树失败:', error)
+  }
+}
+
+/**
+ * 加载用户列表
+ */
+const loadUserList = async () => {
+  try {
+    const res = await userApi.getUserPage({ current: 1, size: 1000 })
+    userList.value = res.data.records
+  } catch (error) {
+    console.error('加载用户列表失败:', error)
   }
 }
 
@@ -854,6 +890,7 @@ const getRecordTypeTag = (type: number): string => {
 // 初始化
 onMounted(() => {
   loadCategoryTree()
+  loadUserList()
   loadAssetList()
 })
 </script>
