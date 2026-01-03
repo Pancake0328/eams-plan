@@ -1,121 +1,119 @@
 <template>
-  <div class="user-management">
-    <!-- 顶部导航栏 -->
-    <div class="header">
-      <div class="header-left">
-        <h1>EAMS 企业资产管理系统</h1>
-      </div>
-      <div class="header-right">
-        <span class="user-info">{{ userStore.userInfo?.nickname }}</span>
-        <el-button type="danger" size="small" @click="handleLogout">
-          退出登录
-        </el-button>
-      </div>
+  <div class="user-management-page">
+    <!-- 页面标题 -->
+    <div class="page-header">
+      <h2>用户管理</h2>
+      <p>管理系统用户账号</p>
     </div>
 
-    <div class="content">
-      <!-- 搜索栏 -->
-      <el-card class="search-card">
-        <el-form :model="searchForm" inline>
-          <el-form-item label="用户名">
-            <el-input
-              v-model="searchForm.username"
-              placeholder="请输入用户名"
-              clearable
-              @clear="handleSearch"
-            />
-          </el-form-item>
-          <el-form-item label="手机号">
-            <el-input
-              v-model="searchForm.phone"
-              placeholder="请输入手机号"
-              clearable
-              @clear="handleSearch"
-            />
-          </el-form-item>
-          <el-form-item label="状态">
-            <el-select
-              v-model="searchForm.status"
-              placeholder="请选择状态"
-              clearable
-              @clear="handleSearch"
-            >
-              <el-option label="正常" :value="1" />
-              <el-option label="禁用" :value="0" />
-            </el-select>
-          </el-form-item>
-          <el-form-item>
-            <el-button type="primary" :icon="Search" @click="handleSearch">
-              搜索
-            </el-button>
-            <el-button :icon="Refresh" @click="handleReset">重置</el-button>
-          </el-form-item>
-        </el-form>
-      </el-card>
+    <!-- 搜索栏 -->
+    <el-card class="search-card" shadow="never">
+      <el-form :model="searchForm" inline>
+        <el-form-item label="用户名">
+          <el-input
+            v-model="searchForm.username"
+            placeholder="请输入用户名"
+            clearable
+            style="width: 200px"
+            @clear="handleSearch"
+          />
+        </el-form-item>
+        <el-form-item label="手机号">
+          <el-input
+            v-model="searchForm.phone"
+            placeholder="请输入手机号"
+            clearable
+            style="width: 200px"
+            @clear="handleSearch"
+          />
+        </el-form-item>
+        <el-form-item label="状态">
+          <el-select
+            v-model="searchForm.status"
+            placeholder="请选择状态"
+            clearable
+            style="width: 120px"
+            @clear="handleSearch"
+          >
+            <el-option label="正常" :value="1" />
+            <el-option label="禁用" :value="0" />
+          </el-select>
+        </el-form-item>
+        <el-form-item>
+          <el-button type="primary" :icon="Search" @click="handleSearch">
+            搜索
+          </el-button>
+          <el-button :icon="Refresh" @click="handleReset">重置</el-button>
+        </el-form-item>
+      </el-form>
+    </el-card>
 
-      <!-- 操作栏 -->
-      <el-card class="toolbar-card">
+    <!-- 操作栏和表格 -->
+    <el-card class="table-card" shadow="never">
+      <div class="toolbar">
         <el-button type="primary" :icon="Plus" @click="handleAdd">
           新增用户
         </el-button>
-      </el-card>
+      </div>
 
-      <!-- 用户列表 -->
-      <el-card class="table-card">
-        <el-table
-          :data="tableData"
-          v-loading="loading"
-          border
-          stripe
-          style="width: 100%"
-        >
-          <el-table-column prop="id" label="ID" width="80" />
-          <el-table-column prop="username" label="用户名" width="120" />
-          <el-table-column prop="nickname" label="昵称" width="120" />
-          <el-table-column prop="email" label="邮箱" width="180" />
-          <el-table-column prop="phone" label="手机号" width="130" />
-          <el-table-column label="状态" width="100">
-            <template #default="{ row }">
-              <el-switch
-                v-model="row.status"
-                :active-value="1"
-                :inactive-value="0"
-                @change="handleStatusChange(row)"
-              />
-            </template>
-          </el-table-column>
-          <el-table-column prop="createTime" label="创建时间" width="180" />
-          <el-table-column label="操作" width="260" fixed="right">
-            <template #default="{ row }">
-              <el-button
-                type="primary"
-                size="small"
-                :icon="Edit"
-                @click="handleEdit(row)"
-              >
-                编辑
-              </el-button>
-              <el-button
-                type="warning"
-                size="small"
-                :icon="Key"
-                @click="handleResetPassword(row)"
-              >
-                重置密码
-              </el-button>
-              <el-button
-                type="danger"
-                size="small"
-                :icon="Delete"
-                @click="handleDelete(row)"
-              >
-                删除
-              </el-button>
-            </template>
-          </el-table-column>
-        </el-table>
+      <el-table
+        :data="tableData"
+        v-loading="loading"
+        border
+        stripe
+        style="width: 100%"
+      >
+        <el-table-column prop="id" label="ID" width="80" />
+        <el-table-column prop="username" label="用户名" width="120" />
+        <el-table-column prop="nickname" label="昵称" width="120" />
+        <el-table-column prop="email" label="邮箱" min-width="180" />
+        <el-table-column prop="phone" label="手机号" width="130" />
+        <el-table-column label="状态" width="100" align="center">
+          <template #default="{ row }">
+            <el-switch
+              v-model="row.status"
+              :active-value="1"
+              :inactive-value="0"
+              @change="handleStatusChange(row)"
+            />
+          </template>
+        </el-table-column>
+        <el-table-column prop="createTime" label="创建时间" width="180" />
+        <el-table-column label="操作" width="280" fixed="right">
+          <template #default="{ row }">
+            <el-button
+              type="primary"
+              size="small"
+              link
+              :icon="Edit"
+              @click="handleEdit(row)"
+            >
+              编辑
+            </el-button>
+            <el-button
+              type="warning"
+              size="small"
+              link
+              :icon="Key"
+              @click="handleResetPassword(row)"
+            >
+              重置密码
+            </el-button>
+            <el-button
+              type="danger"
+              size="small"
+              link
+              :icon="Delete"
+              @click="handleDelete(row)"
+            >
+              删除
+            </el-button>
+          </template>
+        </el-table-column>
+      </el-table>
 
-        <!-- 分页 -->
+      <!-- 分页 -->
+      <div class="pagination">
         <el-pagination
           v-model:current-page="pagination.current"
           v-model:page-size="pagination.size"
@@ -124,10 +122,9 @@
           layout="total, sizes, prev, pager, next, jumper"
           @size-change="handleSizeChange"
           @current-change="handleCurrentChange"
-          style="margin-top: 20px; justify-content: flex-end"
         />
-      </el-card>
-    </div>
+      </div>
+    </el-card>
 
     <!-- 新增/编辑用户对话框 -->
     <el-dialog
@@ -219,15 +216,10 @@
 
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox, FormInstance, FormRules } from 'element-plus'
 import { Search, Refresh, Plus, Edit, Delete, Key } from '@element-plus/icons-vue'
 import { userApi } from '@/api/user'
-import { useUserStore } from '@/stores/user'
 import type { User, UserCreateRequest, UserUpdateRequest, UserPageQuery } from '@/types'
-
-const router = useRouter()
-const userStore = useUserStore()
 
 // 搜索表单
 const searchForm = reactive<UserPageQuery>({
@@ -300,23 +292,6 @@ const passwordFormRules: FormRules = {
     { required: true, message: '请输入新密码', trigger: 'blur' },
     { min: 6, max: 20, message: '密码长度在6-20个字符之间', trigger: 'blur' }
   ]
-}
-
-/**
- * 退出登录
- */
-const handleLogout = () => {
-  ElMessageBox.confirm('确定要退出登录吗？', '提示', {
-    confirmButtonText: '确定',
-    cancelButtonText: '取消',
-    type: 'warning'
-  }).then(() => {
-    userStore.logout()
-    router.push('/login')
-    ElMessage.success('已退出登录')
-  }).catch(() => {
-    // 取消
-  })
 }
 
 /**
@@ -544,51 +519,42 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.user-management {
-  display: flex;
-  flex-direction: column;
-  min-height: 100vh;
+.user-management-page {
+  height: 100%;
 }
 
-.header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0 20px;
-  height: 60px;
-  background: white;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
-.header-left h1 {
-  font-size: 20px;
-  color: #333;
-  margin: 0;
-}
-
-.header-right {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
-
-.user-info {
-  color: #666;
-  font-size: 14px;
-}
-
-.content {
-  flex: 1;
-  padding: 20px;
-}
-
-.search-card,
-.toolbar-card,
-.table-card {
+.page-header {
   margin-bottom: 20px;
 }
 
-.el-pagination {
+.page-header h2 {
+  font-size: 20px;
+  font-weight: 500;
+  color: #333;
+  margin: 0 0 8px 0;
+}
+
+.page-header p {
+  font-size: 14px;
+  color: #999;
+  margin: 0;
+}
+
+.search-card {
+  margin-bottom: 16px;
+}
+
+.table-card {
+  margin-bottom: 16px;
+}
+
+.toolbar {
+  margin-bottom: 16px;
+}
+
+.pagination {
+  margin-top: 16px;
   display: flex;
+  justify-content: flex-end;
 }
 </style>

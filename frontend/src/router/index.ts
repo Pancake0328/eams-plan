@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory, RouteRecordRaw } from 'vue-router'
 import { useUserStore } from '@/stores/user'
 import Login from '@/views/Login.vue'
+import MainLayout from '@/layout/MainLayout.vue'
 import UserManagement from '@/views/UserManagement.vue'
 
 /**
@@ -18,12 +19,21 @@ const routes: RouteRecordRaw[] = [
     },
     {
         path: '/',
-        name: 'UserManagement',
-        component: UserManagement,
+        component: MainLayout,
         meta: {
-            title: '用户管理',
             requiresAuth: true
-        }
+        },
+        children: [
+            {
+                path: '',
+                name: 'UserManagement',
+                component: UserManagement,
+                meta: {
+                    title: '用户管理',
+                    requiresAuth: true
+                }
+            }
+        ]
     }
 ]
 
@@ -38,7 +48,7 @@ const router = createRouter({
 /**
  * 路由守卫 - 权限验证
  */
-router.beforeEach((to, from, next) => {
+router.beforeEach((to, _from, next) => {
     const userStore = useUserStore()
 
     // 设置页面标题
