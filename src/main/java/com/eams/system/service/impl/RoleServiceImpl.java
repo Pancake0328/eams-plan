@@ -123,7 +123,7 @@ public class RoleServiceImpl implements RoleService {
 
     @Override
     public List<Long> getRoleMenuIds(Long roleId) {
-        LambdaQueryWrapper<SysRoleMenu> wrapper = new Lambda QueryWrapper<>();
+        LambdaQueryWrapper<SysRoleMenu> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(SysRoleMenu::getRoleId, roleId);
         List<SysRoleMenu> roleMenus = roleMenuMapper.selectList(wrapper);
         return roleMenus.stream()
