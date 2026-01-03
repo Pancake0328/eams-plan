@@ -41,6 +41,15 @@ const routes: RouteRecordRaw[] = [
                     title: '资产分类管理',
                     requiresAuth: true
                 }
+            },
+            {
+                path: '/assets',
+                name: 'AssetManagement',
+                component: () => import('@/views/AssetManagement.vue'),
+                meta: {
+                    title: '资产信息管理',
+                    requiresAuth: true
+                }
             }
         ]
     }

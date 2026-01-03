@@ -149,3 +149,71 @@ export interface CategoryUpdateRequest {
     sortOrder?: number
     description?: string
 }
+
+/**
+ * 资产信息
+ */
+export interface Asset {
+    id: number
+    assetNumber: string
+    assetName: string
+    categoryId: number
+    categoryName?: string
+    purchaseAmount?: number
+    purchaseDate?: string
+    department?: string
+    custodian?: string
+    assetStatus: number
+    assetStatusText?: string
+    specifications?: string
+    manufacturer?: string
+    remark?: string
+    createTime: string
+    updateTime: string
+}
+
+/**
+ * 创建资产请求
+ */
+export interface AssetCreateRequest {
+    assetName: string
+    categoryId: number
+    purchaseAmount?: number
+    purchaseDate?: string
+    department?: string
+    custodian?: string
+    assetStatus?: number
+    specifications?: string
+    manufacturer?: string
+    remark?: string
+}
+
+/**
+ * 更新资产请求
+ */
+export interface AssetUpdateRequest {
+    assetName: string
+    categoryId: number
+    purchaseAmount?: number
+    purchaseDate?: string
+    department?: string
+    custodian?: string
+    assetStatus?: number
+    specifications?: string
+    manufacturer?: string
+    remark?: string
+}
+
+/**
+ * 资产分页查询条件
+ */
+export interface AssetPageQuery {
+    current?: number
+    size?: number
+    assetNumber?: string
+    assetName?: string
+    categoryId?: number
+    department?: string
+    custodian?: string
+    assetStatus?: number
+}
