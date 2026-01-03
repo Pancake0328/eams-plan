@@ -5,8 +5,10 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.eams.common.exception.BusinessException;
 import com.eams.finance.entity.AssetBill;
 import com.eams.finance.entity.AssetBillDetail;
+import com.eams.finance.entity.AssetPurchase;
 import com.eams.finance.mapper.AssetBillDetailMapper;
 import com.eams.finance.mapper.AssetBillMapper;
+import com.eams.finance.mapper.AssetPurchaseMapper;
 import com.eams.finance.service.AssetBillService;
 import com.eams.finance.service.AssetDepreciationService;
 import com.eams.finance.vo.BillDetailVO;
@@ -38,6 +40,7 @@ public class AssetBillServiceImpl implements AssetBillService {
 
     private final AssetBillMapper billMapper;
     private final AssetBillDetailMapper billDetailMapper;
+    private final AssetPurchaseMapper purchaseMapper;
     private final AssetDepreciationService depreciationService;
 
     @Override
@@ -61,6 +64,22 @@ public class AssetBillServiceImpl implements AssetBillService {
         // 计算所有资产折旧
         List<DepreciationInfo> depreciationList = depreciationService.calculateAllDepreciation(targetDate);
 
+        // 过滤：只包含采购日期不晚于账单日期的资产
+        List<DepreciationInfo> filteredList = depreciationList.stream()
+                .filter(info -> {
+                    // 查询资产的采购记录
+                    LambdaQueryWrapper<AssetPurchase> purchaseWrapper = new LambdaQueryWrapper<>();
+                    purchaseWrapper.eq(AssetPurchase::getAssetId, info.getAssetId());
+                    purchaseWrapper.eq(AssetPurchase::getApprovalStatus, 1);
+                    purchaseWrapper.orderByAsc(AssetPurchase::getPurchaseDate);
+                    purchaseWrapper.last("LIMIT 1");
+                    AssetPurchase purchase = purchaseMapper.selectOne(purchaseWrapper);
+
+                    // 如果找不到采购记录或采购日期晚于账单日期，则不计入
+                    return purchase != null && !purchase.getPurchaseDate().isAfter(targetDate);
+                })
+                .toList();
+
         // 创建账单
         AssetBill bill = new AssetBill();
         bill.setBillNumber(billNumber);
@@ -76,7 +95,7 @@ public class AssetBillServiceImpl implements AssetBillService {
         BigDecimal totalAssetValue = BigDecimal.ZERO;
         BigDecimal totalNetValue = BigDecimal.ZERO;
 
-        for (DepreciationInfo info : depreciationList) {
+        for (DepreciationInfo info : filteredList) {
             totalPurchase = totalPurchase.add(info.getPurchaseAmount());
             totalDepreciation = totalDepreciation.add(info.getAccumulatedDepreciation());
             totalAssetValue = totalAssetValue.add(info.getPurchaseAmount());
@@ -91,7 +110,7 @@ public class AssetBillServiceImpl implements AssetBillService {
         billMapper.insert(bill);
 
         // 创建账单明细
-        for (DepreciationInfo info : depreciationList) {
+        for (DepreciationInfo info : filteredList) {
             AssetBillDetail detail = new AssetBillDetail();
             detail.setBillId(bill.getId());
             detail.setAssetId(info.getAssetId());
@@ -130,6 +149,22 @@ public class AssetBillServiceImpl implements AssetBillService {
         // 计算所有资产折旧
         List<DepreciationInfo> depreciationList = depreciationService.calculateAllDepreciation(targetDate);
 
+        // 过滤：只包含采购日期不晚于账单日期的资产
+        List<DepreciationInfo> filteredList = depreciationList.stream()
+                .filter(info -> {
+                    // 查询资产的采购记录
+                    LambdaQueryWrapper<AssetPurchase> purchaseWrapper = new LambdaQueryWrapper<>();
+                    purchaseWrapper.eq(AssetPurchase::getAssetId, info.getAssetId());
+                    purchaseWrapper.eq(AssetPurchase::getApprovalStatus, 1);
+                    purchaseWrapper.orderByAsc(AssetPurchase::getPurchaseDate);
+                    purchaseWrapper.last("LIMIT 1");
+                    AssetPurchase purchase = purchaseMapper.selectOne(purchaseWrapper);
+
+                    // 如果找不到采购记录或采购日期晚于账单日期，则不计入
+                    return purchase != null && !purchase.getPurchaseDate().isAfter(targetDate);
+                })
+                .toList();
+
         // 创建账单
         AssetBill bill = new AssetBill();
         bill.setBillNumber(billNumber);
@@ -144,7 +179,7 @@ public class AssetBillServiceImpl implements AssetBillService {
         BigDecimal totalAssetValue = BigDecimal.ZERO;
         BigDecimal totalNetValue = BigDecimal.ZERO;
 
-        for (DepreciationInfo info : depreciationList) {
+        for (DepreciationInfo info : filteredList) {
             totalPurchase = totalPurchase.add(info.getPurchaseAmount());
             totalDepreciation = totalDepreciation.add(info.getAccumulatedDepreciation());
             totalAssetValue = totalAssetValue.add(info.getPurchaseAmount());
@@ -159,7 +194,7 @@ public class AssetBillServiceImpl implements AssetBillService {
         billMapper.insert(bill);
 
         // 创建账单明细（简化处理）
-        for (DepreciationInfo info : depreciationList) {
+        for (DepreciationInfo info : filteredList) {
             AssetBillDetail detail = new AssetBillDetail();
             detail.setBillId(bill.getId());
             detail.setAssetId(info.getAssetId());

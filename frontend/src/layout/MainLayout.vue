@@ -197,17 +197,18 @@ const handleLogout = () => {
 
 <style scoped>
 .layout-container {
-  display: flex;
   height: 100vh;
+  display: flex;
   overflow: hidden;
 }
 
 /* 侧边栏 */
 .sidebar {
   width: 200px;
-  background: #001529;
+  background-color: #304156;
   transition: width 0.3s;
   overflow: hidden;
+  box-shadow: 2px 0 6px rgba(0, 0, 0, 0.1);
 }
 
 .sidebar.collapsed {
@@ -227,23 +228,43 @@ const handleLogout = () => {
 
 .el-menu {
   border-right: none;
-  background: #001529;
+  background: #304156 !important;
 }
 
 :deep(.el-menu-item),
 :deep(.el-sub-menu__title) {
-  color: rgba(255, 255, 255, 0.65);
+  color: #bfcbd9 !important;
 }
 
 :deep(.el-menu-item:hover),
 :deep(.el-sub-menu__title:hover) {
-  color: white;
-  background: rgba(255, 255, 255, 0.1) !important;
+  color: white !important;
+  background: #263445 !important;
 }
 
 :deep(.el-menu-item.is-active) {
-  color: white;
-  background: #1890ff !important;
+  color: white !important;
+  background: #409eff !important;
+}
+
+/* 子菜单样式 */
+:deep(.el-sub-menu .el-menu) {
+  background-color: #1f2d3d !important;
+}
+
+:deep(.el-sub-menu .el-menu-item) {
+  background-color: #1f2d3d !important;
+  color: #bfcbd9 !important;
+}
+
+:deep(.el-sub-menu .el-menu-item:hover) {
+  background-color: #001528 !important;
+  color: white !important;
+}
+
+:deep(.el-sub-menu .el-menu-item.is-active) {
+  background-color: #409eff !important;
+  color: white !important;
 }
 
 /* 主容器 */
