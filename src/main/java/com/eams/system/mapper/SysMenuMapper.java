@@ -1,0 +1,15 @@
+package com.eams.system.mapper;
+
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.eams.system.entity.SysMenu;
+import org.apache.ibatis.annotations.Mapper;
+
+/**
+ * 菜单Mapper
+ *
+ * @author EAMS Team
+ * @since 2026-01-03
+ */
+@Mapper
+public interface SysMenuMapper extends BaseMapper<SysMenu> {
+}
