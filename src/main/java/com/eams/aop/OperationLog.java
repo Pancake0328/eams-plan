@@ -15,6 +15,20 @@ import java.lang.annotation.*;
 public @interface OperationLog {
 
     /**
+     * 操作模块
+     *
+     * @return 操作模块
+     */
+    String module() default "";
+
+    /**
+     * 操作动作
+     *
+     * @return 操作动作
+     */
+    String action() default "";
+
+    /**
      * 操作描述
      *
      * @return 操作描述
