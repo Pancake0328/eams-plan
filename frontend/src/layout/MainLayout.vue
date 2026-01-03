@@ -32,8 +32,8 @@
             <el-icon><Grid /></el-icon>
             <span>资产管理</span>
           </template>
-          <el-menu-item index="/assets">资产列表</el-menu-item>
           <el-menu-item index="/categories">资产分类</el-menu-item>
+          <el-menu-item index="/assets">资产列表</el-menu-item>
         </el-sub-menu>
       </el-menu>
     </aside>
@@ -121,10 +121,11 @@ const breadcrumb = computed(() => {
   const path = route.path
   const breadcrumbMap: Record<string, string> = {
     '/': '用户管理',
+    '/categories': '资产分类管理',
     '/roles': '角色管理',
     '/permissions': '权限管理',
     '/assets': '资产列表',
-    '/categories': '资产分类'
+    '/asset-categories': '资产分类'
   }
   return breadcrumbMap[path] || ''
 })

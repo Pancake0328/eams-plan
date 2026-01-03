@@ -101,3 +101,51 @@ export interface LoginResponse {
         avatar?: string
     }
 }
+
+/**
+ * 资产分类
+ */
+export interface AssetCategory {
+    id: number
+    parentId: number
+    categoryName: string
+    categoryCode?: string
+    sortOrder?: number
+    description?: string
+    createTime: string
+    updateTime: string
+}
+
+/**
+ * 资产分类树节点
+ */
+export interface CategoryTreeNode {
+    id: number
+    parentId: number
+    categoryName: string
+    categoryCode?: string
+    sortOrder?: number
+    description?: string
+    children?: CategoryTreeNode[]
+}
+
+/**
+ * 创建资产分类请求
+ */
+export interface CategoryCreateRequest {
+    parentId: number
+    categoryName: string
+    categoryCode?: string
+    sortOrder?: number
+    description?: string
+}
+
+/**
+ * 更新资产分类请求
+ */
+export interface CategoryUpdateRequest {
+    categoryName: string
+    categoryCode?: string
+    sortOrder?: number
+    description?: string
+}

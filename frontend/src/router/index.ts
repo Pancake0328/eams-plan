@@ -32,6 +32,15 @@ const routes: RouteRecordRaw[] = [
                     title: '用户管理',
                     requiresAuth: true
                 }
+            },
+            {
+                path: '/categories',
+                name: 'CategoryManagement',
+                component: () => import('@/views/CategoryManagement.vue'),
+                meta: {
+                    title: '资产分类管理',
+                    requiresAuth: true
+                }
             }
         ]
     }
