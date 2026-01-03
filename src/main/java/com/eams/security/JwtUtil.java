@@ -116,14 +116,24 @@ public class JwtUtil {
 
     /**
      * 从请求头中提取 Token
-     * 移除 "Bearer " 前缀
+     * 移除 "Bearer " 前缀并清理空格
      *
      * @param authorizationHeader Authorization 请求头内容
      * @return Token
      */
     public String extractToken(String authorizationHeader) {
-        if (authorizationHeader != null && authorizationHeader.startsWith(jwtProperties.getTokenPrefix())) {
-            return authorizationHeader.substring(jwtProperties.getTokenPrefix().length());
+        if (authorizationHeader != null && !authorizationHeader.trim().isEmpty()) {
+            // 清理首尾空格
+            String trimmedHeader = authorizationHeader.trim();
+
+            // 如果以 "Bearer " 开头，移除前缀
+            if (trimmedHeader.startsWith(jwtProperties.getTokenPrefix())) {
+                String token = trimmedHeader.substring(jwtProperties.getTokenPrefix().length()).trim();
+                return token.isEmpty() ? null : token;
+            }
+
+            // 直接返回（可能是裸token）
+            return trimmedHeader;
         }
         return null;
     }
