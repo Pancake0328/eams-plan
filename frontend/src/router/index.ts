@@ -50,6 +50,15 @@ const routes: RouteRecordRaw[] = [
                     title: '资产信息管理',
                     requiresAuth: true
                 }
+            },
+            {
+                path: '/records',
+                name: 'RecordManagement',
+                component: () => import('@/views/RecordManagement.vue'),
+                meta: {
+                    title: '流转记录',
+                    requiresAuth: true
+                }
             }
         ]
     }
