@@ -59,6 +59,33 @@ const routes: RouteRecordRaw[] = [
                     title: '流转记录',
                     requiresAuth: true
                 }
+            },
+            {
+                path: '/departments',
+                name: 'DepartmentManagement',
+                component: () => import('@/views/DepartmentManagement.vue'),
+                meta: {
+                    title: '部门管理',
+                    requiresAuth: true
+                }
+            },
+            {
+                path: '/employees',
+                name: 'EmployeeManagement',
+                component: () => import('@/views/EmployeeManagement.vue'),
+                meta: {
+                    title: '员工管理',
+                    requiresAuth: true
+                }
+            },
+            {
+                path: '/asset-assigns',
+                name: 'AssetAssignManagement',
+                component: () => import('@/views/AssetAssignManagement.vue'),
+                meta: {
+                    title: '资产分配管理',
+                    requiresAuth: true
+                }
             }
         ]
     }

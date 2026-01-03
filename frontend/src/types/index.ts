@@ -262,3 +262,174 @@ export interface RecordPageQuery {
   recordType?: number
   operator?: string
 }
+
+// ================================================================
+// 部门管理类型
+// ================================================================
+
+/**
+ * 部门信息
+ */
+export interface Department {
+  id: number
+  parentId: number
+  deptName: string
+  deptCode?: string
+  leader?: string
+  phone?: string
+  email?: string
+  sortOrder?: number
+  status: number
+  remark?: string
+  createTime: string
+  children?: Department[]
+}
+
+/**
+ * 创建部门请求
+ */
+export interface DepartmentCreateRequest {
+  parentId: number
+  deptName: string
+  deptCode?: string
+  leader?: string
+  phone?: string
+  email?: string
+  sortOrder?: number
+  status?: number
+  remark?: string
+}
+
+/**
+ * 更新部门请求
+ */
+export interface DepartmentUpdateRequest {
+  deptName?: string
+  deptCode?: string
+  leader?: string
+  phone?: string
+  email?: string
+  sortOrder?: number
+  status?: number
+  remark?: string
+}
+
+// ================================================================
+// 员工管理类型
+// ================================================================
+
+/**
+ * 员工信息
+ */
+export interface Employee {
+  id: number
+  empNo: string
+  empName: string
+  deptId?: number
+  deptName?: string
+  position?: string
+  phone?: string
+  email?: string
+  gender?: number
+  genderText?: string
+  entryDate?: string
+  status: number
+  statusText?: string
+  remark?: string
+  createTime: string
+  updateTime: string
+}
+
+/**
+ * 创建员工请求
+ */
+export interface EmployeeCreateRequest {
+  empNo: string
+  empName: string
+  deptId: number
+  position?: string
+  phone?: string
+  email?: string
+  gender?: number
+  entryDate?: string
+  status?: number
+  remark?: string
+}
+
+/**
+ * 更新员工请求
+ */
+export interface EmployeeUpdateRequest {
+  empName?: string
+  deptId?: number
+  position?: string
+  phone?: string
+  email?: string
+  gender?: number
+  entryDate?: string
+  status?: number
+  remark?: string
+}
+
+/**
+ * 员工分页查询
+ */
+export interface EmployeePageQuery {
+  current?: number
+  size?: number
+  empNo?: string
+  empName?: string
+  deptId?: number
+  status?: number
+}
+
+// ================================================================
+// 资产分配类型
+// ================================================================
+
+/**
+ * 资产分配请求
+ */
+export interface AssetAssignRequest {
+  assetId: number
+  toEmpId: number
+  toDeptId?: number
+  remark?: string
+}
+
+/**
+ * 资产分配记录
+ */
+export interface AssetAssignRecord {
+  id: number
+  assetId: number
+  assetNumber?: string
+  assetName?: string
+  assignType: number
+  assignTypeText?: string
+  fromEmpId?: number
+  fromEmpName?: string
+  toEmpId?: number
+  toEmpName?: string
+  fromDeptId?: number
+  fromDeptName?: string
+  toDeptId?: number
+  toDeptName?: string
+  assignDate: string
+  returnDate?: string
+  remark?: string
+  operator: string
+  operateTime: string
+  createTime: string
+}
+
+/**
+ * 资产分配记录查询
+ */
+export interface AssignRecordPageQuery {
+  current?: number
+  size?: number
+  assetId?: number
+  empId?: number
+  assignType?: number
+}
