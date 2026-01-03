@@ -1,225 +1,225 @@
 /**
- * 通用响应结果接口
+ * 閫氱敤鍝嶅簲缁撴灉鎺ュ彛
  */
 export interface Result<T = any> {
-    code: number
-    message: string
-    data: T
-    timestamp: number
+  code: number
+  message: string
+  data: T
+  timestamp: number
 }
 
 /**
- * 分页响应接口
+ * 鍒嗛〉鍝嶅簲鎺ュ彛
  */
 export interface PageResult<T> {
-    records: T[]
-    total: number
-    size: number
-    current: number
-    pages: number
+  records: T[]
+  total: number
+  size: number
+  current: number
+  pages: number
 }
 
 /**
- * 用户信息接口
+ * 鐢ㄦ埛淇℃伅鎺ュ彛
  */
 export interface User {
-    id: number
-    username: string
-    nickname: string
-    email?: string
-    phone?: string
-    avatar?: string
-    status: number
-    createTime: string
-    updateTime: string
+  id: number
+  username: string
+  nickname: string
+  email?: string
+  phone?: string
+  avatar?: string
+  status: number
+  createTime: string
+  updateTime: string
 }
 
 /**
- * 创建用户请求
+ * 鍒涘缓鐢ㄦ埛璇锋眰
  */
 export interface UserCreateRequest {
-    username: string
-    password: string
-    nickname: string
-    email?: string
-    phone?: string
-    avatar?: string
-    status?: number
+  username: string
+  password: string
+  nickname: string
+  email?: string
+  phone?: string
+  avatar?: string
+  status?: number
 }
 
 /**
- * 更新用户请求
+ * 鏇存柊鐢ㄦ埛璇锋眰
  */
 export interface UserUpdateRequest {
+  nickname: string
+  email?: string
+  phone?: string
+  avatar?: string
+  status?: number
+}
+
+/**
+ * 閲嶇疆瀵嗙爜璇锋眰
+ */
+export interface ResetPasswordRequest {
+  newPassword: string
+}
+
+/**
+ * 鐢ㄦ埛鍒嗛〉鏌ヨ�鍙傛暟
+ */
+export interface UserPageQuery {
+  current?: number
+  size?: number
+  username?: string
+  nickname?: string
+  phone?: string
+  status?: number
+}
+
+/**
+ * 鐧诲綍璇锋眰
+ */
+export interface LoginRequest {
+  username: string
+  password: string
+}
+
+/**
+ * 鐧诲綍鍝嶅簲
+ */
+export interface LoginResponse {
+  token: string
+  tokenType: string
+  expiresIn: number
+  userInfo: {
+    id: number
+    username: string
     nickname: string
     email?: string
     phone?: string
     avatar?: string
-    status?: number
+  }
 }
 
 /**
- * 重置密码请求
- */
-export interface ResetPasswordRequest {
-    newPassword: string
-}
-
-/**
- * 用户分页查询参数
- */
-export interface UserPageQuery {
-    current?: number
-    size?: number
-    username?: string
-    nickname?: string
-    phone?: string
-    status?: number
-}
-
-/**
- * 登录请求
- */
-export interface LoginRequest {
-    username: string
-    password: string
-}
-
-/**
- * 登录响应
- */
-export interface LoginResponse {
-    token: string
-    tokenType: string
-    expiresIn: number
-    userInfo: {
-        id: number
-        username: string
-        nickname: string
-        email?: string
-        phone?: string
-        avatar?: string
-    }
-}
-
-/**
- * 资产分类
+ * 璧勪骇鍒嗙被
  */
 export interface AssetCategory {
-    id: number
-    parentId: number
-    categoryName: string
-    categoryCode?: string
-    sortOrder?: number
-    description?: string
-    createTime: string
-    updateTime: string
+  id: number
+  parentId: number
+  categoryName: string
+  categoryCode?: string
+  sortOrder?: number
+  description?: string
+  createTime: string
+  updateTime: string
 }
 
 /**
- * 资产分类树节点
+ * 璧勪骇鍒嗙被鏍戣妭鐐�
  */
 export interface CategoryTreeNode {
-    id: number
-    parentId: number
-    categoryName: string
-    categoryCode?: string
-    sortOrder?: number
-    description?: string
-    children?: CategoryTreeNode[]
+  id: number
+  parentId: number
+  categoryName: string
+  categoryCode?: string
+  sortOrder?: number
+  description?: string
+  children?: CategoryTreeNode[]
 }
 
 /**
- * 创建资产分类请求
+ * 鍒涘缓璧勪骇鍒嗙被璇锋眰
  */
 export interface CategoryCreateRequest {
-    parentId: number
-    categoryName: string
-    categoryCode?: string
-    sortOrder?: number
-    description?: string
+  parentId: number
+  categoryName: string
+  categoryCode?: string
+  sortOrder?: number
+  description?: string
 }
 
 /**
- * 更新资产分类请求
+ * 鏇存柊璧勪骇鍒嗙被璇锋眰
  */
 export interface CategoryUpdateRequest {
-    categoryName: string
-    categoryCode?: string
-    sortOrder?: number
-    description?: string
+  categoryName: string
+  categoryCode?: string
+  sortOrder?: number
+  description?: string
 }
 
 /**
- * 资产信息
+ * 璧勪骇淇℃伅
  */
 export interface Asset {
-    id: number
-    assetNumber: string
-    assetName: string
-    categoryId: number
-    categoryName?: string
-    purchaseAmount?: number
-    purchaseDate?: string
-    department?: string
-    custodian?: string
-    assetStatus: number
-    assetStatusText?: string
-    specifications?: string
-    manufacturer?: string
-    remark?: string
-    createTime: string
-    updateTime: string
+  id: number
+  assetNumber: string
+  assetName: string
+  categoryId: number
+  categoryName?: string
+  purchaseAmount?: number
+  purchaseDate?: string
+  department?: string
+  custodian?: string
+  assetStatus: number
+  assetStatusText?: string
+  specifications?: string
+  manufacturer?: string
+  remark?: string
+  createTime: string
+  updateTime: string
 }
 
 /**
- * 创建资产请求
+ * 鍒涘缓璧勪骇璇锋眰
  */
 export interface AssetCreateRequest {
-    assetName: string
-    categoryId: number
-    purchaseAmount?: number
-    purchaseDate?: string
-    department?: string
-    custodian?: string
-    assetStatus?: number
-    specifications?: string
-    manufacturer?: string
-    remark?: string
+  assetName: string
+  categoryId: number
+  purchaseAmount?: number
+  purchaseDate?: string
+  department?: string
+  custodian?: string
+  assetStatus?: number
+  specifications?: string
+  manufacturer?: string
+  remark?: string
 }
 
 /**
- * 更新资产请求
+ * 鏇存柊璧勪骇璇锋眰
  */
 export interface AssetUpdateRequest {
-    assetName: string
-    categoryId: number
-    purchaseAmount?: number
-    purchaseDate?: string
-    department?: string
-    custodian?: string
-    assetStatus?: number
-    specifications?: string
-    manufacturer?: string
-    remark?: string
+  assetName: string
+  categoryId: number
+  purchaseAmount?: number
+  purchaseDate?: string
+  department?: string
+  custodian?: string
+  assetStatus?: number
+  specifications?: string
+  manufacturer?: string
+  remark?: string
 }
 
 /**
- * 资产分页查询条件
+ * 璧勪骇鍒嗛〉鏌ヨ�鏉′欢
  */
 export interface AssetPageQuery {
-    current?: number
-    size?: number
-    assetNumber?: string
-    assetName?: string
-    categoryId?: number
-    department?: string
-    custodian?: string
-    assetStatus?: number
+  current?: number
+  size?: number
+  assetNumber?: string
+  assetName?: string
+  categoryId?: number
+  department?: string
+  custodian?: string
+  assetStatus?: number
 }
 
 /**
- * �ʲ���ת��¼
+ * 资产流转记录
  */
 export interface AssetRecord {
   id: number
@@ -243,7 +243,7 @@ export interface AssetRecord {
 }
 
 /**
- * ������ת��¼����
+ * 创建流转记录请求
  */
 export interface RecordCreateRequest {
   assetId: number
@@ -253,7 +253,7 @@ export interface RecordCreateRequest {
 }
 
 /**
- * ��ת��¼��ҳ��ѯ����
+ * 流转记录分页查询条件
  */
 export interface RecordPageQuery {
   current?: number
@@ -264,11 +264,11 @@ export interface RecordPageQuery {
 }
 
 // ================================================================
-// ���Ź�������
+// 部门管理类型
 // ================================================================
 
 /**
- * ������Ϣ
+ * 部门信息
  */
 export interface Department {
   id: number
@@ -286,7 +286,7 @@ export interface Department {
 }
 
 /**
- * ������������
+ * 创建部门请求
  */
 export interface DepartmentCreateRequest {
   parentId: number
@@ -301,7 +301,7 @@ export interface DepartmentCreateRequest {
 }
 
 /**
- * ���²�������
+ * 更新部门请求
  */
 export interface DepartmentUpdateRequest {
   deptName?: string
@@ -315,11 +315,11 @@ export interface DepartmentUpdateRequest {
 }
 
 // ================================================================
-// Ա����������
+// 员工管理类型
 // ================================================================
 
 /**
- * Ա����Ϣ
+ * 员工信息
  */
 export interface Employee {
   id: number
@@ -341,7 +341,7 @@ export interface Employee {
 }
 
 /**
- * ����Ա������
+ * 创建员工请求
  */
 export interface EmployeeCreateRequest {
   empNo: string
@@ -357,7 +357,7 @@ export interface EmployeeCreateRequest {
 }
 
 /**
- * ����Ա������
+ * 更新员工请求
  */
 export interface EmployeeUpdateRequest {
   empName?: string
@@ -372,7 +372,7 @@ export interface EmployeeUpdateRequest {
 }
 
 /**
- * Ա����ҳ��ѯ
+ * 员工分页查询
  */
 export interface EmployeePageQuery {
   current?: number
@@ -384,11 +384,11 @@ export interface EmployeePageQuery {
 }
 
 // ================================================================
-// �ʲ���������
+// 资产分配类型
 // ================================================================
 
 /**
- * �ʲ���������
+ * 资产分配请求
  */
 export interface AssetAssignRequest {
   assetId: number
@@ -398,7 +398,7 @@ export interface AssetAssignRequest {
 }
 
 /**
- * �ʲ������¼
+ * 资产分配记录
  */
 export interface AssetAssignRecord {
   id: number
@@ -424,7 +424,7 @@ export interface AssetAssignRecord {
 }
 
 /**
- * �ʲ������¼��ѯ
+ * 资产分配记录查询
  */
 export interface AssignRecordPageQuery {
   current?: number
@@ -435,11 +435,11 @@ export interface AssignRecordPageQuery {
 }
 
 // ================================================================
-// �˵����ʽ��������
+// 账单与资金管理类型
 // ================================================================
 
 /**
- * �ɹ���¼
+ * 采购记录
  */
 export interface Purchase {
   id: number
@@ -463,7 +463,7 @@ export interface Purchase {
 }
 
 /**
- * �ɹ���¼��������
+ * 采购记录创建请求
  */
 export interface PurchaseCreateRequest {
   assetId: number
@@ -478,7 +478,7 @@ export interface PurchaseCreateRequest {
 }
 
 /**
- * �۾���Ϣ
+ * 折旧信息
  */
 export interface DepreciationInfo {
   assetId: number
@@ -496,7 +496,7 @@ export interface DepreciationInfo {
 }
 
 /**
- * �˵�
+ * 账单
  */
 export interface Bill {
   id: number
@@ -518,7 +518,7 @@ export interface Bill {
 }
 
 /**
- * �ʽ�ͳ��
+ * 资金统计
  */
 export interface FinanceStatistics {
   dimension: string

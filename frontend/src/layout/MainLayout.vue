@@ -52,6 +52,26 @@
           <el-icon><Money /></el-icon>
           <template #title>财务管理</template>
         </el-menu-item>
+
+        <!-- 生命周期与盘点模块 -->
+        <el-sub-menu index="lifecycle-inventory">
+          <template #title>
+            <el-icon><Refresh /></el-icon>
+            <span>生命周期与盘点</span>
+          </template>
+          <el-menu-item index="/lifecycle">
+            <el-icon><Clock /></el-icon>
+            <span>生命周期管理</span>
+          </el-menu-item>
+          <el-menu-item index="/inventory">
+            <el-icon><Checked /></el-icon>
+            <span>盘点管理</span>
+          </el-menu-item>
+          <el-menu-item index="/repair">
+            <el-icon><Tools /></el-icon>
+            <span>报修管理</span>
+          </el-menu-item>
+        </el-sub-menu>
       </el-menu>
     </aside>
 
@@ -113,7 +133,7 @@ import { ref, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { ElMessageBox, ElMessage } from 'element-plus'
 import {
-  User,
+  UserFilled,
   Setting,
   Grid,
   Expand,
@@ -139,13 +159,23 @@ const breadcrumb = computed(() => {
   const path = route.path
   const breadcrumbMap: Record<string, string> = {
     '/': '用户管理',
+    '/dashboard': '首页',
+    '/asset': '资产管理',
+    '/category': '分类管理',
+    '/user': '人员管理',
+    '/employee': '员工管理',
+    '/department': '部门管理',
+    '/record': '使用记录',
+    '/finance': '财务管理', // Overwrites previous /finance entry
+    '/lifecycle': '生命周期管理',
+    '/inventory': '盘点管理',
+    '/repair': '报修管理',
     '/categories': '资产分类管理',
     '/assets': '资产信息管理',
     '/records': '流转记录',
     '/departments': '部门管理',
     '/employees': '员工管理',
     '/asset-assigns': '资产分配管理',
-    '/finance': '账单与资金管理',
     '/roles': '角色管理',
     '/permissions': '权限管理',
     '/asset-categories': '资产分类'

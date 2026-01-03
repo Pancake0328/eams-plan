@@ -95,6 +95,24 @@ const routes: RouteRecordRaw[] = [
                     title: '账单与资金管理',
                     requiresAuth: true
                 }
+            },
+            {
+                path: '/lifecycle',
+                name: 'LifecycleManagement',
+                component: () => import('@/views/LifecycleManagement.vue'),
+                meta: { requiresAuth: true, title: '生命周期管理' }
+            },
+            {
+                path: '/inventory',
+                name: 'InventoryManagement',
+                component: () => import('@/views/InventoryManagement.vue'),
+                meta: { requiresAuth: true, title: '盘点管理' }
+            },
+            {
+                path: '/repair',
+                name: 'RepairManagement',
+                component: () => import('@/views/RepairManagement.vue'),
+                meta: { requiresAuth: true, title: '报修管理' }
             }
         ]
     }
