@@ -262,6 +262,23 @@ public class AssetBillServiceImpl implements AssetBillService {
         return voPage;
     }
 
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void deleteBill(Long billId) {
+        AssetBill bill = billMapper.selectById(billId);
+        if (bill == null) {
+            throw new BusinessException("账单不存在");
+        }
+
+        // 删除账单明细
+        LambdaQueryWrapper<AssetBillDetail> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(AssetBillDetail::getBillId, billId);
+        billDetailMapper.delete(wrapper);
+
+        // 删除账单
+        billMapper.deleteById(billId);
+    }
+
     /**
      * 生成账单编号
      */

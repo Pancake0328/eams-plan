@@ -86,6 +86,15 @@ const routes: RouteRecordRaw[] = [
                     title: '资产分配管理',
                     requiresAuth: true
                 }
+            },
+            {
+                path: '/finance',
+                name: 'FinanceManagement',
+                component: () => import('@/views/FinanceManagement.vue'),
+                meta: {
+                    title: '账单与资金管理',
+                    requiresAuth: true
+                }
             }
         ]
     }

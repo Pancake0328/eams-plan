@@ -54,4 +54,11 @@ public interface AssetBillService {
      * @return 分页结果
      */
     Page<BillVO> getBillPage(Integer current, Integer size, Integer billType, Integer year, Integer month);
+
+    /**
+     * 删除账单
+     *
+     * @param billId 账单ID
+     */
+    void deleteBill(Long billId);
 }

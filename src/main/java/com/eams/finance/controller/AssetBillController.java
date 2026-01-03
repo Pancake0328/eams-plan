@@ -68,4 +68,12 @@ public class AssetBillController {
         PageResult<BillVO> result = PageResult.of(page.getRecords(), page.getTotal());
         return Result.success(result);
     }
+
+    @Operation(summary = "删除账单")
+    @DeleteMapping("/{billId}")
+    @OperationLog(module = "账单管理", action = "删除账单")
+    public Result<Void> deleteBill(@PathVariable Long billId) {
+        billService.deleteBill(billId);
+        return Result.success();
+    }
 }

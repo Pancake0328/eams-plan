@@ -47,6 +47,11 @@
           <!-- <el-menu-item index="/employees">员工管理</el-menu-item> -->
           <!-- <el-menu-item index="/asset-assigns">资产分配</el-menu-item> -->
         </el-sub-menu>
+        
+        <el-menu-item index="/finance">
+          <el-icon><Money /></el-icon>
+          <template #title>财务管理</template>
+        </el-menu-item>
       </el-menu>
     </aside>
 
@@ -114,7 +119,8 @@ import {
   Expand,
   Fold,
   ArrowDown,
-  SwitchButton
+  SwitchButton,
+  Money
 } from '@element-plus/icons-vue'
 import { useUserStore } from '@/stores/user'
 
@@ -139,6 +145,7 @@ const breadcrumb = computed(() => {
     '/departments': '部门管理',
     '/employees': '员工管理',
     '/asset-assigns': '资产分配管理',
+    '/finance': '账单与资金管理',
     '/roles': '角色管理',
     '/permissions': '权限管理',
     '/asset-categories': '资产分类'

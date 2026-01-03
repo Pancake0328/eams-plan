@@ -433,3 +433,98 @@ export interface AssignRecordPageQuery {
   empId?: number
   assignType?: number
 }
+
+// ================================================================
+// 账单与资金管理类型
+// ================================================================
+
+/**
+ * 采购记录
+ */
+export interface Purchase {
+  id: number
+  assetId: number
+  assetNumber?: string
+  assetName?: string
+  purchaseAmount: number
+  supplierName?: string
+  supplierContact?: string
+  invoiceNumber?: string
+  purchaseDate: string
+  paymentMethod?: string
+  warrantyPeriod?: number
+  remark?: string
+  purchaser?: string
+  approvalStatus: number
+  approvalStatusText?: string
+  approver?: string
+  approvalTime?: string
+  createTime: string
+}
+
+/**
+ * 采购记录创建请求
+ */
+export interface PurchaseCreateRequest {
+  assetId: number
+  purchaseAmount: number
+  supplierName?: string
+  supplierContact?: string
+  invoiceNumber?: string
+  purchaseDate: string
+  paymentMethod?: string
+  warrantyPeriod?: number
+  remark?: string
+}
+
+/**
+ * 折旧信息
+ */
+export interface DepreciationInfo {
+  assetId: number
+  assetNumber: string
+  assetName: string
+  purchaseAmount: number
+  residualValue: number
+  monthlyDepreciation: number
+  accumulatedDepreciation: number
+  netValue: number
+  depreciationRate: number
+  usefulLife: number
+  usedMonths: number
+  remainingMonths: number
+}
+
+/**
+ * 账单
+ */
+export interface Bill {
+  id: number
+  billNumber: string
+  billType: number
+  billTypeText?: string
+  billYear: number
+  billMonth?: number
+  totalPurchaseAmount: number
+  totalDepreciationAmount: number
+  totalAssetValue: number
+  totalNetValue: number
+  billStatus: number
+  billStatusText?: string
+  generateTime: string
+  confirmTime?: string
+  remark?: string
+  createTime: string
+}
+
+/**
+ * 资金统计
+ */
+export interface FinanceStatistics {
+  dimension: string
+  assetCount: number
+  totalPurchaseAmount: number
+  totalDepreciation: number
+  totalNetValue: number
+  averagePrice: number
+}
