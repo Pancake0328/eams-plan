@@ -92,7 +92,7 @@
         <el-form-item label="分类编码" prop="categoryCode">
           <el-input
             v-model="categoryForm.categoryCode"
-            placeholder="请输入分类编码"
+            placeholder="请输入分类编码（唯一，建议大写字母）"
           />
         </el-form-item>
         <el-form-item label="排序" prop="sortOrder">
@@ -167,7 +167,8 @@ const formRules: FormRules = {
     { max: 50, message: '分类名称长度不能超过50个字符', trigger: 'blur' }
   ],
   categoryCode: [
-    { max: 50, message: '分类编码长度不能超过50个字符', trigger: 'blur' }
+    { max: 50, message: '分类编码长度不能超过50个字符', trigger: 'blur' },
+    { pattern: /^[A-Z0-9_]*$/, message: '分类编码只能包含大写字母、数字和下划线', trigger: 'blur' }
   ],
   description: [
     { max: 200, message: '描述长度不能超过200个字符', trigger: 'blur' }

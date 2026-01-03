@@ -14,7 +14,8 @@ CREATE TABLE asset_category (
     create_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
     update_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
     PRIMARY KEY (id),
-    KEY idx_parent_id (parent_id)
+    KEY idx_parent_id (parent_id),
+    UNIQUE KEY uk_category_code (category_code)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='资产分类表';
 
 -- 插入初始分类数据

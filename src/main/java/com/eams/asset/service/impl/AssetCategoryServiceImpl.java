@@ -54,6 +54,13 @@ public class AssetCategoryServiceImpl implements AssetCategoryService {
             throw new BusinessException("同级分类中已存在相同名称");
         }
 
+        // 检查分类编码唯一性（如果提供了编码）
+        if (request.getCategoryCode() != null && !request.getCategoryCode().trim().isEmpty()) {
+            if (checkCategoryCodeExists(request.getCategoryCode(), null)) {
+                throw new BusinessException("分类编码已存在");
+            }
+        }
+
         // 创建分类
         AssetCategory category = new AssetCategory();
         category.setParentId(request.getParentId());
@@ -83,6 +90,13 @@ public class AssetCategoryServiceImpl implements AssetCategoryService {
         // 检查同级分类名称唯一性（排除自己）
         if (checkCategoryNameExists(request.getCategoryName(), category.getParentId(), id)) {
             throw new BusinessException("同级分类中已存在相同名称");
+        }
+
+        // 检查分类编码唯一性（如果提供了编码且不为空）
+        if (request.getCategoryCode() != null && !request.getCategoryCode().trim().isEmpty()) {
+            if (checkCategoryCodeExists(request.getCategoryCode(), id)) {
+                throw new BusinessException("分类编码已存在");
+            }
         }
 
         // 更新分类信息
@@ -194,6 +208,22 @@ public class AssetCategoryServiceImpl implements AssetCategoryService {
             throw new BusinessException(ResultCode.DATA_NOT_EXISTED);
         }
         return category;
+    }
+
+    /**
+     * 检查分类编码是否已存在
+     *
+     * @param categoryCode 分类编码
+     * @param excludeId    排除的分类ID（用于更新时排除自己）
+     * @return true-已存在，false-不存在
+     */
+    private boolean checkCategoryCodeExists(String categoryCode, Long excludeId) {
+        LambdaQueryWrapper<AssetCategory> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(AssetCategory::getCategoryCode, categoryCode);
+        if (excludeId != null) {
+            wrapper.ne(AssetCategory::getId, excludeId);
+        }
+        return categoryMapper.selectCount(wrapper) > 0;
     }
 
     /**
