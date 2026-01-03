@@ -217,3 +217,48 @@ export interface AssetPageQuery {
     custodian?: string
     assetStatus?: number
 }
+
+/**
+ * 资产流转记录
+ */
+export interface AssetRecord {
+  id: number
+  assetId: number
+  assetNumber?: string
+  assetName?: string
+  recordType: number
+  recordTypeText?: string
+  fromDepartment?: string
+  toDepartment?: string
+  fromCustodian?: string
+  toCustodian?: string
+  oldStatus?: number
+  oldStatusText?: string
+  newStatus?: number
+  newStatusText?: string
+  remark?: string
+  operator: string
+  operateTime: string
+  createTime: string
+}
+
+/**
+ * 创建流转记录请求
+ */
+export interface RecordCreateRequest {
+  assetId: number
+  toDepartment?: string
+  toCustodian?: string
+  remark?: string
+}
+
+/**
+ * 流转记录分页查询条件
+ */
+export interface RecordPageQuery {
+  current?: number
+  size?: number
+  assetId?: number
+  recordType?: number
+  operator?: string
+}

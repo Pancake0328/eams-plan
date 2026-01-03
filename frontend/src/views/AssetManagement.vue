@@ -99,7 +99,7 @@
           </template>
         </el-table-column>
         <el-table-column prop="createTime" label="登记时间" width="180" />
-        <el-table-column label="操作" width="260" fixed="right">
+        <el-table-column label="操作" width="300" fixed="right">
           <template #default="{ row }">
             <el-button
               type="primary"
@@ -119,6 +119,36 @@
             >
               编辑
             </el-button>
+            <el-dropdown @command="(cmd: string) => handleOperation(cmd, row)" style="margin-left: 8px">
+              <el-button type="primary" size="small" link>
+                更多操作<el-icon style="margin-left: 4px"><ArrowDown /></el-icon>
+              </el-button>
+              <template #dropdown>
+                <el-dropdown-menu>
+                  <el-dropdown-item command="allocate" :disabled="row.assetStatus !== 1">
+                    <el-icon><UserFilled /></el-icon> 分配
+                  </el-dropdown-item>
+                  <el-dropdown-item command="transfer" :disabled="row.assetStatus === 4">
+                    <el-icon><Switch /></el-icon> 调拨
+                  </el-dropdown-item>
+                  <el-dropdown-item command="return" :disabled="row.assetStatus !== 2">
+                    <el-icon><RefreshLeft /></el-icon> 归还
+                  </el-dropdown-item>
+                  <el-dropdown-item command="repair" :disabled="row.assetStatus === 3 || row.assetStatus === 4">
+                    <el-icon><Tools /></el-icon> 送修
+                  </el-dropdown-item>
+                  <el-dropdown-item command="repairComplete" :disabled="row.assetStatus !== 3">
+                    <el-icon><CircleCheck /></el-icon> 维修完成
+                  </el-dropdown-item>
+                  <el-dropdown-item command="scrap" :disabled="row.assetStatus === 4" divided>
+                    <el-icon><Delete /></el-icon> 报废
+                  </el-dropdown-item>
+                  <el-dropdown-item command="history">
+                    <el-icon><Clock /></el-icon> 流转历史
+                  </el-dropdown-item>
+                </el-dropdown-menu>
+              </template>
+            </el-dropdown>
             <el-button
               type="danger"
               size="small"
@@ -301,16 +331,102 @@
         <el-descriptions-item label="更新时间">{{ detailData.updateTime }}</el-descriptions-item>
       </el-descriptions>
     </el-dialog>
+
+    <!-- 流转操作对话框 -->
+    <el-dialog
+      v-model="operationVisible"
+      :title="operationTitle"
+      width="500px"
+      @close="handleOperationClose"
+    >
+      <el-form
+        ref="operationFormRef"
+        :model="operationForm"
+        :rules="operationRules"
+        label-width="100px"
+      >
+        <el-form-item label="资产编号">
+          <el-input :value="currentAsset?.assetNumber" disabled />
+        </el-form-item>
+        <el-form-item label="资产名称">
+          <el-input :value="currentAsset?.assetName" disabled />
+        </el-form-item>
+        <el-form-item label="目标部门" prop="toDepartment" v-if="showDepartmentField">
+          <el-input
+            v-model="operationForm.toDepartment"
+            placeholder="请输入目标部门"
+          />
+        </el-form-item>
+        <el-form-item label="目标责任人" prop="toCustodian" v-if="showCustodianField">
+          <el-input
+            v-model="operationForm.toCustodian"
+            placeholder="请输入目标责任人"
+          />
+        </el-form-item>
+        <el-form-item label="备注" prop="remark">
+          <el-input
+            v-model="operationForm.remark"
+            type="textarea"
+            :rows="3"
+            placeholder="请输入备注"
+          />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="operationVisible = false">取消</el-button>
+        <el-button type="primary" @click="handleOperationSubmit" :loading="operationLoading">
+          确定
+        </el-button>
+      </template>
+    </el-dialog>
+
+    <!-- 流转历史对话框 -->
+    <el-dialog
+      v-model="historyVisible"
+      title="流转历史"
+      width="900px"
+    >
+      <el-timeline>
+        <el-timeline-item
+          v-for="record in historyData"
+          :key="record.id"
+          :timestamp="record.operateTime"
+          placement="top"
+        >
+          <el-card>
+            <p><strong>操作类型：</strong><el-tag :type="getRecordTypeTag(record.recordType)">{{ record.recordTypeText }}</el-tag></p>
+            <p v-if="record.oldStatus && record.newStatus">
+              <strong>状态变更：</strong>
+              <el-tag :type="getStatusType(record.oldStatus)" size="small">{{ record.oldStatusText }}</el-tag>
+              →
+              <el-tag :type="getStatusType(record.newStatus)" size="small">{{ record.newStatusText }}</el-tag>
+            </p>
+            <p v-if="record.fromDepartment || record.toDepartment">
+              <strong>部门：</strong>{{ record.fromDepartment || '-' }} → {{ record.toDepartment || '-' }}
+            </p>
+            <p v-if="record.fromCustodian || record.toCustodian">
+              <strong>责任人：</strong>{{ record.fromCustodian || '-' }} → {{ record.toCustodian || '-' }}
+            </p>
+            <p v-if="record.remark"><strong>备注：</strong>{{ record.remark }}</p>
+            <p><strong>操作人：</strong>{{ record.operator }}</p>
+          </el-card>
+        </el-timeline-item>
+      </el-timeline>
+    </el-dialog>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox, FormInstance, FormRules } from 'element-plus'
-import { Plus, Edit, Delete, Search, Refresh, View } from '@element-plus/icons-vue'
+import { 
+  Plus, Edit, Delete, Search, Refresh, View, ArrowDown,
+  UserFilled, Switch, RefreshLeft, Tools, CircleCheck, Clock
+} from '@element-plus/icons-vue'
 import { assetApi } from '@/api/asset'
 import { categoryApi } from '@/api/category'
-import type { Asset, AssetCreateRequest, AssetUpdateRequest, CategoryTreeNode } from '@/types'
+import { recordApi } from '@/api/record'
+import type { Asset, AssetCreateRequest, AssetUpdateRequest, CategoryTreeNode, RecordCreateRequest, AssetRecord } from '@/types'
 
 // 列表数据
 const tableData = ref<Asset[]>([])
@@ -380,6 +496,45 @@ const formRules: FormRules = {
     { max: 100, message: '生产厂商长度不能超过100个字符', trigger: 'blur' }
   ]
 }
+
+// 操作对话框相关状态
+const operationVisible = ref(false)
+const operationTitle = ref('')
+const operationType = ref('')
+const currentAsset = ref<Asset | null>(null)
+const operationFormRef = ref<FormInstance>()
+const operationLoading = ref(false)
+
+// 操作表单
+const operationForm = reactive<RecordCreateRequest>({
+  assetId: 0,
+  toDepartment: '',
+  toCustodian: '',
+  remark: ''
+})
+
+// 操作表单校验规则
+const operationRules: FormRules = {
+  toDepartment: [
+    { max: 100, message: '部门长度不能超过100个字符', trigger: 'blur' }
+  ],
+  toCustodian: [
+    { max: 50, message: '责任人长度不能超过50个字符', trigger: 'blur' }
+  ]
+}
+
+// 流转历史对话框
+const historyVisible = ref(false)
+const historyData = ref<AssetRecord[]>([])
+
+// 根据操作类型显示/隐藏字段
+const showDepartmentField = computed(() => {
+  return ['allocate', 'transfer'].includes(operationType.value)
+})
+
+const showCustodianField = computed(() => {
+  return ['allocate', 'transfer'].includes(operationType.value)
+})
 
 /**
  * 加载资产列表
@@ -588,6 +743,112 @@ const getStatusType = (status: number): string => {
     4: 'danger'    // 报废
   }
   return typeMap[status] || 'info'
+}
+
+/**
+ * 处理操作命令
+ */
+const handleOperation = async (command: string, row: Asset) => {
+  currentAsset.value = row
+  operationType.value = command
+
+  if (command === 'history') {
+    // 查看流转历史
+    await loadHistory(row.id)
+    return
+  }
+
+  // 设置对话框标题
+  const titleMap: Record<string, string> = {
+    allocate: '分配资产',
+    transfer: '调拨资产',
+    return: '归还资产',
+    scrap: '报废资产',
+    repair: '送修资产',
+    repairComplete: '维修完成'
+  }
+  operationTitle.value = titleMap[command] || '操作资产'
+
+  // 重置表单
+  operationForm.assetId = row.id
+  operationForm.toDepartment = ''
+  operationForm.toCustodian = ''
+  operationForm.remark = ''
+
+  operationVisible.value = true
+}
+
+/**
+ * 提交操作
+ */
+const handleOperationSubmit = async () => {
+  if (!operationFormRef.value) return
+
+  await operationFormRef.value.validate(async (valid) => {
+    if (!valid) return
+
+    operationLoading.value = true
+    try {
+      const apiMap: Record<string, () => Promise<any>> = {
+        allocate: () => recordApi.allocateAsset(operationForm),
+        transfer: () => recordApi.transferAsset(operationForm),
+        return: () => recordApi.returnAsset(operationForm),
+        scrap: () => recordApi.scrapAsset(operationForm),
+        repair: () => recordApi.sendForRepair(operationForm),
+        repairComplete: () => recordApi.repairComplete(operationForm)
+      }
+
+      const apiCall = apiMap[operationType.value]
+      if (apiCall) {
+        await apiCall()
+        ElMessage.success('操作成功')
+        operationVisible.value = false
+        loadAssetList() // 刷新列表
+      }
+    } catch (error) {
+      console.error('操作失败:', error)
+    } finally {
+      operationLoading.value = false
+    }
+  })
+}
+
+/**
+ * 关闭操作对话框
+ */
+const handleOperationClose = () => {
+  operationFormRef.value?.resetFields()
+  currentAsset.value = null
+  operationType.value = ''
+}
+
+/**
+ * 加载流转历史
+ */
+const loadHistory = async (assetId: number) => {
+  try {
+    const res = await recordApi.getAssetRecordHistory(assetId)
+    historyData.value = res.data
+    historyVisible.value = true
+  } catch (error) {
+    console.error('加载流转历史失败:', error)
+  }
+}
+
+/**
+ * 获取记录类型标签颜色
+ */
+const getRecordTypeTag = (type: number): string => {
+  const typeMap: Record<number, string> = {
+    1: '',           // 入库
+    2: 'success',    // 分配
+    3: 'warning',    // 调拨
+    4: 'info',       // 归还
+    5: 'danger',     // 报废
+    6: 'warning',    // 送修
+    7: 'success'     // 维修完成
+  }
+  return typeMap[type] || ''
 }
 
 // 初始化

@@ -34,6 +34,7 @@
           </template>
           <el-menu-item index="/assets">资产列表</el-menu-item>
           <el-menu-item index="/categories">资产分类</el-menu-item>
+          <el-menu-item index="/records">流转记录</el-menu-item>
         </el-sub-menu>
       </el-menu>
     </aside>
@@ -123,6 +124,7 @@ const breadcrumb = computed(() => {
     '/': '用户管理',
     '/categories': '资产分类管理',
     '/assets': '资产信息管理',
+    '/records': '流转记录',
     '/roles': '角色管理',
     '/permissions': '权限管理',
     '/asset-categories': '资产分类'
