@@ -25,10 +25,10 @@ const routes: RouteRecordRaw[] = [
         },
         children: [
             {
-              path: '/dashboard',
-              name: 'Dashboard',
-              component: () => import('@/views/Dashboard.vue'),
-              meta: { requiresAuth: true, title: '仪表盘' }
+                path: '/dashboard',
+                name: 'Dashboard',
+                component: () => import('@/views/Dashboard.vue'),
+                meta: { requiresAuth: true, title: '仪表盘' }
             },
             {
                 path: '',
@@ -119,6 +119,12 @@ const routes: RouteRecordRaw[] = [
                 name: 'RepairManagement',
                 component: () => import('@/views/RepairManagement.vue'),
                 meta: { requiresAuth: true, title: '报修管理' }
+            },
+            {
+                path: '/role',
+                name: 'RoleManagement',
+                component: () => import('@/views/RoleManagement.vue'),
+                meta: { requiresAuth: true, title: '角色管理' }
             }
         ]
     }

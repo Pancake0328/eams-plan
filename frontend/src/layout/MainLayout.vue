@@ -23,15 +23,29 @@
           <template #title>用户管理</template>
         </el-menu-item>
         
-        <el-sub-menu index="2">
+<!--        <el-sub-menu index="2">-->
+<!--          <template #title>-->
+<!--            <el-icon><Setting /></el-icon>-->
+<!--            <span>系统管理</span>-->
+<!--          </template>-->
+<!--          <el-menu-item index="/roles">角色管理</el-menu-item>-->
+<!--          <el-menu-item index="/permissions">权限管理</el-menu-item>-->
+<!--        </el-sub-menu>-->
+        <!-- 系统管理模块 -->
+        <el-sub-menu index="system">
           <template #title>
             <el-icon><Setting /></el-icon>
             <span>系统管理</span>
           </template>
-          <el-menu-item index="/roles">角色管理</el-menu-item>
-          <el-menu-item index="/permissions">权限管理</el-menu-item>
+          <el-menu-item index="/role">
+            <el-icon><UserFilled /></el-icon>
+            <span>角色管理</span>
+          </el-menu-item>
+          <el-menu-item index="/permission">
+            <el-icon><UserFilled /></el-icon>
+            <span>权限管理</span>
+          </el-menu-item>
         </el-sub-menu>
-        
         <el-sub-menu index="3">
           <template #title>
             <el-icon><Grid /></el-icon>
@@ -184,7 +198,9 @@ const breadcrumb = computed(() => {
     '/asset-assigns': '资产分配管理',
     '/roles': '角色管理',
     '/permissions': '权限管理',
-    '/asset-categories': '资产分类'
+    '/asset-categories': '资产分类',
+    '/role': '角色管理',
+    '/permission': '权限管理'
   }
   return breadcrumbMap[path] || ''
 })
