@@ -195,13 +195,23 @@
         <div style="margin-bottom: 20px">
           <h4>待入库明细列表</h4>
           <el-table
+              ref="inboundTableRef"
               :data="pendingDetails"
               v-loading="inboundLoading"
               border
-              highlight-current-row
-              @current-change="handleSelectDetail"
               max-height="300"
           >
+            <el-table-column width="50">
+              <template #default="{ row }">
+                <el-radio 
+                  v-model="selectedDetailId" 
+                  :value="row.id"
+                  @change="handleSelectDetail(row)"
+                >
+                  &nbsp;
+                </el-radio>
+              </template>
+            </el-table-column>
             <el-table-column type="index" label="序号" width="60" />
             <el-table-column prop="assetName" label="资产名称" width="150" />
             <el-table-column prop="categoryName" label="分类" width="100" />
@@ -281,7 +291,7 @@
         <el-empty v-else description="请从上方表格选择要入库的明细" :image-size="80" />
       </div>
 
-      <!-- 编辑模式：保持原有表单 -->
+      <!-- 编辑模式：原有表单 -->
       <el-form
           v-else
           ref="formRef"
@@ -289,7 +299,117 @@
           :rules="formRules"
           label-width="100px"
       >
-        <!-- 这里保留原有的编辑表单内容，约192-340行的内容 -->
+        <el-row :gutter="16">
+          <el-col :span="12">
+            <el-form-item label="资产名称" prop="assetName">
+              <el-input v-model="assetForm.assetName" placeholder="请输入资产名称" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="资产分类" prop="categoryId">
+              <el-tree-select
+                  v-model="assetForm.categoryId"
+                  :data="categoryTree"
+                  :props="{ label: 'categoryName', value: 'id' }"
+                  placeholder="请选择分类"
+                  check-strictly
+                  style="width: 100%"
+              />
+            </el-form-item>
+          </el-col>
+        </el-row>
+        
+        <el-row :gutter="16">
+          <el-col :span="12">
+            <el-form-item label="采购金额" prop="purchaseAmount">
+              <el-input-number
+                  v-model="assetForm.purchaseAmount"
+                  :precision="2"
+                  :min="0"
+                  :max="9999999999.99"
+                  controls-position="right"
+                  style="width: 100%"
+              />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="采购日期" prop="purchaseDate">
+              <el-date-picker
+                  v-model="assetForm.purchaseDate"
+                  type="date"
+                  placeholder="请选择日期"
+                  value-format="YYYY-MM-DD"
+                  style="width: 100%"
+              />
+            </el-form-item>
+          </el-col>
+        </el-row>
+        
+        <el-row :gutter="16">
+          <el-col :span="12">
+            <el-form-item label="使用部门" prop="department">
+              <el-tree-select
+                  v-model="assetForm.department"
+                  :data="deptTree"
+                  :props="{ label: 'deptName', value: 'deptName', children: 'children' }"
+                  placeholder="请选择使用部门"
+                  check-strictly
+                  filterable
+                  clearable
+                  style="width: 100%"
+              />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="责任人" prop="custodian">
+              <el-select
+                  v-model="assetForm.custodian"
+                  placeholder="请选择责任人"
+                  filterable
+                  clearable
+                  style="width: 100%"
+              >
+                <el-option
+                    v-for="user in userList"
+                    :key="user.id"
+                    :label="user.username"
+                    :value="user.username"
+                />
+              </el-select>
+            </el-form-item>
+          </el-col>
+        </el-row>
+        
+        <el-row :gutter="16">
+          <el-col :span="12">
+            <el-form-item label="资产状态" prop="assetStatus">
+              <el-select v-model="assetForm.assetStatus" placeholder="请选择状态" style="width: 100%">
+                <el-option label="闲置" :value="1" />
+                <el-option label="使用中" :value="2" />
+                <el-option label="维修中" :value="3" />
+                <el-option label="报废" :value="4" />
+              </el-select>
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="规格型号" prop="specifications">
+              <el-input v-model="assetForm.specifications" placeholder="请输入规格型号" />
+            </el-form-item>
+          </el-col>
+        </el-row>
+        
+        <el-row :gutter="16">
+          <el-col :span="12">
+            <el-form-item label="生产厂商" prop="manufacturer">
+              <el-input v-model="assetForm.manufacturer" placeholder="请输入生产厂商" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="备注" prop="remark">
+              <el-input v-model="assetForm.remark" placeholder="请输入备注" />
+            </el-form-item>
+          </el-col>
+        </el-row>
       </el-form>
 
       <template #footer>
@@ -666,6 +786,15 @@ const handleReset = () => {
  * 资产入库 - 加载待入库明细列表
  */
 const handleAdd = async () => {
+  // 先重置所有入库相关状态
+  selectedDetailId.value = undefined
+  pendingDetails.value = []
+  inboundForm.detailId = 0
+  inboundForm.storageLocation = ''
+  inboundForm.department = ''
+  inboundForm.custodian = ''
+  inboundForm.remark = ''
+  
   isEdit.value = false
   dialogTitle.value = '资产入库'
 
@@ -674,7 +803,7 @@ const handleAdd = async () => {
   try {
     const res = await purchaseApi.getPendingInboundDetails({
       current: 1,
-      size: 100 // 一次加载所有待入库明细
+      size: 100
     })
     pendingDetails.value = res.data.records
     dialogVisible.value = true
@@ -687,10 +816,14 @@ const handleAdd = async () => {
 /**
  * 选择采购明细
  */
-const handleSelectDetail = (detail: PurchaseDetail) => {
+const handleSelectDetail = (detail: PurchaseDetail | null) => {
+  if (!detail) {
+    selectedDetailId.value = undefined
+    return
+  }
+  
   selectedDetailId.value = detail.id
   inboundForm.detailId = detail.id
-  // 可以预填充一些信息
   inboundForm.storageLocation = ''
   inboundForm.department = ''
   inboundForm.custodian = ''
@@ -706,20 +839,31 @@ const handleSubmitInbound = async () => {
     return
   }
 
-  try {
-    await purchaseApi.inboundAsset(inboundForm)
-    ElMessage.success('入库成功')
-    dialogVisible.value = false
-    loadAssetList() // 刷新资产列表
+  console.log('提交入库，表单数据：', inboundForm)
 
+  try {
+    const result = await purchaseApi.inboundAsset(inboundForm)
+    console.log('入库成功，返回：', result)
+    
+    ElMessage.success('入库成功')
+    
+    // 先关闭对话框
+    dialogVisible.value = false
+    
     // 重置表单
     selectedDetailId.value = undefined
+    pendingDetails.value = []
+    inboundForm.detailId = 0
     inboundForm.storageLocation = ''
     inboundForm.department = ''
     inboundForm.custodian = ''
     inboundForm.remark = ''
-  } catch (error) {
-    ElMessage.error('入库失败')
+    
+    // 刷新资产列表
+    await loadAssetList()
+  } catch (error: any) {
+    console.error('入库失败：', error)
+    ElMessage.error(error?.response?.data?.message || '入库失败')
   }
 }
 
@@ -770,10 +914,24 @@ const handleView = async (row: Asset) => {
  */
 const handleDialogClose = () => {
   formRef.value?.resetFields()
-  resetAssetForm()
+  
+  // 重置资产表单
+  assetForm.id = undefined
+  assetForm.assetName = ''
+  assetForm.categoryId = null as any
+  assetForm.purchaseAmount = 0
+  assetForm.purchaseDate = ''
+  assetForm.department = ''
+  assetForm.custodian = ''
+  assetForm.assetStatus = 1
+  assetForm.specifications = ''
+  assetForm.manufacturer = ''
+  assetForm.remark = ''
+  
   // 重置入库相关状态
   selectedDetailId.value = undefined
   pendingDetails.value = []
+  inboundForm.detailId = 0
   inboundForm.storageLocation = ''
   inboundForm.department = ''
   inboundForm.custodian = ''

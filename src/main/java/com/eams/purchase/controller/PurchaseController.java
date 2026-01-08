@@ -3,6 +3,7 @@ package com.eams.purchase.controller;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.eams.common.result.Result;
 import com.eams.purchase.dto.AssetInboundRequest;
+import com.eams.purchase.dto.BatchInboundRequest;
 import com.eams.purchase.dto.PurchaseCreateRequest;
 import com.eams.purchase.service.PurchaseService;
 import com.eams.purchase.vo.PurchaseVO;
@@ -11,6 +12,8 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @Tag(name = "采购管理")
 @RestController
@@ -63,8 +66,15 @@ public class PurchaseController {
 
     @Operation(summary = "资产入库")
     @PostMapping("/inbound")
-    public Result<Long> inboundAsset(@Valid @RequestBody AssetInboundRequest request) {
-        Long assetId = purchaseService.inboundAsset(request);
-        return Result.success(assetId);
+    public Result<List<Long>> inboundAsset(@Valid @RequestBody AssetInboundRequest request) {
+        List<Long> assetIds = purchaseService.inboundAsset(request);
+        return Result.success(assetIds);
+    }
+
+    @Operation(summary = "批量入库")
+    @PostMapping("/batch-inbound")
+    public Result<List<Long>> batchInbound(@Valid @RequestBody BatchInboundRequest request) {
+        List<Long> assetIds = purchaseService.batchInbound(request);
+        return Result.success(assetIds);
     }
 }

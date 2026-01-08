@@ -10,6 +10,7 @@ import com.eams.asset.service.AssetNumberGenerator;
 import com.eams.lifecycle.entity.AssetLifecycle;
 import com.eams.lifecycle.mapper.AssetLifecycleMapper;
 import com.eams.purchase.dto.AssetInboundRequest;
+import com.eams.purchase.dto.BatchInboundRequest;
 import com.eams.purchase.dto.PurchaseCreateRequest;
 import com.eams.purchase.entity.PurchaseOrder;
 import com.eams.purchase.entity.PurchaseOrderDetail;
@@ -24,6 +25,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -165,49 +167,76 @@ public class PurchaseServiceImpl implements PurchaseService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Long inboundAsset(AssetInboundRequest request) {
+    public List<Long> inboundAsset(AssetInboundRequest request) {
         PurchaseOrderDetail detail = detailMapper.selectById(request.getDetailId());
         if (detail == null) {
             throw new RuntimeException("采购明细不存在");
         }
 
-        if (detail.getInboundQuantity() >= detail.getQuantity()) {
+        int remainingQuantity = detail.getQuantity() - detail.getInboundQuantity();
+        if (remainingQuantity <= 0) {
             throw new RuntimeException("该明细已全部入库");
         }
 
-        AssetInfo asset = new AssetInfo();
-        asset.setAssetNumber(numberGenerator.generateAssetNumber());
-        asset.setAssetName(detail.getAssetName());
-        asset.setCategoryId(detail.getCategoryId());
-        asset.setPurchaseAmount(detail.getUnitPrice());
-        asset.setPurchaseDate(LocalDateTime.now().toLocalDate());
-        asset.setDepartment(request.getDepartment());
-        asset.setCustodian(request.getCustodian());
-        asset.setSpecifications(detail.getSpecifications());
-        asset.setManufacturer(detail.getManufacturer());
-        asset.setAssetStatus(1);
-        asset.setRemark(request.getRemark());
+        if (request.getQuantity() > remainingQuantity) {
+            throw new RuntimeException("入库数量超过剩余可入库数量");
+        }
 
-        assetInfoMapper.insert(asset);
+        List<Long> assetIds = new ArrayList<>();
 
-        AssetLifecycle lifecycle = new AssetLifecycle();
-        lifecycle.setAssetId(asset.getId());
-        lifecycle.setStage(0);
-        lifecycle.setStageDate(LocalDateTime.now().toLocalDate());
-        lifecycle.setOperator("system");
-        lifecycle.setRemark("从采购单入库：" + detail.getAssetName());
+        // 循环创建多个资产
+        for (int i = 0; i < request.getQuantity(); i++) {
+            AssetInfo asset = new AssetInfo();
+            asset.setAssetNumber(numberGenerator.generateAssetNumber());
+            asset.setAssetName(detail.getAssetName());
+            asset.setCategoryId(detail.getCategoryId());
+            asset.setPurchaseAmount(detail.getUnitPrice());
+            asset.setPurchaseDate(LocalDateTime.now().toLocalDate());
+            asset.setDepartment(request.getDepartment());
+            asset.setCustodian(request.getCustodian());
+            asset.setSpecifications(detail.getSpecifications());
+            asset.setManufacturer(detail.getManufacturer());
+            asset.setAssetStatus(1);
+            asset.setRemark(request.getRemark());
 
-        lifecycleMapper.insert(lifecycle);
+            assetInfoMapper.insert(asset);
+            assetIds.add(asset.getId());
 
-        detail.setInboundQuantity(detail.getInboundQuantity() + 1);
+            // 创建生命周期记录
+            AssetLifecycle lifecycle = new AssetLifecycle();
+            lifecycle.setAssetId(asset.getId());
+            lifecycle.setStage(0);
+            lifecycle.setStageDate(LocalDateTime.now().toLocalDate());
+            lifecycle.setOperator("system");
+            lifecycle.setRemark("从采购单入库：" + detail.getAssetName());
+
+            lifecycleMapper.insert(lifecycle);
+        }
+
+        // 更新采购明细入库数量
+        detail.setInboundQuantity(detail.getInboundQuantity() + request.getQuantity());
         if (detail.getInboundQuantity().equals(detail.getQuantity())) {
             detail.setDetailStatus(2);
         }
         detailMapper.updateById(detail);
 
+        // 更新采购单状态
         updatePurchaseStatus(detail.getPurchaseId());
 
-        return asset.getId();
+        return assetIds;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public List<Long> batchInbound(BatchInboundRequest request) {
+        List<Long> allAssetIds = new ArrayList<>();
+
+        for (AssetInboundRequest inboundRequest : request.getInboundList()) {
+            List<Long> assetIds = inboundAsset(inboundRequest);
+            allAssetIds.addAll(assetIds);
+        }
+
+        return allAssetIds;
     }
 
     private void updatePurchaseStatus(Long purchaseId) {

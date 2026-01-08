@@ -58,10 +58,16 @@ export interface PurchaseDetailRequest {
 
 export interface AssetInboundRequest {
     detailId: number
+    quantity: number
     storageLocation?: string
     department?: string
     custodian?: string
     remark?: string
+}
+
+// 批量入库请求
+export interface BatchInboundRequest {
+    inboundList: AssetInboundRequest[]
 }
 
 /**
@@ -114,7 +120,14 @@ export const purchaseApi = {
     /**
      * 资产入库
      */
-    inboundAsset(data: AssetInboundRequest): Promise<Result<number>> {
+    inboundAsset(data: AssetInboundRequest): Promise<Result<number[]>> {
         return request.post('/purchase/inbound', data)
+    },
+
+    /**
+     * 批量入库
+     */
+    batchInbound(data: BatchInboundRequest): Promise<Result<number[]>> {
+        return request.post('/purchase/batch-inbound', data)
     }
 }
