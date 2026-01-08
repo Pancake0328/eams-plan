@@ -71,10 +71,10 @@
           <!-- <el-menu-item index="/asset-assigns">资产分配</el-menu-item> -->
         </el-sub-menu>
         
-        <el-menu-item index="/finance">
-          <el-icon><Money /></el-icon>
-          <template #title>财务管理</template>
-        </el-menu-item>
+<!--        <el-menu-item index="/finance">-->
+<!--          <el-icon><Money /></el-icon>-->
+<!--          <template #title>财务管理</template>-->
+<!--        </el-menu-item>-->
 
         <!-- 生命周期与盘点模块 -->
         <el-sub-menu index="lifecycle-inventory">
