@@ -193,29 +193,20 @@
 
         <!-- 待入库明细列表 -->
         <div style="margin-bottom: 20px">
-          <h4>待入库明细列表</h4>
+          <h4>待入库明细列表（可多选）</h4>
           <el-table
               ref="inboundTableRef"
               :data="pendingDetails"
               v-loading="inboundLoading"
               border
-              max-height="300"
+              max-height="350"
+              @selection-change="handleSelectionChange"
           >
-            <el-table-column width="50">
-              <template #default="{ row }">
-                <el-radio 
-                  v-model="selectedDetailId" 
-                  :value="row.id"
-                  @change="handleSelectDetail(row)"
-                >
-                  &nbsp;
-                </el-radio>
-              </template>
-            </el-table-column>
+            <el-table-column type="selection" width="50" :selectable="checkSelectable" />
             <el-table-column type="index" label="序号" width="60" />
-            <el-table-column prop="assetName" label="资产名称" width="150" />
+            <el-table-column prop="assetName" label="资产名称" width="140" />
             <el-table-column prop="categoryName" label="分类" width="100" />
-            <el-table-column prop="specifications" label="规格型号" show-overflow-tooltip />
+            <el-table-column prop="specifications" label="规格型号" min-width="120" show-overflow-tooltip />
             <el-table-column prop="unitPrice" label="单价" width="100">
               <template #default="{ row }">¥{{ row.unitPrice.toFixed(2) }}</template>
             </el-table-column>
@@ -226,15 +217,31 @@
                 <el-tag type="warning">{{ row.remainingQuantity }}</el-tag>
               </template>
             </el-table-column>
+            <el-table-column label="本次入库" width="120" fixed="right">
+              <template #default="{ row }">
+                <el-input-number
+                    v-if="selectedDetailIds.includes(row.id)"
+                    :model-value="inboundQuantities.get(row.id) || 1"
+                    @update:model-value="(val: number) => handleQuantityChange(row.id, val)"
+                    :min="1"
+                    :max="row.remainingQuantity"
+                    :step="1"
+                    size="small"
+                    controls-position="right"
+                    style="width: 100%"
+                />
+                <span v-else class="text-gray">-</span>
+              </template>
+            </el-table-column>
           </el-table>
         </div>
 
         <!-- 入库信息表单 -->
-        <el-divider>入库信息</el-divider>
+        <el-divider>入库信息（应用于所有选中明细）</el-divider>
         <el-form
             :model="inboundForm"
             label-width="100px"
-            v-if="selectedDetailId"
+            v-if="selectedDetailIds.length > 0"
         >
           <el-row :gutter="16">
             <el-col :span="12">
@@ -288,7 +295,7 @@
             </el-col>
           </el-row>
         </el-form>
-        <el-empty v-else description="请从上方表格选择要入库的明细" :image-size="80" />
+        <el-empty v-else description="请从上方表格勾选要入库的明细并设置入库数量" :image-size="80" />
       </div>
 
       <!-- 编辑模式：原有表单 -->
@@ -418,9 +425,9 @@
             v-if="!isEdit"
             type="primary"
             @click="handleSubmitInbound"
-            :disabled="!selectedDetailId"
+            :disabled="selectedDetailIds.length === 0"
         >
-          确认入库
+          确认入库（{{ selectedDetailIds.length }}项）
         </el-button>
         <el-button
             v-else
@@ -574,18 +581,18 @@ import { recordApi } from '@/api/record'
 import { userApi } from '@/api/user'
 import { departmentApi } from '@/api/department'
 import { purchaseApi } from '@/api/purchase'
-import type { PurchaseDetail, AssetInboundRequest } from '@/api/purchase'
+import type { PurchaseDetail, BatchInboundRequest } from '@/api/purchase'
 import type { Asset, AssetCreateRequest, AssetUpdateRequest, CategoryTreeNode, RecordCreateRequest, AssetRecord, User, Department } from '@/types'
 
 
 // 待入库明细列表
 const pendingDetails = ref<PurchaseDetail[]>([])
-const selectedDetailId = ref<number>()
+const selectedDetailIds = ref<number[]>([]) // 改为数组支持多选
+const inboundQuantities = ref<Map<number, number>>(new Map()) // 存储每个明细的入库数量
 const inboundLoading = ref(false)
 
-// 入库表单
-const inboundForm = reactive<AssetInboundRequest>({
-  detailId: 0,
+// 入库表单（公共信息）
+const inboundForm = reactive({
   storageLocation: '',
   department: '',
   custodian: '',
@@ -787,9 +794,9 @@ const handleReset = () => {
  */
 const handleAdd = async () => {
   // 先重置所有入库相关状态
-  selectedDetailId.value = undefined
+  selectedDetailIds.value = []
+  inboundQuantities.value.clear()
   pendingDetails.value = []
-  inboundForm.detailId = 0
   inboundForm.storageLocation = ''
   inboundForm.department = ''
   inboundForm.custodian = ''
@@ -814,46 +821,91 @@ const handleAdd = async () => {
   }
 }
 /**
- * 选择采购明细
+ * 表格选择变化
  */
-const handleSelectDetail = (detail: PurchaseDetail | null) => {
-  if (!detail) {
-    selectedDetailId.value = undefined
-    return
-  }
+const handleSelectionChange = (selection: PurchaseDetail[]) => {
+  selectedDetailIds.value = selection.map(item => item.id)
   
-  selectedDetailId.value = detail.id
-  inboundForm.detailId = detail.id
-  inboundForm.storageLocation = ''
-  inboundForm.department = ''
-  inboundForm.custodian = ''
-  inboundForm.remark = `从采购单入库：${detail.assetName}`
+  // 为新选中的明细初始化数量（默认为剩余数量或1）
+  selection.forEach(detail => {
+    if (!inboundQuantities.value.has(detail.id)) {
+      inboundQuantities.value.set(detail.id, Math.min(1, detail.remainingQuantity))
+    }
+  })
+  
+  // 移除未选中明细的数量
+  const selectedIds = new Set(selectedDetailIds.value)
+  inboundQuantities.value.forEach((_, id) => {
+    if (!selectedIds.has(id)) {
+      inboundQuantities.value.delete(id)
+    }
+  })
+}
+
+/**
+ * 入库数量变化
+ */
+const handleQuantityChange = (detailId: number, quantity: number | null) => {
+  if (quantity !== null && quantity > 0) {
+    inboundQuantities.value.set(detailId, quantity)
+  }
+}
+
+/**
+ * 检查行是否可选
+ */
+const checkSelectable = (row: PurchaseDetail) => {
+  return row.remainingQuantity > 0
 }
 
 /**
  * 提交入库
  */
 const handleSubmitInbound = async () => {
-  if (!selectedDetailId.value) {
+  if (selectedDetailIds.value.length === 0) {
     ElMessage.warning('请先选择要入库的采购明细')
     return
   }
 
-  console.log('提交入库，表单数据：', inboundForm)
+  // 检查所有选中的明细是否都设置了数量
+  const hasInvalidQuantity = selectedDetailIds.value.some(id => {
+    const quantity = inboundQuantities.value.get(id)
+    return !quantity || quantity <= 0
+  })
+
+  if (hasInvalidQuantity) {
+    ElMessage.warning('请为所有选中的明细设置有效的入库数量')
+    return
+  }
+
+  console.log('提交批量入库')
+  console.log('选中的明细ID:', selectedDetailIds.value)
+  console.log('入库数量:', Object.fromEntries(inboundQuantities.value))
+  console.log('公共信息:', inboundForm)
 
   try {
-    const result = await purchaseApi.inboundAsset(inboundForm)
-    console.log('入库成功，返回：', result)
+    // 构建批量入库请求
+    const inboundList = selectedDetailIds.value.map(detailId => ({
+      detailId,
+      quantity: inboundQuantities.value.get(detailId)!,
+      storageLocation: inboundForm.storageLocation,
+      department: inboundForm.department,
+      custodian: inboundForm.custodian,
+      remark: inboundForm.remark
+    }))
+
+    const result = await purchaseApi.batchInbound({ inboundList })
+    console.log('入库成功，资产ID列表：', result.data)
     
-    ElMessage.success('入库成功')
+    ElMessage.success(`入库成功！共创建 ${result.data.length} 个资产`)
     
     // 先关闭对话框
     dialogVisible.value = false
     
     // 重置表单
-    selectedDetailId.value = undefined
+    selectedDetailIds.value = []
+    inboundQuantities.value.clear()
     pendingDetails.value = []
-    inboundForm.detailId = 0
     inboundForm.storageLocation = ''
     inboundForm.department = ''
     inboundForm.custodian = ''
@@ -929,9 +981,9 @@ const handleDialogClose = () => {
   assetForm.remark = ''
   
   // 重置入库相关状态
-  selectedDetailId.value = undefined
+  selectedDetailIds.value = []
+  inboundQuantities.value.clear()
   pendingDetails.value = []
-  inboundForm.detailId = 0
   inboundForm.storageLocation = ''
   inboundForm.department = ''
   inboundForm.custodian = ''
