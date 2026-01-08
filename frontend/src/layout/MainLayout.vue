@@ -55,6 +55,10 @@
           <el-menu-item index="/categories">资产分类</el-menu-item>
           <el-menu-item index="/records">流转记录</el-menu-item>
         </el-sub-menu>
+        <el-menu-item index="/purchase">
+          <el-icon><ShoppingCart /></el-icon>
+          <span>采购管理</span>
+        </el-menu-item>
         
         <el-sub-menu index="4">
           <template #title>
