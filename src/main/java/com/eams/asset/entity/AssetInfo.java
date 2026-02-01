@@ -52,9 +52,9 @@ public class AssetInfo implements Serializable {
     private LocalDate purchaseDate;
 
     /**
-     * 使用部门
+     * 使用部门ID
      */
-    private String department;
+    private Long departmentId;
 
     /**
      * 责任人

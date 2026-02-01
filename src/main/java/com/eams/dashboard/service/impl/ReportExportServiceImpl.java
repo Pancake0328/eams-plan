@@ -32,6 +32,7 @@ public class ReportExportServiceImpl implements ReportExportService {
 
     private final AssetInfoMapper assetInfoMapper;
     private final DashboardService dashboardService;
+    private final com.eams.system.mapper.DepartmentMapper departmentMapper;
 
     @Override
     public void exportAssetListToExcel(HttpServletResponse response) {
@@ -62,7 +63,7 @@ public class ReportExportServiceImpl implements ReportExportService {
                         .setCellValue(asset.getPurchaseAmount() != null ? asset.getPurchaseAmount().doubleValue() : 0);
                 row.createCell(3)
                         .setCellValue(asset.getPurchaseDate() != null ? asset.getPurchaseDate().toString() : "");
-                row.createCell(4).setCellValue(asset.getDepartment() != null ? asset.getDepartment() : "");
+                row.createCell(4).setCellValue(getDepartmentName(asset.getDepartmentId()));
                 row.createCell(5).setCellValue(asset.getCustodian() != null ? asset.getCustodian() : "");
                 row.createCell(6).setCellValue(getStatusText(asset.getAssetStatus()));
                 row.createCell(7).setCellValue(asset.getSpecifications() != null ? asset.getSpecifications() : "");
@@ -245,5 +246,16 @@ public class ReportExportServiceImpl implements ReportExportService {
             case 4 -> "报废";
             default -> "未知";
         };
+    }
+
+    /**
+     * 根据部门ID获取部门名称
+     */
+    private String getDepartmentName(Long departmentId) {
+        if (departmentId == null) {
+            return "";
+        }
+        com.eams.system.entity.Department department = departmentMapper.selectById(departmentId);
+        return department != null ? department.getDeptName() : "";
     }
 }

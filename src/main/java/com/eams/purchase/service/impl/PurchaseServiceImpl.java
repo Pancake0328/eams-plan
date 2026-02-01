@@ -215,6 +215,17 @@ public class PurchaseServiceImpl implements PurchaseService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public List<Long> inboundAsset(AssetInboundRequest request) {
+        // 获取当前登录用户
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String currentUsername = authentication.getName();
+
+        LambdaQueryWrapper<User> userWrapper = new LambdaQueryWrapper<>();
+        userWrapper.eq(User::getUsername, currentUsername);
+        User currentUser = userMapper.selectOne(userWrapper);
+        if (currentUser == null) {
+            throw new BusinessException("当前用户不存在");
+        }
+
         PurchaseOrderDetail detail = detailMapper.selectById(request.getDetailId());
         if (detail == null) {
             throw new RuntimeException("采购明细不存在");
@@ -239,8 +250,10 @@ public class PurchaseServiceImpl implements PurchaseService {
             asset.setCategoryId(detail.getCategoryId());
             asset.setPurchaseAmount(detail.getUnitPrice());
             asset.setPurchaseDate(LocalDateTime.now().toLocalDate());
-            asset.setDepartment(request.getDepartment());
-            asset.setCustodian(request.getCustodian());
+
+            // 使用当前用户的部门ID
+            asset.setDepartmentId(currentUser.getDepartmentId());
+            asset.setCustodian(currentUser.getUsername()); // 使用当前用户作为责任人
             asset.setSpecifications(detail.getSpecifications());
             asset.setManufacturer(detail.getManufacturer());
             asset.setAssetStatus(1);

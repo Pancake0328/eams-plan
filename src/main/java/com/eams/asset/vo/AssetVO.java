@@ -71,10 +71,16 @@ public class AssetVO implements Serializable {
     private LocalDate purchaseDate;
 
     /**
-     * 使用部门
+     * 使用部门ID
+     */
+    @Schema(description = "使用部门ID")
+    private Long departmentId;
+
+    /**
+     * 使用部门名称
      */
     @Schema(description = "使用部门")
-    private String department;
+    private String departmentName;
 
     /**
      * 责任人

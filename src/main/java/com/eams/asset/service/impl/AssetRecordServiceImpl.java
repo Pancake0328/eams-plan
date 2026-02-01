@@ -38,6 +38,7 @@ public class AssetRecordServiceImpl implements AssetRecordService {
 
     private final AssetRecordMapper recordMapper;
     private final AssetInfoMapper assetInfoMapper;
+    private final com.eams.system.mapper.DepartmentMapper departmentMapper;
 
     /**
      * 记录类型映射
@@ -79,14 +80,14 @@ public class AssetRecordServiceImpl implements AssetRecordService {
         AssetRecord record = createRecord(
                 asset,
                 1, // 入库
-                null, request.getToDepartment(),
+                null, request.getToDepartmentId(),
                 null, request.getToCustodian(),
                 asset.getAssetStatus(), 1, // 状态变更为闲置
                 request.getRemark());
         recordMapper.insert(record);
 
         // 更新资产信息
-        asset.setDepartment(request.getToDepartment());
+        asset.setDepartmentId(request.getToDepartmentId());
         asset.setCustodian(request.getToCustodian());
         asset.setAssetStatus(1); // 闲置
         assetInfoMapper.updateById(asset);
@@ -115,14 +116,14 @@ public class AssetRecordServiceImpl implements AssetRecordService {
         AssetRecord record = createRecord(
                 asset,
                 2, // 分配
-                asset.getDepartment(), request.getToDepartment(),
+                asset.getDepartmentId(), request.getToDepartmentId(),
                 asset.getCustodian(), request.getToCustodian(),
                 asset.getAssetStatus(), 2, // 状态变更为使用中
                 request.getRemark());
         recordMapper.insert(record);
 
         // 更新资产信息
-        asset.setDepartment(request.getToDepartment());
+        asset.setDepartmentId(request.getToDepartmentId());
         asset.setCustodian(request.getToCustodian());
         asset.setAssetStatus(2); // 使用中
         assetInfoMapper.updateById(asset);
@@ -151,14 +152,14 @@ public class AssetRecordServiceImpl implements AssetRecordService {
         AssetRecord record = createRecord(
                 asset,
                 3, // 调拨
-                asset.getDepartment(), request.getToDepartment(),
+                asset.getDepartmentId(), request.getToDepartmentId(),
                 asset.getCustodian(), request.getToCustodian(),
                 asset.getAssetStatus(), asset.getAssetStatus(), // 状态不变
                 request.getRemark());
         recordMapper.insert(record);
 
         // 更新资产信息
-        asset.setDepartment(request.getToDepartment());
+        asset.setDepartmentId(request.getToDepartmentId());
         asset.setCustodian(request.getToCustodian());
         assetInfoMapper.updateById(asset);
 
@@ -186,7 +187,7 @@ public class AssetRecordServiceImpl implements AssetRecordService {
         AssetRecord record = createRecord(
                 asset,
                 4, // 归还
-                asset.getDepartment(), null,
+                asset.getDepartmentId(), null,
                 asset.getCustodian(), null,
                 asset.getAssetStatus(), 1, // 状态变更为闲置
                 request.getRemark());
@@ -221,7 +222,7 @@ public class AssetRecordServiceImpl implements AssetRecordService {
         AssetRecord record = createRecord(
                 asset,
                 5, // 报废
-                asset.getDepartment(), null,
+                asset.getDepartmentId(), null,
                 asset.getCustodian(), null,
                 asset.getAssetStatus(), 4, // 状态变更为报废
                 request.getRemark());
@@ -259,7 +260,7 @@ public class AssetRecordServiceImpl implements AssetRecordService {
         AssetRecord record = createRecord(
                 asset,
                 6, // 送修
-                asset.getDepartment(), asset.getDepartment(),
+                asset.getDepartmentId(), asset.getDepartmentId(),
                 asset.getCustodian(), asset.getCustodian(),
                 asset.getAssetStatus(), 3, // 状态变更为维修中
                 request.getRemark());
@@ -293,7 +294,7 @@ public class AssetRecordServiceImpl implements AssetRecordService {
         AssetRecord record = createRecord(
                 asset,
                 7, // 维修完成
-                asset.getDepartment(), asset.getDepartment(),
+                asset.getDepartmentId(), asset.getDepartmentId(),
                 asset.getCustodian(), asset.getCustodian(),
                 asset.getAssetStatus(), 1, // 状态变更为闲置
                 request.getRemark());
@@ -383,15 +384,16 @@ public class AssetRecordServiceImpl implements AssetRecordService {
      * @return 流转记录
      */
     private AssetRecord createRecord(AssetInfo asset, Integer recordType,
-            String fromDepartment, String toDepartment,
+            Long fromDepartmentId, Long toDepartmentId,
             String fromCustodian, String toCustodian,
             Integer oldStatus, Integer newStatus,
             String remark) {
         AssetRecord record = new AssetRecord();
         record.setAssetId(asset.getId());
         record.setRecordType(recordType);
-        record.setFromDepartment(fromDepartment);
-        record.setToDepartment(toDepartment);
+        // 查询部门名称并存储
+        record.setFromDepartment(getDepartmentName(fromDepartmentId));
+        record.setToDepartment(getDepartmentName(toDepartmentId));
         record.setFromCustodian(fromCustodian);
         record.setToCustodian(toCustodian);
         record.setOldStatus(oldStatus);
@@ -459,5 +461,16 @@ public class AssetRecordServiceImpl implements AssetRecordService {
                 .operateTime(record.getOperateTime())
                 .createTime(record.getCreateTime())
                 .build();
+    }
+
+    /**
+     * 根据部门ID获取部门名称
+     */
+    private String getDepartmentName(Long departmentId) {
+        if (departmentId == null) {
+            return null;
+        }
+        com.eams.system.entity.Department department = departmentMapper.selectById(departmentId);
+        return department != null ? department.getDeptName() : null;
     }
 }

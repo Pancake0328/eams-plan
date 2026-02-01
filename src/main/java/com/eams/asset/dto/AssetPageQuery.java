@@ -48,10 +48,10 @@ public class AssetPageQuery implements Serializable {
     private Long categoryId;
 
     /**
-     * 使用部门（模糊查询）
+     * 使用部门ID
      */
-    @Schema(description = "使用部门（模糊查询）")
-    private String department;
+    @Schema(description = "使用部门ID")
+    private Long departmentId;
 
     /**
      * 责任人（模糊查询）

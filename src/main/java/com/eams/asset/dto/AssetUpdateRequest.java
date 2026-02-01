@@ -50,11 +50,10 @@ public class AssetUpdateRequest implements Serializable {
     private LocalDate purchaseDate;
 
     /**
-     * 使用部门
+     * 使用部门ID
      */
-    @Size(max = 100, message = "使用部门长度不能超过100个字符")
-    @Schema(description = "使用部门")
-    private String department;
+    @Schema(description = "使用部门ID")
+    private Long departmentId;
 
     /**
      * 责任人

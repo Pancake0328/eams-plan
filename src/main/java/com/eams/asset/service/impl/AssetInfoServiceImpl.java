@@ -39,6 +39,7 @@ public class AssetInfoServiceImpl implements AssetInfoService {
     private final AssetInfoMapper assetInfoMapper;
     private final AssetCategoryMapper categoryMapper;
     private final AssetNumberGenerator numberGenerator;
+    private final com.eams.system.mapper.DepartmentMapper departmentMapper;
 
     /**
      * 资产状态映射
@@ -77,7 +78,7 @@ public class AssetInfoServiceImpl implements AssetInfoService {
         asset.setCategoryId(request.getCategoryId());
         asset.setPurchaseAmount(request.getPurchaseAmount());
         asset.setPurchaseDate(request.getPurchaseDate());
-        asset.setDepartment(request.getDepartment());
+        asset.setDepartmentId(request.getDepartmentId());
         asset.setCustodian(request.getCustodian());
         asset.setAssetStatus(request.getAssetStatus() != null ? request.getAssetStatus() : 1); // 默认闲置
         asset.setSpecifications(request.getSpecifications());
@@ -113,7 +114,7 @@ public class AssetInfoServiceImpl implements AssetInfoService {
         asset.setCategoryId(request.getCategoryId());
         asset.setPurchaseAmount(request.getPurchaseAmount());
         asset.setPurchaseDate(request.getPurchaseDate());
-        asset.setDepartment(request.getDepartment());
+        asset.setDepartmentId(request.getDepartmentId());
         asset.setCustodian(request.getCustodian());
         asset.setAssetStatus(request.getAssetStatus());
         asset.setSpecifications(request.getSpecifications());
@@ -178,9 +179,9 @@ public class AssetInfoServiceImpl implements AssetInfoService {
             wrapper.eq(AssetInfo::getCategoryId, query.getCategoryId());
         }
 
-        // 使用部门模糊查询
-        if (StringUtils.hasText(query.getDepartment())) {
-            wrapper.like(AssetInfo::getDepartment, query.getDepartment());
+        // 使用部门ID精确查询
+        if (query.getDepartmentId() != null) {
+            wrapper.eq(AssetInfo::getDepartmentId, query.getDepartmentId());
         }
 
         // 责任人模糊查询
@@ -271,7 +272,8 @@ public class AssetInfoServiceImpl implements AssetInfoService {
                 .categoryName(categoryName)
                 .purchaseAmount(asset.getPurchaseAmount())
                 .purchaseDate(asset.getPurchaseDate())
-                .department(asset.getDepartment())
+                .departmentId(asset.getDepartmentId())
+                .departmentName(getDepartmentName(asset.getDepartmentId()))
                 .custodian(asset.getCustodian())
                 .assetStatus(asset.getAssetStatus())
                 .assetStatusText(ASSET_STATUS_MAP.get(asset.getAssetStatus()))
@@ -281,5 +283,19 @@ public class AssetInfoServiceImpl implements AssetInfoService {
                 .createTime(asset.getCreateTime())
                 .updateTime(asset.getUpdateTime())
                 .build();
+    }
+
+    /**
+     * 根据部门ID获取部门名称
+     *
+     * @param departmentId 部门ID
+     * @return 部门名称
+     */
+    private String getDepartmentName(Long departmentId) {
+        if (departmentId == null) {
+            return null;
+        }
+        com.eams.system.entity.Department department = departmentMapper.selectById(departmentId);
+        return department != null ? department.getDeptName() : null;
     }
 }

@@ -79,7 +79,7 @@ public class AssetAssignServiceImpl implements AssetAssignService {
         // 更新资产状态为使用中
         asset.setAssetStatus(2);
         asset.setCustodian(employee.getEmpName());
-        asset.setDepartment(employee.getDeptId() != null ? getDeptName(employee.getDeptId()) : null);
+        asset.setDepartmentId(employee.getDeptId());
         assetInfoMapper.updateById(asset);
 
         return record.getId();
@@ -191,7 +191,7 @@ public class AssetAssignServiceImpl implements AssetAssignService {
 
         // 更新资产责任人
         asset.setCustodian(toEmployee.getEmpName());
-        asset.setDepartment(toEmployee.getDeptId() != null ? getDeptName(toEmployee.getDeptId()) : null);
+        asset.setDepartmentId(toEmployee.getDeptId());
         assetInfoMapper.updateById(asset);
 
         return record.getId();

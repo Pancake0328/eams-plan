@@ -28,6 +28,12 @@ public class RecordCreateRequest implements Serializable {
     private Long assetId;
 
     /**
+     * 目标部门ID
+     */
+    @Schema(description = "目标部门ID")
+    private Long toDepartmentId;
+
+    /**
      * 目标部门
      */
     @Size(max = 100, message = "部门长度不能超过100个字符")

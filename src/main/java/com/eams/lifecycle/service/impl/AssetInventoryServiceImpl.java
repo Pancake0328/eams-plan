@@ -39,6 +39,7 @@ public class AssetInventoryServiceImpl implements AssetInventoryService {
     private final AssetInventoryMapper inventoryMapper;
     private final AssetInventoryDetailMapper detailMapper;
     private final AssetInfoMapper assetMapper;
+    private final com.eams.system.mapper.DepartmentMapper departmentMapper;
 
     private static final Map<Integer, String> TYPE_MAP = new HashMap<>();
     private static final Map<Integer, String> STATUS_MAP = new HashMap<>();
@@ -86,7 +87,7 @@ public class AssetInventoryServiceImpl implements AssetInventoryService {
             detail.setAssetId(asset.getId());
             detail.setAssetNumber(asset.getAssetNumber());
             detail.setAssetName(asset.getAssetName());
-            detail.setExpectedLocation(asset.getDepartment()); // 使用部门作为预期位置
+            detail.setExpectedLocation(getDepartmentName(asset.getDepartmentId())); // 查询部门名称作为预期位置
             detail.setInventoryResult(1); // 未盘点
 
             detailMapper.insert(detail);
@@ -285,5 +286,16 @@ public class AssetInventoryServiceImpl implements AssetInventoryService {
         }
 
         return vo;
+    }
+
+    /**
+     * 根据部门ID获取部门名称
+     */
+    private String getDepartmentName(Long departmentId) {
+        if (departmentId == null) {
+            return null;
+        }
+        com.eams.system.entity.Department department = departmentMapper.selectById(departmentId);
+        return department != null ? department.getDeptName() : null;
     }
 }
