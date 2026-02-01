@@ -16,7 +16,8 @@ public class PurchaseVO {
     private BigDecimal totalAmount;
     private Integer purchaseStatus;
     private String purchaseStatusText;
-    private String applicant;
+    private Long applicantId;
+    private String applicantName;
     private String approver;
     private LocalDateTime approveTime;
     private String remark;

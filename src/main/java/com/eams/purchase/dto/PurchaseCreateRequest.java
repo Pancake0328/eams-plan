@@ -17,8 +17,8 @@ public class PurchaseCreateRequest {
 
     private String supplier;
 
-    @NotBlank(message = "申请人不能为空")
-    private String applicant;
+    @NotNull(message = "申请人不能为空")
+    private Long applicantId;
 
     private String remark;
 

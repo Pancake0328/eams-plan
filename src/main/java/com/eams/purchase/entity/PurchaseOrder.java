@@ -28,7 +28,12 @@ public class PurchaseOrder implements Serializable {
     private String supplier;
     private BigDecimal totalAmount;
     private Integer purchaseStatus;
-    private String applicant;
+
+    /**
+     * 申请人用户ID
+     */
+    private Long applicantId;
+
     private String approver;
     private LocalDateTime approveTime;
     private String remark;

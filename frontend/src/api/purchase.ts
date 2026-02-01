@@ -9,8 +9,9 @@ export interface Purchase {
     supplier?: string
     totalAmount: number
     purchaseStatus: number
-    purchaseStatusText?: string
-    applicant: string
+    purchaseStatusText: string
+    applicantId: number
+    applicantName: string
     approver?: string
     approveTime?: string
     remark?: string
@@ -40,7 +41,7 @@ export interface PurchaseDetail {
 export interface PurchaseCreateRequest {
     purchaseDate: string
     supplier?: string
-    applicant: string
+    applicantId: number
     remark?: string
     details: PurchaseDetailRequest[]
 }

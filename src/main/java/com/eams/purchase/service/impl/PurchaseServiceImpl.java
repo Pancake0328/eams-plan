@@ -7,6 +7,7 @@ import com.eams.asset.entity.AssetInfo;
 import com.eams.asset.mapper.AssetCategoryMapper;
 import com.eams.asset.mapper.AssetInfoMapper;
 import com.eams.asset.service.AssetNumberGenerator;
+import com.eams.exception.BusinessException;
 import com.eams.lifecycle.entity.AssetLifecycle;
 import com.eams.lifecycle.mapper.AssetLifecycleMapper;
 import com.eams.purchase.dto.AssetInboundRequest;
@@ -18,12 +19,16 @@ import com.eams.purchase.mapper.PurchaseOrderDetailMapper;
 import com.eams.purchase.mapper.PurchaseOrderMapper;
 import com.eams.purchase.service.PurchaseService;
 import com.eams.purchase.vo.PurchaseVO;
+import com.eams.system.entity.User;
+import com.eams.system.mapper.UserMapper;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -33,6 +38,7 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class PurchaseServiceImpl implements PurchaseService {
 
     private final PurchaseOrderMapper purchaseMapper;
@@ -40,6 +46,7 @@ public class PurchaseServiceImpl implements PurchaseService {
     private final AssetInfoMapper assetInfoMapper;
     private final AssetCategoryMapper categoryMapper;
     private final AssetLifecycleMapper lifecycleMapper;
+    private final UserMapper userMapper;
     private final AssetNumberGenerator numberGenerator;
 
     private static final Map<Integer, String> PURCHASE_STATUS_MAP = new HashMap<>();
@@ -58,13 +65,19 @@ public class PurchaseServiceImpl implements PurchaseService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Long createPurchase(PurchaseCreateRequest request) {
+        // 验证申请人用户是否存在
+        User applicant = userMapper.selectById(request.getApplicantId());
+        if (applicant == null) {
+            throw new BusinessException("申请人用户不存在");
+        }
+
         String purchaseNumber = numberGenerator.generatePurchaseNumber();
 
         PurchaseOrder purchase = new PurchaseOrder();
         purchase.setPurchaseNumber(purchaseNumber);
         purchase.setPurchaseDate(request.getPurchaseDate());
         purchase.setSupplier(request.getSupplier());
-        purchase.setApplicant(request.getApplicant());
+        purchase.setApplicantId(request.getApplicantId());
         purchase.setRemark(request.getRemark());
         purchase.setPurchaseStatus(1);
 
@@ -75,25 +88,36 @@ public class PurchaseServiceImpl implements PurchaseService {
 
         purchaseMapper.insert(purchase);
 
+        // TODO: 后续入库时创建生命周期记录
+        // 当前采购明细没有对应的资产，只有在入库时才创建资产和生命周期
+
         for (PurchaseCreateRequest.PurchaseDetailRequest detail : request.getDetails()) {
             PurchaseOrderDetail purchaseDetail = new PurchaseOrderDetail();
             purchaseDetail.setPurchaseId(purchase.getId());
             purchaseDetail.setAssetName(detail.getAssetName());
             purchaseDetail.setCategoryId(detail.getCategoryId());
-            purchaseDetail.setSpecifications(detail.getSpecifications());
-            purchaseDetail.setManufacturer(detail.getManufacturer());
+            purchaseDetail.setSpecifications(emptyToNull(detail.getSpecifications()));
+            purchaseDetail.setManufacturer(emptyToNull(detail.getManufacturer()));
             purchaseDetail.setUnitPrice(detail.getUnitPrice());
             purchaseDetail.setQuantity(detail.getQuantity());
             purchaseDetail.setInboundQuantity(0);
             purchaseDetail.setTotalAmount(detail.getUnitPrice().multiply(BigDecimal.valueOf(detail.getQuantity())));
             purchaseDetail.setExpectedLife(detail.getExpectedLife());
-            purchaseDetail.setRemark(detail.getRemark());
+            purchaseDetail.setRemark(emptyToNull(detail.getRemark()));
             purchaseDetail.setDetailStatus(1);
 
             detailMapper.insert(purchaseDetail);
         }
 
+        log.info("创建采购成功，采购单号: {}, 申请人: {}", purchaseNumber, applicant.getUsername());
         return purchase.getId();
+    }
+
+    /**
+     * 将空字符串转换为null
+     */
+    private String emptyToNull(String str) {
+        return (str == null || str.trim().isEmpty()) ? null : str;
     }
 
     @Override
@@ -260,6 +284,15 @@ public class PurchaseServiceImpl implements PurchaseService {
         PurchaseVO vo = new PurchaseVO();
         BeanUtils.copyProperties(purchase, vo);
         vo.setPurchaseStatusText(PURCHASE_STATUS_MAP.get(purchase.getPurchaseStatus()));
+
+        // 查询申请人姓名
+        if (purchase.getApplicantId() != null) {
+            User applicant = userMapper.selectById(purchase.getApplicantId());
+            if (applicant != null) {
+                vo.setApplicantName(applicant.getUsername());
+            }
+        }
+
         return vo;
     }
 
