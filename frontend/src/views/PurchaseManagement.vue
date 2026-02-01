@@ -100,19 +100,7 @@
           </el-col>
         </el-row>
         <el-row :gutter="20">
-          <el-col :span="12">
-            <el-form-item label="申请人" prop="applicantId">
-              <el-select v-model="formData.applicantId" placeholder="请选择申请人" filterable>
-                <el-option
-                  v-for="user in userList"
-                  :key="user.id"
-                  :label="user.username"
-                  :value="user.id"
-                />
-              </el-select>
-            </el-form-item>
-          </el-col>
-          <el-col :span="12">
+          <el-col :span="24">
             <el-form-item label="备注">
               <el-input v-model="formData.remark" placeholder="请输入备注" />
             </el-form-item>
@@ -231,10 +219,7 @@ import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'elem
 import { Search, Refresh, Plus, View, Close } from '@element-plus/icons-vue'
 import { purchaseApi } from '@/api/purchase'
 import { categoryApi } from '@/api/category'
-import { userApi } from '@/api/user'
-import type { Purchase, PurchaseCreateRequest, PurchaseDetailRequest } from '@/api/purchase'
-import type { Category } from '@/api/category'
-import type { User } from '@/types'
+import type { Purchase, PurchaseCreateRequest } from '@/api/purchase'
 
 // 搜索表单
 const searchForm = reactive({
@@ -248,9 +233,6 @@ const loading = ref(false)
 
 // 分类列表
 const categories = ref<Category[]>([])
-
-// 用户列表
-const userList = ref<User[]>([])
 
 // 分页
 const pagination = reactive({
@@ -266,17 +248,15 @@ const currentPurchase = ref<Purchase>()
 
 // 表单
 const formRef = ref<FormInstance>()
-const formData = reactive<PurchaseCreateRequest & { applicantId?: number }>({
+const formData = reactive<PurchaseCreateRequest>({
   purchaseDate: new Date().toISOString().split('T')[0],
   supplier: '',
-  applicantId: undefined as unknown as number,
   remark: '',
   details: []
 })
 
 const formRules: FormRules = {
-  purchaseDate: [{ required: true, message: '请选择采购日期', trigger: 'change' }],
-  applicantId: [{ required: true, message: '请选择申请人', trigger: 'change' }]
+  purchaseDate: [{ required: true, message: '请选择采购日期', trigger: 'change' }]
 }
 
 /**
@@ -327,18 +307,6 @@ const flattenCategories = (tree: Category[]): Category[] => {
   }
   flatten(tree)
   return result
-}
-
-/**
- * 加载用户列表
- */
-const loadUserList = async () => {
-  try {
-    const res = await userApi.getUserPage({ current: 1, size: 1000 })
-    userList.value = res.data.records
-  } catch (error) {
-    console.error('加载用户列表失败:', error)
-  }
 }
 
 /**
@@ -462,7 +430,6 @@ const getStatusType = (status: number) => {
 onMounted(() => {
   loadPurchaseList()
   loadCategories()
-  loadUserList()
 })
 </script>
 

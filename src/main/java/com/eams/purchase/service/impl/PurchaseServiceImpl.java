@@ -24,6 +24,8 @@ import com.eams.system.mapper.UserMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -65,10 +67,16 @@ public class PurchaseServiceImpl implements PurchaseService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Long createPurchase(PurchaseCreateRequest request) {
-        // 验证申请人用户是否存在
-        User applicant = userMapper.selectById(request.getApplicantId());
+        // 获取当前登录用户
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String currentUsername = authentication.getName();
+
+        // 根据用户名查询用户ID
+        LambdaQueryWrapper<User> userWrapper = new LambdaQueryWrapper<>();
+        userWrapper.eq(User::getUsername, currentUsername);
+        User applicant = userMapper.selectOne(userWrapper);
         if (applicant == null) {
-            throw new BusinessException("申请人用户不存在");
+            throw new BusinessException("当前用户不存在");
         }
 
         String purchaseNumber = numberGenerator.generatePurchaseNumber();
@@ -77,7 +85,7 @@ public class PurchaseServiceImpl implements PurchaseService {
         purchase.setPurchaseNumber(purchaseNumber);
         purchase.setPurchaseDate(request.getPurchaseDate());
         purchase.setSupplier(request.getSupplier());
-        purchase.setApplicantId(request.getApplicantId());
+        purchase.setApplicantId(applicant.getId());
         purchase.setRemark(request.getRemark());
         purchase.setPurchaseStatus(1);
 

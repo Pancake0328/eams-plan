@@ -41,7 +41,6 @@ export interface PurchaseDetail {
 export interface PurchaseCreateRequest {
     purchaseDate: string
     supplier?: string
-    applicantId: number
     remark?: string
     details: PurchaseDetailRequest[]
 }

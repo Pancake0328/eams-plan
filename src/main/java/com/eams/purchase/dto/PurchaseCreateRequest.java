@@ -17,9 +17,6 @@ public class PurchaseCreateRequest {
 
     private String supplier;
 
-    @NotNull(message = "申请人不能为空")
-    private Long applicantId;
-
     private String remark;
 
     @NotEmpty(message = "采购明细不能为空")
