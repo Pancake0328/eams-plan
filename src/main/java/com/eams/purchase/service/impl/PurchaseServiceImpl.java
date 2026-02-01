@@ -182,9 +182,24 @@ public class PurchaseServiceImpl implements PurchaseService {
 
     @Override
     public Page<PurchaseVO.PurchaseDetailVO> getPendingInboundDetails(int current, int size) {
+        // 先查询未取消的采购单ID列表（排除status=4）
+        LambdaQueryWrapper<PurchaseOrder> purchaseWrapper = new LambdaQueryWrapper<>();
+        purchaseWrapper.ne(PurchaseOrder::getPurchaseStatus, 4); // 排除已取消
+        List<PurchaseOrder> validPurchases = purchaseMapper.selectList(purchaseWrapper);
+
+        if (validPurchases.isEmpty()) {
+            return new Page<>(current, size, 0);
+        }
+
+        List<Long> validPurchaseIds = validPurchases.stream()
+                .map(PurchaseOrder::getId)
+                .collect(Collectors.toList());
+
+        // 查询这些有效采购单中待入库的明细
         Page<PurchaseOrderDetail> page = new Page<>(current, size);
         LambdaQueryWrapper<PurchaseOrderDetail> wrapper = new LambdaQueryWrapper<>();
-        wrapper.eq(PurchaseOrderDetail::getDetailStatus, 1);
+        wrapper.in(PurchaseOrderDetail::getPurchaseId, validPurchaseIds); // 只查询有效采购单的明细
+        wrapper.eq(PurchaseOrderDetail::getDetailStatus, 1); // 待入库状态
         wrapper.orderByDesc(PurchaseOrderDetail::getCreateTime);
 
         Page<PurchaseOrderDetail> detailPage = detailMapper.selectPage(page, wrapper);
