@@ -29,6 +29,8 @@ export interface User {
   email?: string
   phone?: string
   avatar?: string
+  departmentId?: number
+  departmentName?: string
   status: number
   createTime: string
   updateTime: string
@@ -44,6 +46,7 @@ export interface UserCreateRequest {
   email?: string
   phone?: string
   avatar?: string
+  departmentId: number
   status?: number
 }
 
@@ -55,6 +58,7 @@ export interface UserUpdateRequest {
   email?: string
   phone?: string
   avatar?: string
+  departmentId?: number
   status?: number
 }
 

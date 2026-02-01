@@ -68,6 +68,7 @@
         <el-table-column prop="nickname" label="昵称" width="120" />
         <el-table-column prop="email" label="邮箱" min-width="180" />
         <el-table-column prop="phone" label="手机号" width="130" />
+        <el-table-column prop="departmentName" label="所属部门" width="150" />
         <el-table-column label="状态" width="100" align="center">
           <template #default="{ row }">
             <el-switch
@@ -163,6 +164,16 @@
         <el-form-item label="手机号" prop="phone">
           <el-input v-model="userForm.phone" placeholder="请输入手机号" />
         </el-form-item>
+        <el-form-item label="所属部门" prop="departmentId">
+          <el-tree-select
+            v-model="userForm.departmentId"
+            :data="departmentTree"
+            :props="{ label: 'deptName', value: 'id', children: 'children' }"
+            placeholder="请选择部门"
+            clearable
+            check-strictly
+          />
+        </el-form-item>
         <el-form-item label="状态" prop="status">
           <el-radio-group v-model="userForm.status">
             <el-radio :value="1">正常</el-radio>
@@ -219,6 +230,7 @@ import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox, FormInstance, FormRules } from 'element-plus'
 import { Search, Refresh, Plus, Edit, Delete, Key } from '@element-plus/icons-vue'
 import { userApi } from '@/api/user'
+import { departmentApi } from '@/api/department'
 import type { User, UserCreateRequest, UserUpdateRequest, UserPageQuery } from '@/types'
 
 // 搜索表单
@@ -239,6 +251,9 @@ const pagination = reactive({
 const tableData = ref<User[]>([])
 const loading = ref(false)
 
+// 部门树数据
+const departmentTree = ref<any[]>([])
+
 // 对话框
 const dialogVisible = ref(false)
 const dialogTitle = ref('新增用户')
@@ -247,12 +262,13 @@ const formRef = ref<FormInstance>()
 const submitLoading = ref(false)
 
 // 用户表单
-const userForm = reactive<UserCreateRequest & { id?: number }>({
+const userForm = reactive<UserCreateRequest & { id?: number; departmentId?: number }>({
   username: '',
   password: '',
   nickname: '',
   email: '',
   phone: '',
+  departmentId: undefined as unknown as number,
   status: 1
 })
 
@@ -276,6 +292,9 @@ const formRules: FormRules = {
   ],
   phone: [
     { pattern: /^1[3-9]\d{9}$/, message: '请输入正确的手机号', trigger: 'blur' }
+  ],
+  departmentId: [
+    { required: true, message: '请选择所属部门', trigger: 'change' }
   ]
 }
 
@@ -312,6 +331,18 @@ const getUserList = async () => {
     console.error('获取用户列表失败:', error)
   } finally {
     loading.value = false
+  }
+}
+
+/**
+ * 加载部门树
+ */
+const loadDepartmentTree = async () => {
+  try {
+    const res = await departmentApi.getDepartmentTree()
+    departmentTree.value = res.data
+  } catch (error) {
+    console.error('加载部门树失败:', error)
   }
 }
 
@@ -368,6 +399,7 @@ const handleEdit = (row: User) => {
   userForm.username = row.username
   userForm.nickname = row.nickname
   userForm.email = row.email || ''
+  userForm.departmentId = row.departmentId as unknown as number
   userForm.phone = row.phone || ''
   userForm.status = row.status
   dialogVisible.value = true
@@ -384,6 +416,7 @@ const handleDialogClose = () => {
   userForm.nickname = ''
   userForm.email = ''
   userForm.phone = ''
+  userForm.departmentId = undefined as unknown as number
   userForm.status = 1
 }
 
@@ -404,6 +437,7 @@ const handleSubmit = async () => {
           nickname: userForm.nickname,
           email: userForm.email,
           phone: userForm.phone,
+          departmentId: userForm.departmentId,
           status: userForm.status
         }
         await userApi.updateUser(userForm.id!, updateData)
@@ -416,6 +450,7 @@ const handleSubmit = async () => {
           nickname: userForm.nickname,
           email: userForm.email,
           phone: userForm.phone,
+          departmentId: userForm.departmentId!,
           status: userForm.status
         }
         await userApi.createUser(createData)
@@ -514,6 +549,7 @@ const handlePasswordSubmit = async () => {
 
 // 初始化
 onMounted(() => {
+  loadDepartmentTree()
   getUserList()
 })
 </script>

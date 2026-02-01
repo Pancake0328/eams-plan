@@ -50,6 +50,12 @@ public class UserUpdateRequest implements Serializable {
     private String avatar;
 
     /**
+     * 所属部门ID
+     */
+    @Schema(description = "所属部门ID", example = "1")
+    private Long departmentId;
+
+    /**
      * 状态：0-禁用，1-正常
      */
     @Schema(description = "状态：0-禁用，1-正常", example = "1")

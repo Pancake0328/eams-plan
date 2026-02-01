@@ -62,6 +62,18 @@ public class UserVO implements Serializable {
     private String avatar;
 
     /**
+     * 所属部门ID
+     */
+    @Schema(description = "所属部门ID")
+    private Long departmentId;
+
+    /**
+     * 所属部门名称
+     */
+    @Schema(description = "所属部门名称")
+    private String departmentName;
+
+    /**
      * 状态：0-禁用，1-正常
      */
     @Schema(description = "状态：0-禁用，1-正常")

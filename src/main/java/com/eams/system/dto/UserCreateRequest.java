@@ -5,6 +5,7 @@ import lombok.Data;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import java.io.Serializable;
@@ -65,6 +66,13 @@ public class UserCreateRequest implements Serializable {
      */
     @Schema(description = "头像URL")
     private String avatar;
+
+    /**
+     * 所属部门ID
+     */
+    @NotNull(message = "所属部门不能为空")
+    @Schema(description = "所属部门ID", example = "1")
+    private Long departmentId;
 
     /**
      * 状态：0-禁用，1-正常

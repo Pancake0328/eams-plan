@@ -8,7 +8,9 @@ import com.eams.system.dto.ResetPasswordRequest;
 import com.eams.system.dto.UserCreateRequest;
 import com.eams.system.dto.UserPageQuery;
 import com.eams.system.dto.UserUpdateRequest;
+import com.eams.system.entity.Department;
 import com.eams.system.entity.User;
+import com.eams.system.mapper.DepartmentMapper;
 import com.eams.system.mapper.UserMapper;
 import com.eams.system.service.UserService;
 import com.eams.system.vo.UserVO;
@@ -31,6 +33,7 @@ import org.springframework.util.StringUtils;
 public class UserServiceImpl implements UserService {
 
     private final UserMapper userMapper;
+    private final DepartmentMapper departmentMapper;
     private final PasswordEncoder passwordEncoder;
 
     /**
@@ -52,6 +55,14 @@ public class UserServiceImpl implements UserService {
             throw new BusinessException("手机号已被使用");
         }
 
+        // 校验部门是否存在
+        if (request.getDepartmentId() != null) {
+            Department department = departmentMapper.selectById(request.getDepartmentId());
+            if (department == null) {
+                throw new BusinessException("所属部门不存在");
+            }
+        }
+
         // 创建用户实体
         User user = new User();
         user.setUsername(request.getUsername());
@@ -60,11 +71,12 @@ public class UserServiceImpl implements UserService {
         user.setEmail(request.getEmail());
         user.setPhone(request.getPhone());
         user.setAvatar(request.getAvatar());
+        user.setDepartmentId(request.getDepartmentId());
         user.setStatus(request.getStatus() != null ? request.getStatus() : 1);
 
         // 保存用户
         userMapper.insert(user);
-        log.info("创建用户成功，用户名: {}", user.getUsername());
+        log.info("创建用户成功，用户名: {}, 部门ID: {}", user.getUsername(), user.getDepartmentId());
 
         return user.getId();
     }
@@ -86,11 +98,22 @@ public class UserServiceImpl implements UserService {
             throw new BusinessException("手机号已被使用");
         }
 
+        // 校验部门是否存在
+        if (request.getDepartmentId() != null) {
+            Department department = departmentMapper.selectById(request.getDepartmentId());
+            if (department == null) {
+                throw new BusinessException("所属部门不存在");
+            }
+        }
+
         // 更新用户信息
         user.setNickname(request.getNickname());
         user.setEmail(request.getEmail());
         user.setPhone(request.getPhone());
         user.setAvatar(request.getAvatar());
+        if (request.getDepartmentId() != null) {
+            user.setDepartmentId(request.getDepartmentId());
+        }
         if (request.getStatus() != null) {
             user.setStatus(request.getStatus());
         }
@@ -261,6 +284,15 @@ public class UserServiceImpl implements UserService {
      * @return 用户VO
      */
     private UserVO convertToVO(User user) {
+        // 查询部门名称
+        String departmentName = null;
+        if (user.getDepartmentId() != null) {
+            Department department = departmentMapper.selectById(user.getDepartmentId());
+            if (department != null) {
+                departmentName = department.getDeptName();
+            }
+        }
+
         return UserVO.builder()
                 .id(user.getId())
                 .username(user.getUsername())
@@ -268,6 +300,8 @@ public class UserServiceImpl implements UserService {
                 .email(user.getEmail())
                 .phone(user.getPhone())
                 .avatar(user.getAvatar())
+                .departmentId(user.getDepartmentId())
+                .departmentName(departmentName)
                 .status(user.getStatus())
                 .createTime(user.getCreateTime())
                 .updateTime(user.getUpdateTime())
