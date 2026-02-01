@@ -18,10 +18,6 @@
         <el-icon><DataLine /></el-icon>
         <span>仪表盘</span>
       </el-menu-item>
-        <el-menu-item index="/">
-          <el-icon><User /></el-icon>
-          <template #title>用户管理</template>
-        </el-menu-item>
         
 <!--        <el-sub-menu index="2">-->
 <!--          <template #title>-->
@@ -65,6 +61,10 @@
             <el-icon><User /></el-icon>
             <span>人员管理</span>
           </template>
+          <el-menu-item index="/">
+            <el-icon><UserFilled /></el-icon>
+            <span>用户管理</span>
+          </el-menu-item>
           <el-menu-item index="/departments">部门管理</el-menu-item>
           <!-- 员工管理和资产分配功能暂时隐藏，保留代码以便将来启用 -->
           <!-- <el-menu-item index="/employees">员工管理</el-menu-item> -->
