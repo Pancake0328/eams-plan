@@ -131,7 +131,7 @@
                   <el-dropdown-item command="allocate" :disabled="row.assetStatus !== 1">
                     <el-icon><UserFilled /></el-icon> 分配
                   </el-dropdown-item>
-                  <el-dropdown-item command="transfer" :disabled="row.assetStatus === 4">
+                  <el-dropdown-item command="transfer" :disabled="row.assetStatus !== 2">
                     <el-icon><Switch /></el-icon> 调拨
                   </el-dropdown-item>
                   <el-dropdown-item command="return" :disabled="row.assetStatus !== 2">
@@ -425,18 +425,6 @@
         <el-form-item label="资产名称">
           <el-input :value="currentAsset?.assetName" disabled />
         </el-form-item>
-        <el-form-item label="目标部门" prop="toDepartmentId" v-if="showDepartmentField">
-          <el-tree-select
-            v-model="operationForm.toDepartmentId"
-            :data="deptTree"
-            :props="{ label: 'deptName', value: 'id', children: 'children' }"
-            placeholder="请选择目标部门"
-            check-strictly
-            filterable
-            clearable
-            style="width: 100%"
-          />
-        </el-form-item>
         <el-form-item label="目标责任人" prop="toCustodian" v-if="showCustodianField">
           <el-select
             v-model="operationForm.toCustodian"
@@ -450,8 +438,12 @@
               :key="user.id"
               :label="user.nickname || user.username"
               :value="user.username"
+              :disabled="!user.departmentId"
             />
           </el-select>
+        </el-form-item>
+        <el-form-item label="目标部门" v-if="showCustodianField">
+          <el-input :model-value="selectedUserDepartmentName" disabled />
         </el-form-item>
         <el-form-item label="备注" prop="remark">
           <el-input
@@ -615,16 +607,22 @@ const operationLoading = ref(false)
 // 操作表单
 const operationForm = reactive<RecordCreateRequest>({
   assetId: 0,
-  toDepartmentId: undefined,
   toCustodian: '',
   remark: ''
 })
 
+const selectedUserDepartmentId = computed(() => {
+  const selectedUser = userList.value.find(user => user.username === operationForm.toCustodian)
+  return selectedUser?.departmentId
+})
+
+const selectedUserDepartmentName = computed(() => {
+  const selectedUser = userList.value.find(user => user.username === operationForm.toCustodian)
+  return selectedUser?.departmentName || ''
+})
+
 // 操作表单校验规则
 const operationRules: FormRules = {
-  toDepartmentId: [
-    { required: true, message: '请选择目标部门', trigger: 'change' }
-  ],
   toCustodian: [
     { max: 50, message: '责任人长度不能超过50个字符', trigger: 'blur' }
   ]
@@ -635,10 +633,6 @@ const historyVisible = ref(false)
 const historyData = ref<AssetRecord[]>([])
 
 // 根据操作类型显示/隐藏字段
-const showDepartmentField = computed(() => {
-  return ['allocate', 'transfer'].includes(operationType.value)
-})
-
 const showCustodianField = computed(() => {
   return ['allocate', 'transfer'].includes(operationType.value)
 })
@@ -1035,7 +1029,6 @@ const handleOperation = async (command: string, row: Asset) => {
 
   // 重置表单
   operationForm.assetId = row.id
-  operationForm.toDepartmentId = undefined
   operationForm.toCustodian = ''
   operationForm.remark = ''
 
@@ -1051,11 +1044,22 @@ const handleOperationSubmit = async () => {
   await operationFormRef.value.validate(async (valid) => {
     if (!valid) return
 
+    if (['allocate', 'transfer'].includes(operationType.value) && !selectedUserDepartmentId.value) {
+      ElMessage.warning('目标责任人未绑定部门，无法执行操作')
+      return
+    }
+
     operationLoading.value = true
     try {
       const apiMap: Record<string, () => Promise<any>> = {
-        allocate: () => recordApi.allocateAsset(operationForm),
-        transfer: () => recordApi.transferAsset(operationForm),
+        allocate: () => recordApi.allocateAsset({
+          ...operationForm,
+          toDepartmentId: selectedUserDepartmentId.value
+        }),
+        transfer: () => recordApi.transferAsset({
+          ...operationForm,
+          toDepartmentId: selectedUserDepartmentId.value
+        }),
         return: () => recordApi.returnAsset(operationForm),
         scrap: () => recordApi.scrapAsset(operationForm),
         repair: () => recordApi.sendForRepair(operationForm),

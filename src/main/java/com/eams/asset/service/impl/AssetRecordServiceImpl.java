@@ -39,6 +39,7 @@ public class AssetRecordServiceImpl implements AssetRecordService {
     private final AssetRecordMapper recordMapper;
     private final AssetInfoMapper assetInfoMapper;
     private final com.eams.system.mapper.DepartmentMapper departmentMapper;
+    private final com.eams.system.mapper.UserMapper userMapper;
 
     /**
      * 记录类型映射
@@ -112,18 +113,20 @@ public class AssetRecordServiceImpl implements AssetRecordService {
             throw new BusinessException("只有闲置状态的资产才能分配");
         }
 
+        Long targetDepartmentId = getDepartmentIdByUsername(request.getToCustodian());
+
         // 创建分配记录
         AssetRecord record = createRecord(
                 asset,
                 2, // 分配
-                asset.getDepartmentId(), request.getToDepartmentId(),
+                asset.getDepartmentId(), targetDepartmentId,
                 asset.getCustodian(), request.getToCustodian(),
                 asset.getAssetStatus(), 2, // 状态变更为使用中
                 request.getRemark());
         recordMapper.insert(record);
 
         // 更新资产信息
-        asset.setDepartmentId(request.getToDepartmentId());
+        asset.setDepartmentId(targetDepartmentId);
         asset.setCustodian(request.getToCustodian());
         asset.setAssetStatus(2); // 使用中
         assetInfoMapper.updateById(asset);
@@ -143,29 +146,31 @@ public class AssetRecordServiceImpl implements AssetRecordService {
     public Long transferAsset(RecordCreateRequest request) {
         AssetInfo asset = getAssetEntityById(request.getAssetId());
 
-        // 状态校验：只有闲置或使用中的资产才能调拨
-        if (asset.getAssetStatus() != 1 && asset.getAssetStatus() != 2) {
-            throw new BusinessException("只有闲置或使用中的资产才能调拨");
+        // 状态校验：只有使用中的资产才能调拨
+        if (asset.getAssetStatus() != 2) {
+            throw new BusinessException("只有使用中状态的资产才能调拨");
         }
+
+        Long targetDepartmentId = getDepartmentIdByUsername(request.getToCustodian());
 
         // 创建调拨记录
         AssetRecord record = createRecord(
                 asset,
                 3, // 调拨
-                asset.getDepartmentId(), request.getToDepartmentId(),
+                asset.getDepartmentId(), targetDepartmentId,
                 asset.getCustodian(), request.getToCustodian(),
                 asset.getAssetStatus(), asset.getAssetStatus(), // 状态不变
                 request.getRemark());
         recordMapper.insert(record);
 
         // 更新资产信息
-        asset.setDepartmentId(request.getToDepartmentId());
+        asset.setDepartmentId(targetDepartmentId);
         asset.setCustodian(request.getToCustodian());
         assetInfoMapper.updateById(asset);
 
         log.info("资产调拨成功，资产编号: {}, 目标部门: {}",
                 asset.getAssetNumber(),
-                getDepartmentName(request.getToDepartmentId()));
+                getDepartmentName(targetDepartmentId));
         return record.getId();
     }
 
@@ -478,5 +483,21 @@ public class AssetRecordServiceImpl implements AssetRecordService {
         }
         com.eams.system.entity.Department department = departmentMapper.selectById(departmentId);
         return department != null ? department.getDeptName() : null;
+    }
+
+    private Long getDepartmentIdByUsername(String username) {
+        if (!StringUtils.hasText(username)) {
+            throw new BusinessException("目标责任人不能为空");
+        }
+        com.eams.system.entity.User user = userMapper.selectOne(
+                new LambdaQueryWrapper<com.eams.system.entity.User>()
+                        .eq(com.eams.system.entity.User::getUsername, username));
+        if (user == null) {
+            throw new BusinessException("目标责任人不存在");
+        }
+        if (user.getDepartmentId() == null) {
+            throw new BusinessException("目标责任人未绑定部门");
+        }
+        return user.getDepartmentId();
     }
 }
