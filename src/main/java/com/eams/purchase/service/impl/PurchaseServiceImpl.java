@@ -114,29 +114,31 @@ public class PurchaseServiceImpl implements PurchaseService {
             detailMapper.insert(purchaseDetail);
 
             // 创建采购阶段资产信息（先不展示，入库时继续使用）
-            AssetInfo asset = new AssetInfo();
-            asset.setAssetNumber(numberGenerator.generateAssetNumber());
-            asset.setAssetName(detail.getAssetName());
-            asset.setCategoryId(detail.getCategoryId());
-            asset.setPurchaseDetailId(purchaseDetail.getId());
-            asset.setPurchaseAmount(detail.getUnitPrice());
-            asset.setPurchaseDate(request.getPurchaseDate());
-            asset.setSpecifications(detail.getSpecifications());
-            asset.setManufacturer(detail.getManufacturer());
-            asset.setRemark(detail.getRemark());
-            asset.setCustodian(currentUsername);
-            asset.setDepartmentId(applicant.getDepartmentId());
-            asset.setAssetStatus(0);
-            assetInfoMapper.insert(asset);
+            for (int i = 0; i < detail.getQuantity(); i++) {
+                AssetInfo asset = new AssetInfo();
+                asset.setAssetNumber(numberGenerator.generateAssetNumber());
+                asset.setAssetName(detail.getAssetName());
+                asset.setCategoryId(detail.getCategoryId());
+                asset.setPurchaseDetailId(purchaseDetail.getId());
+                asset.setPurchaseAmount(detail.getUnitPrice());
+                asset.setPurchaseDate(request.getPurchaseDate());
+                asset.setSpecifications(detail.getSpecifications());
+                asset.setManufacturer(detail.getManufacturer());
+                asset.setRemark(detail.getRemark());
+                asset.setCustodian(currentUsername);
+                asset.setDepartmentId(applicant.getDepartmentId());
+                asset.setAssetStatus(0);
+                assetInfoMapper.insert(asset);
 
-            AssetLifecycle lifecycle = new AssetLifecycle();
-            lifecycle.setAssetId(asset.getId());
-            lifecycle.setStage(1);
-            lifecycle.setStageDate(request.getPurchaseDate());
-            lifecycle.setReason("采购创建");
-            lifecycle.setOperator(currentUsername);
-            lifecycle.setRemark("采购单创建生成");
-            lifecycleMapper.insert(lifecycle);
+                AssetLifecycle lifecycle = new AssetLifecycle();
+                lifecycle.setAssetId(asset.getId());
+                lifecycle.setStage(1);
+                lifecycle.setStageDate(request.getPurchaseDate());
+                lifecycle.setReason("采购创建");
+                lifecycle.setOperator(currentUsername);
+                lifecycle.setRemark("采购单创建生成");
+                lifecycleMapper.insert(lifecycle);
+            }
         }
 
         log.info("创建采购成功，采购单号: {}, 申请人: {}", purchaseNumber, applicant.getUsername());
