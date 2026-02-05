@@ -44,4 +44,5 @@ CREATE TABLE asset_number_sequence (
 
 -- 插入初始序列记录
 INSERT INTO asset_number_sequence (prefix, current_number, date_part) VALUES
-('ZC', 0, NULL);
+('AST', 0, NULL),
+('PUR', 0, NULL);

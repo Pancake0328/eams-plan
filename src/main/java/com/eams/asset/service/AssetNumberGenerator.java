@@ -1,14 +1,16 @@
 package com.eams.asset.service;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.eams.asset.entity.AssetNumberSequence;
+import com.eams.asset.mapper.AssetNumberSequenceMapper;
 import com.eams.purchase.entity.PurchaseOrder;
 import com.eams.purchase.mapper.PurchaseOrderMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * 资产编号生成器
@@ -20,17 +22,36 @@ import java.util.concurrent.atomic.AtomicInteger;
 @RequiredArgsConstructor
 public class AssetNumberGenerator {
 
-    private final AtomicInteger assetCounter = new AtomicInteger(1);
     private final PurchaseOrderMapper purchaseOrderMapper;
+    private final AssetNumberSequenceMapper assetNumberSequenceMapper;
+    private final com.eams.asset.mapper.AssetInfoMapper assetInfoMapper;
 
     /**
      * 生成资产编号
      * 格式：AST-YYYYMMDD-XXXX
      */
+    @Transactional(rollbackFor = Exception.class)
     public String generateAssetNumber() {
         String date = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"));
-        int sequence = assetCounter.getAndIncrement();
-        return String.format("AST-%s-%04d", date, sequence);
+        String prefix = "AST";
+
+        assetNumberSequenceMapper.insertIgnore(prefix, date);
+
+        for (int i = 0; i < 5; i++) {
+            AssetNumberSequence sequence = assetNumberSequenceMapper.selectForUpdate(prefix, date);
+            if (sequence == null) {
+                throw new IllegalStateException("资产编号序列初始化失败");
+            }
+            int nextNumber = sequence.getCurrentNumber() + 1;
+            assetNumberSequenceMapper.incrementSequence(prefix, date);
+
+            String assetNumber = String.format("%s-%s-%04d", prefix, date, nextNumber);
+            if (assetInfoMapper.countByAssetNumber(assetNumber) == 0) {
+                return assetNumber;
+            }
+        }
+
+        throw new IllegalStateException("资产编号生成失败，请重试");
     }
 
     /**

@@ -237,6 +237,10 @@ create table asset_number_sequence
 )
     comment '资产编号序列表' charset = utf8mb4;
 
+insert into asset_number_sequence (prefix, current_number, date_part)
+values ('AST', 0, null),
+       ('PUR', 0, null);
+
 create table asset_purchase
 (
     id              bigint auto_increment comment '采购单ID'

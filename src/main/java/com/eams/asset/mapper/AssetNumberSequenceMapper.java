@@ -3,7 +3,9 @@ package com.eams.asset.mapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.eams.asset.entity.AssetNumberSequence;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Insert;
 import org.apache.ibatis.annotations.Param;
+import org.apache.ibatis.annotations.Select;
 import org.apache.ibatis.annotations.Update;
 
 /**
@@ -25,4 +27,20 @@ public interface AssetNumberSequenceMapper extends BaseMapper<AssetNumberSequenc
     @Update("UPDATE asset_number_sequence SET current_number = current_number + 1 " +
             "WHERE prefix = #{prefix} AND (date_part = #{datePart} OR (date_part IS NULL AND #{datePart} IS NULL))")
     int incrementSequence(@Param("prefix") String prefix, @Param("datePart") String datePart);
+
+    /**
+     * 初始化序列（若已存在则忽略）
+     */
+    @Insert("INSERT IGNORE INTO asset_number_sequence (prefix, current_number, date_part) " +
+            "VALUES (#{prefix}, 0, #{datePart})")
+    int insertIgnore(@Param("prefix") String prefix, @Param("datePart") String datePart);
+
+    /**
+     * 查询并锁定序列行
+     */
+    @Select("SELECT id, prefix, current_number, date_part, create_time, update_time " +
+            "FROM asset_number_sequence " +
+            "WHERE prefix = #{prefix} AND (date_part = #{datePart} OR (date_part IS NULL AND #{datePart} IS NULL)) " +
+            "FOR UPDATE")
+    AssetNumberSequence selectForUpdate(@Param("prefix") String prefix, @Param("datePart") String datePart);
 }
