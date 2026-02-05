@@ -60,7 +60,7 @@ export interface AssetInboundRequest {
     detailId: number
     quantity: number
     storageLocation?: string
-    department?: string
+    departmentId?: number
     custodian?: string
     remark?: string
 }

@@ -10,4 +10,4 @@ ALTER TABLE asset_info DROP COLUMN department;
 -- 说明：
 -- 原 department 字段存储部门名称（VARCHAR）
 -- 现改为 department_id 存储部门ID（BIGINT）
--- 与 sys_department 表关联
+-- 与 sys_dept 表关联

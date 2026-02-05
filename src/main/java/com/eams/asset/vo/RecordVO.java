@@ -68,10 +68,22 @@ public class RecordVO implements Serializable {
     private String fromDepartment;
 
     /**
+     * 原部门ID
+     */
+    @Schema(description = "原部门ID")
+    private Long fromDepartmentId;
+
+    /**
      * 目标部门
      */
     @Schema(description = "目标部门")
     private String toDepartment;
+
+    /**
+     * 目标部门ID
+     */
+    @Schema(description = "目标部门ID")
+    private Long toDepartmentId;
 
     /**
      * 原责任人

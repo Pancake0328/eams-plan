@@ -10,7 +10,7 @@ CREATE TABLE asset_info (
     category_id BIGINT NOT NULL COMMENT '资产分类ID',
     purchase_amount DECIMAL(15,2) COMMENT '采购金额',
     purchase_date DATE COMMENT '采购日期',
-    department VARCHAR(100) COMMENT '使用部门',
+    department_id BIGINT COMMENT '使用部门ID',
     custodian VARCHAR(50) COMMENT '责任人',
     asset_status TINYINT NOT NULL DEFAULT 1 COMMENT '资产状态：1-闲置，2-使用中，3-维修中，4-报废',
     specifications TEXT COMMENT '规格型号',
@@ -22,7 +22,8 @@ CREATE TABLE asset_info (
     PRIMARY KEY (id),
     UNIQUE KEY uk_asset_number (asset_number),
     KEY idx_category_id (category_id),
-    KEY idx_asset_status (asset_status)
+    KEY idx_asset_status (asset_status),
+    KEY idx_department_id (department_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='资产信息表';
 
 -- ============================

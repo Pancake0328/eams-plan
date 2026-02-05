@@ -251,8 +251,10 @@ public class PurchaseServiceImpl implements PurchaseService {
             asset.setPurchaseAmount(detail.getUnitPrice());
             asset.setPurchaseDate(LocalDateTime.now().toLocalDate());
 
-            // 使用当前用户的部门ID
-            asset.setDepartmentId(currentUser.getDepartmentId());
+            // 使用请求部门ID优先，其次取当前用户部门
+            asset.setDepartmentId(request.getDepartmentId() != null
+                    ? request.getDepartmentId()
+                    : currentUser.getDepartmentId());
             asset.setCustodian(currentUser.getUsername()); // 使用当前用户作为责任人
             asset.setSpecifications(detail.getSpecifications());
             asset.setManufacturer(detail.getManufacturer());

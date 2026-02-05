@@ -88,18 +88,19 @@ CREATE INDEX idx_inventory_status ON asset_inventory(inventory_status);
 ### 2.1 部门资产分布
 ```sql
 SELECT 
-    COALESCE(department, '未分配') AS department_name,
+    COALESCE(d.dept_name, '未分配') AS department_name,
     COUNT(*) AS asset_count,
-    SUM(purchase_amount) AS total_amount,
+    SUM(a.purchase_amount) AS total_amount,
     ROUND(COUNT(*) * 100.0 / (SELECT COUNT(*) FROM asset_info WHERE deleted = 0), 2) AS percentage
-FROM asset_info 
-WHERE deleted = 0
-GROUP BY department
+FROM asset_info a
+LEFT JOIN sys_dept d ON a.department_id = d.id
+WHERE a.deleted = 0
+GROUP BY a.department_id, d.dept_name
 ORDER BY asset_count DESC;
 ```
 
 **性能优化**：
-- 在`department`字段上建立索引
+- 在`department_id`字段上建立索引
 - 子查询会被缓存，避免重复计算
 
 ### 2.2 资产分类分布
@@ -217,7 +218,7 @@ ORDER BY period;
 ```sql
 -- 资产信息表
 CREATE INDEX idx_asset_status ON asset_info(asset_status);
-CREATE INDEX idx_asset_department ON asset_info(department);
+CREATE INDEX idx_asset_department ON asset_info(department_id);
 CREATE INDEX idx_asset_category ON asset_info(category_id);
 CREATE INDEX idx_asset_purchase_date ON asset_info(purchase_date);
 
@@ -289,7 +290,9 @@ CREATE INDEX idx_inventory_status ON asset_inventory(inventory_status);
 ### 5.2 NULL值处理
 使用`COALESCE`或`IFNULL`处理NULL值：
 ```sql
-SELECT COALESCE(department, '未分配') AS department FROM asset_info;
+SELECT COALESCE(d.dept_name, '未分配') AS department
+FROM asset_info a
+LEFT JOIN sys_dept d ON a.department_id = d.id;
 ```
 
 ### 5.3 事务一致性

@@ -18,7 +18,7 @@ public class AssetInboundRequest {
     private Integer quantity;
 
     private String storageLocation;
-    private String department;
+    private Long departmentId;
     private String custodian;
     private String remark;
 }

@@ -163,7 +163,9 @@ public class AssetRecordServiceImpl implements AssetRecordService {
         asset.setCustodian(request.getToCustodian());
         assetInfoMapper.updateById(asset);
 
-        log.info("资产调拨成功，资产编号: {}, 目标部门: {}", asset.getAssetNumber(), request.getToDepartment());
+        log.info("资产调拨成功，资产编号: {}, 目标部门: {}",
+                asset.getAssetNumber(),
+                getDepartmentName(request.getToDepartmentId()));
         return record.getId();
     }
 
@@ -391,6 +393,8 @@ public class AssetRecordServiceImpl implements AssetRecordService {
         AssetRecord record = new AssetRecord();
         record.setAssetId(asset.getId());
         record.setRecordType(recordType);
+        record.setFromDepartmentId(fromDepartmentId);
+        record.setToDepartmentId(toDepartmentId);
         // 查询部门名称并存储
         record.setFromDepartment(getDepartmentName(fromDepartmentId));
         record.setToDepartment(getDepartmentName(toDepartmentId));
@@ -448,7 +452,9 @@ public class AssetRecordServiceImpl implements AssetRecordService {
                 .assetName(asset != null ? asset.getAssetName() : null)
                 .recordType(record.getRecordType())
                 .recordTypeText(RECORD_TYPE_MAP.get(record.getRecordType()))
+                .fromDepartmentId(record.getFromDepartmentId())
                 .fromDepartment(record.getFromDepartment())
+                .toDepartmentId(record.getToDepartmentId())
                 .toDepartment(record.getToDepartment())
                 .fromCustodian(record.getFromCustodian())
                 .toCustodian(record.getToCustodian())

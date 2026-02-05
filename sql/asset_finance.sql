@@ -61,7 +61,7 @@ CREATE TABLE `asset_bill_detail` (
   `asset_number` VARCHAR(50) DEFAULT NULL COMMENT '资产编号',
   `asset_name` VARCHAR(200) DEFAULT NULL COMMENT '资产名称',
   `category_name` VARCHAR(100) DEFAULT NULL COMMENT '分类名称',
-  `department` VARCHAR(100) DEFAULT NULL COMMENT '使用部门',
+  `department` VARCHAR(100) DEFAULT NULL COMMENT '使用部门名称',
   `purchase_amount` DECIMAL(15,2) DEFAULT 0.00 COMMENT '采购金额',
   `accumulated_depreciation` DECIMAL(15,2) DEFAULT 0.00 COMMENT '累计折旧',
   `current_depreciation` DECIMAL(15,2) DEFAULT 0.00 COMMENT '本期折旧',

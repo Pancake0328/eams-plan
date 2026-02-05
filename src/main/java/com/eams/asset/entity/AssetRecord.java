@@ -35,9 +35,19 @@ public class AssetRecord implements Serializable {
     private Integer recordType;
 
     /**
+     * 原部门ID
+     */
+    private Long fromDepartmentId;
+
+    /**
      * 原部门
      */
     private String fromDepartment;
+
+    /**
+     * 目标部门ID
+     */
+    private Long toDepartmentId;
 
     /**
      * 目标部门

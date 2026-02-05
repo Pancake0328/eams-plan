@@ -37,10 +37,13 @@
           />
         </el-form-item>
         <el-form-item label="使用部门">
-          <el-input
-            v-model="queryForm.department"
-            placeholder="请输入部门"
+          <el-tree-select
+            v-model="queryForm.departmentId"
+            :data="deptTree"
+            :props="{ label: 'deptName', value: 'id', children: 'children' }"
+            placeholder="请选择部门"
             clearable
+            check-strictly
             style="width: 150px"
           />
         </el-form-item>
@@ -89,7 +92,7 @@
             <span v-else>-</span>
           </template>
         </el-table-column>
-        <el-table-column prop="department" label="使用部门" width="120" />
+        <el-table-column prop="departmentName" label="使用部门" width="120" show-overflow-tooltip />
         <el-table-column prop="custodian" label="责任人" width="100" />
         <el-table-column prop="assetStatus" label="资产状态" width="100" align="center">
           <template #default="{ row }">
@@ -253,11 +256,11 @@
               </el-form-item>
             </el-col>
             <el-col :span="12">
-              <el-form-item label="使用部门">
-                <el-tree-select
-                    v-model="inboundForm.department"
+                <el-form-item label="使用部门">
+                  <el-tree-select
+                    v-model="inboundForm.departmentId"
                     :data="deptTree"
-                    :props="{ label: 'deptName', value: 'deptName', children: 'children' }"
+                    :props="{ label: 'deptName', value: 'id', children: 'children' }"
                     placeholder="请选择使用部门"
                     check-strictly
                     filterable
@@ -354,11 +357,11 @@
         
         <el-row :gutter="16">
           <el-col :span="12">
-            <el-form-item label="使用部门" prop="department">
+            <el-form-item label="使用部门" prop="departmentId">
               <el-tree-select
-                  v-model="assetForm.department"
+                  v-model="assetForm.departmentId"
                   :data="deptTree"
-                  :props="{ label: 'deptName', value: 'deptName', children: 'children' }"
+                  :props="{ label: 'deptName', value: 'id', children: 'children' }"
                   placeholder="请选择使用部门"
                   check-strictly
                   filterable
@@ -453,7 +456,7 @@
           <span v-else>-</span>
         </el-descriptions-item>
         <el-descriptions-item label="采购日期">{{ detailData.purchaseDate || '-' }}</el-descriptions-item>
-        <el-descriptions-item label="使用部门">{{ detailData.department || '-' }}</el-descriptions-item>
+        <el-descriptions-item label="使用部门">{{ detailData.departmentName || '-' }}</el-descriptions-item>
         <el-descriptions-item label="责任人">{{ detailData.custodian || '-' }}</el-descriptions-item>
         <el-descriptions-item label="资产状态">
           <el-tag :type="getStatusType(detailData.assetStatus)">
@@ -487,11 +490,11 @@
         <el-form-item label="资产名称">
           <el-input :value="currentAsset?.assetName" disabled />
         </el-form-item>
-        <el-form-item label="目标部门" prop="toDepartment" v-if="showDepartmentField">
+        <el-form-item label="目标部门" prop="toDepartmentId" v-if="showDepartmentField">
           <el-tree-select
-            v-model="operationForm.toDepartment"
+            v-model="operationForm.toDepartmentId"
             :data="deptTree"
-            :props="{ label: 'deptName', value: 'deptName', children: 'children' }"
+            :props="{ label: 'deptName', value: 'id', children: 'children' }"
             placeholder="请选择目标部门"
             check-strictly
             filterable
@@ -594,7 +597,7 @@ const inboundLoading = ref(false)
 // 入库表单（公共信息）
 const inboundForm = reactive({
   storageLocation: '',
-  department: '',
+  departmentId: undefined as number | undefined,
   custodian: '',
   remark: ''
 })
@@ -614,7 +617,7 @@ const queryForm = reactive({
   assetNumber: '',
   assetName: '',
   categoryId: undefined as number | undefined,
-  department: '',
+  departmentId: undefined as number | undefined,
   custodian: '',
   assetStatus: undefined as number | undefined
 })
@@ -641,7 +644,7 @@ const assetForm = reactive<AssetCreateRequest & { id?: number }>({
   categoryId: 0,
   purchaseAmount: undefined,
   purchaseDate: undefined,
-  department: '',
+  departmentId: undefined,
   custodian: '',
   assetStatus: 1,
   specifications: '',
@@ -662,9 +665,6 @@ const formRules: FormRules = {
   categoryId: [
     { required: true, message: '请选择资产分类', trigger: 'change' }
   ],
-  department: [
-    { max: 100, message: '使用部门长度不能超过100个字符', trigger: 'blur' }
-  ],
   custodian: [
     { max: 50, message: '责任人长度不能超过50个字符', trigger: 'blur' }
   ],
@@ -684,15 +684,15 @@ const operationLoading = ref(false)
 // 操作表单
 const operationForm = reactive<RecordCreateRequest>({
   assetId: 0,
-  toDepartment: '',
+  toDepartmentId: undefined,
   toCustodian: '',
   remark: ''
 })
 
 // 操作表单校验规则
 const operationRules: FormRules = {
-  toDepartment: [
-    { max: 100, message: '部门长度不能超过100个字符', trigger: 'blur' }
+  toDepartmentId: [
+    { required: true, message: '请选择目标部门', trigger: 'change' }
   ],
   toCustodian: [
     { max: 50, message: '责任人长度不能超过50个字符', trigger: 'blur' }
@@ -783,7 +783,7 @@ const handleReset = () => {
   queryForm.assetNumber = ''
   queryForm.assetName = ''
   queryForm.categoryId = undefined
-  queryForm.department = ''
+  queryForm.departmentId = undefined
   queryForm.custodian = ''
   queryForm.assetStatus = undefined
   handleSearch()
@@ -798,7 +798,7 @@ const handleAdd = async () => {
   inboundQuantities.value.clear()
   pendingDetails.value = []
   inboundForm.storageLocation = ''
-  inboundForm.department = ''
+  inboundForm.departmentId = undefined
   inboundForm.custodian = ''
   inboundForm.remark = ''
   
@@ -889,7 +889,7 @@ const handleSubmitInbound = async () => {
       detailId,
       quantity: inboundQuantities.value.get(detailId)!,
       storageLocation: inboundForm.storageLocation,
-      department: inboundForm.department,
+      departmentId: inboundForm.departmentId,
       custodian: inboundForm.custodian,
       remark: inboundForm.remark
     }))
@@ -907,7 +907,7 @@ const handleSubmitInbound = async () => {
     inboundQuantities.value.clear()
     pendingDetails.value = []
     inboundForm.storageLocation = ''
-    inboundForm.department = ''
+    inboundForm.departmentId = undefined
     inboundForm.custodian = ''
     inboundForm.remark = ''
     
@@ -935,7 +935,7 @@ const handleEdit = async (row: Asset) => {
     assetForm.categoryId = asset.categoryId
     assetForm.purchaseAmount = asset.purchaseAmount
     assetForm.purchaseDate = asset.purchaseDate
-    assetForm.department = asset.department || ''
+    assetForm.departmentId = asset.departmentId
     assetForm.custodian = asset.custodian|| ''
     assetForm.assetStatus = asset.assetStatus
     assetForm.specifications = asset.specifications || ''
@@ -973,7 +973,7 @@ const handleDialogClose = () => {
   assetForm.categoryId = null as any
   assetForm.purchaseAmount = 0
   assetForm.purchaseDate = ''
-  assetForm.department = ''
+  assetForm.departmentId = undefined
   assetForm.custodian = ''
   assetForm.assetStatus = 1
   assetForm.specifications = ''
@@ -985,7 +985,7 @@ const handleDialogClose = () => {
   inboundQuantities.value.clear()
   pendingDetails.value = []
   inboundForm.storageLocation = ''
-  inboundForm.department = ''
+  inboundForm.departmentId = undefined
   inboundForm.custodian = ''
   inboundForm.remark = ''
 }
@@ -1008,7 +1008,7 @@ const handleSubmit = async () => {
           categoryId: assetForm.categoryId,
           purchaseAmount: assetForm.purchaseAmount,
           purchaseDate: assetForm.purchaseDate,
-          department: assetForm.department,
+          departmentId: assetForm.departmentId,
           custodian: assetForm.custodian,
           assetStatus: assetForm.assetStatus,
           specifications: assetForm.specifications,
@@ -1103,7 +1103,7 @@ const handleOperation = async (command: string, row: Asset) => {
 
   // 重置表单
   operationForm.assetId = row.id
-  operationForm.toDepartment = ''
+  operationForm.toDepartmentId = undefined
   operationForm.toCustodian = ''
   operationForm.remark = ''
 

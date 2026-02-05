@@ -1,11 +1,10 @@
 package com.eams.asset.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.Size;
 import lombok.Data;
 
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Size;
 import java.io.Serializable;
 
 /**
@@ -32,13 +31,6 @@ public class RecordCreateRequest implements Serializable {
      */
     @Schema(description = "目标部门ID")
     private Long toDepartmentId;
-
-    /**
-     * 目标部门
-     */
-    @Size(max = 100, message = "部门长度不能超过100个字符")
-    @Schema(description = "目标部门")
-    private String toDepartment;
 
     /**
      * 目标责任人

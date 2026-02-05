@@ -165,7 +165,8 @@ export interface Asset {
   categoryName?: string
   purchaseAmount?: number
   purchaseDate?: string
-  department?: string
+  departmentId?: number
+  departmentName?: string
   custodian?: string
   assetStatus: number
   assetStatusText?: string
@@ -184,7 +185,7 @@ export interface AssetCreateRequest {
   categoryId: number
   purchaseAmount?: number
   purchaseDate?: string
-  department?: string
+  departmentId?: number
   custodian?: string
   assetStatus?: number
   specifications?: string
@@ -200,7 +201,7 @@ export interface AssetUpdateRequest {
   categoryId: number
   purchaseAmount?: number
   purchaseDate?: string
-  department?: string
+  departmentId?: number
   custodian?: string
   assetStatus?: number
   specifications?: string
@@ -217,7 +218,7 @@ export interface AssetPageQuery {
   assetNumber?: string
   assetName?: string
   categoryId?: number
-  department?: string
+  departmentId?: number
   custodian?: string
   assetStatus?: number
 }
@@ -232,7 +233,9 @@ export interface AssetRecord {
   assetName?: string
   recordType: number
   recordTypeText?: string
+  fromDepartmentId?: number
   fromDepartment?: string
+  toDepartmentId?: number
   toDepartment?: string
   fromCustodian?: string
   toCustodian?: string
@@ -251,7 +254,7 @@ export interface AssetRecord {
  */
 export interface RecordCreateRequest {
   assetId: number
-  toDepartment?: string
+  toDepartmentId?: number
   toCustodian?: string
   remark?: string
 }
