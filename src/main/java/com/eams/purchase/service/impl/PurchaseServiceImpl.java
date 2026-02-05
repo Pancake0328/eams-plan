@@ -96,9 +96,6 @@ public class PurchaseServiceImpl implements PurchaseService {
 
         purchaseMapper.insert(purchase);
 
-        // TODO: 后续入库时创建生命周期记录
-        // 当前采购明细没有对应的资产，只有在入库时才创建资产和生命周期
-
         for (PurchaseCreateRequest.PurchaseDetailRequest detail : request.getDetails()) {
             PurchaseOrderDetail purchaseDetail = new PurchaseOrderDetail();
             purchaseDetail.setPurchaseId(purchase.getId());
@@ -115,6 +112,31 @@ public class PurchaseServiceImpl implements PurchaseService {
             purchaseDetail.setDetailStatus(1);
 
             detailMapper.insert(purchaseDetail);
+
+            // 创建采购阶段资产信息（先不展示，入库时继续使用）
+            AssetInfo asset = new AssetInfo();
+            asset.setAssetNumber(numberGenerator.generateAssetNumber());
+            asset.setAssetName(detail.getAssetName());
+            asset.setCategoryId(detail.getCategoryId());
+            asset.setPurchaseDetailId(purchaseDetail.getId());
+            asset.setPurchaseAmount(detail.getUnitPrice());
+            asset.setPurchaseDate(request.getPurchaseDate());
+            asset.setSpecifications(detail.getSpecifications());
+            asset.setManufacturer(detail.getManufacturer());
+            asset.setRemark(detail.getRemark());
+            asset.setCustodian(currentUsername);
+            asset.setDepartmentId(applicant.getDepartmentId());
+            asset.setAssetStatus(0);
+            assetInfoMapper.insert(asset);
+
+            AssetLifecycle lifecycle = new AssetLifecycle();
+            lifecycle.setAssetId(asset.getId());
+            lifecycle.setStage(1);
+            lifecycle.setStageDate(request.getPurchaseDate());
+            lifecycle.setReason("采购创建");
+            lifecycle.setOperator(currentUsername);
+            lifecycle.setRemark("采购单创建生成");
+            lifecycleMapper.insert(lifecycle);
         }
 
         log.info("创建采购成功，采购单号: {}, 申请人: {}", purchaseNumber, applicant.getUsername());
@@ -130,6 +152,9 @@ public class PurchaseServiceImpl implements PurchaseService {
 
     @Override
     public PurchaseVO getPurchaseById(Long id) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String currentUsername = authentication.getName();
+
         PurchaseOrder purchase = purchaseMapper.selectById(id);
         if (purchase == null) {
             return null;
@@ -173,10 +198,34 @@ public class PurchaseServiceImpl implements PurchaseService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void cancelPurchase(Long id) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String currentUsername = authentication.getName();
+
         PurchaseOrder purchase = purchaseMapper.selectById(id);
         if (purchase != null) {
             purchase.setPurchaseStatus(4);
             purchaseMapper.updateById(purchase);
+
+            List<PurchaseOrderDetail> details = detailMapper.selectList(
+                    new LambdaQueryWrapper<PurchaseOrderDetail>()
+                            .eq(PurchaseOrderDetail::getPurchaseId, id));
+            for (PurchaseOrderDetail detail : details) {
+                List<AssetInfo> assets = assetInfoMapper.selectList(new LambdaQueryWrapper<AssetInfo>()
+                        .eq(AssetInfo::getPurchaseDetailId, detail.getId())
+                        .eq(AssetInfo::getAssetStatus, 0));
+                for (AssetInfo asset : assets) {
+                    AssetLifecycle lifecycle = new AssetLifecycle();
+                    lifecycle.setAssetId(asset.getId());
+                    lifecycle.setStage(6);
+                    lifecycle.setStageDate(LocalDate.now());
+                    lifecycle.setReason("取消采购");
+                    lifecycle.setOperator(currentUsername);
+                    lifecycle.setRemark("采购单取消");
+                    lifecycleMapper.insert(lifecycle);
+                    asset.setAssetStatus(6);
+                    assetInfoMapper.updateById(asset);
+                }
+            }
         }
     }
 
@@ -242,34 +291,30 @@ public class PurchaseServiceImpl implements PurchaseService {
 
         List<Long> assetIds = new ArrayList<>();
 
-        // 循环创建多个资产
+        // 循环入库更新资产
         for (int i = 0; i < request.getQuantity(); i++) {
-            AssetInfo asset = new AssetInfo();
-            asset.setAssetNumber(numberGenerator.generateAssetNumber());
-            asset.setAssetName(detail.getAssetName());
-            asset.setCategoryId(detail.getCategoryId());
-            asset.setPurchaseAmount(detail.getUnitPrice());
-            asset.setPurchaseDate(LocalDateTime.now().toLocalDate());
+            AssetInfo asset = assetInfoMapper.selectOne(new LambdaQueryWrapper<AssetInfo>()
+                    .eq(AssetInfo::getPurchaseDetailId, detail.getId())
+                    .eq(AssetInfo::getAssetStatus, 0)
+                    .last("LIMIT 1"));
+            if (asset == null) {
+                throw new BusinessException("可入库资产不足");
+            }
 
-            // 使用当前操作人部门
             asset.setDepartmentId(currentUser.getDepartmentId());
-            asset.setCustodian(currentUser.getUsername()); // 使用当前用户作为责任人
-            asset.setSpecifications(detail.getSpecifications());
-            asset.setManufacturer(detail.getManufacturer());
+            asset.setCustodian(currentUser.getUsername());
             asset.setAssetStatus(1);
             asset.setRemark(request.getRemark());
-
-            assetInfoMapper.insert(asset);
+            assetInfoMapper.updateById(asset);
             assetIds.add(asset.getId());
 
-            // 创建生命周期记录
             AssetLifecycle lifecycle = new AssetLifecycle();
             lifecycle.setAssetId(asset.getId());
-            lifecycle.setStage(0);
+            lifecycle.setStage(4);
             lifecycle.setStageDate(LocalDateTime.now().toLocalDate());
-            lifecycle.setOperator("system");
+            lifecycle.setReason("采购入库");
+            lifecycle.setOperator(currentUsername);
             lifecycle.setRemark("从采购单入库：" + detail.getAssetName());
-
             lifecycleMapper.insert(lifecycle);
         }
 

@@ -22,7 +22,7 @@ public class LifecycleCreateRequest {
     private Long assetId;
 
     /**
-     * 生命周期阶段：1-购入 2-使用中 3-维修中 4-闲置 5-报废
+     * 生命周期阶段：1-购入 2-使用中 3-维修中 4-闲置 5-报废 6-取消采购
      */
     @NotNull(message = "生命周期阶段不能为空")
     private Integer stage;

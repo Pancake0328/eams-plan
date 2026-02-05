@@ -54,6 +54,7 @@
             clearable
             style="width: 120px"
           >
+            <el-option label="采购" :value="0" />
             <el-option label="闲置" :value="1" />
             <el-option label="使用中" :value="2" />
             <el-option label="维修中" :value="3" />
@@ -994,6 +995,7 @@ const formatMoney = (amount: number): string => {
  */
 const getStatusType = (status: number): string => {
   const typeMap: Record<number, string> = {
+    0: 'warning',  // 采购
     1: 'info',     // 闲置
     2: 'success',  // 使用中
     3: 'warning',  // 维修中

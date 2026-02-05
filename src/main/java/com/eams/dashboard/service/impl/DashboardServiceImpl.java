@@ -229,10 +229,12 @@ public class DashboardServiceImpl implements DashboardService {
                 long totalAssets = allAssets.size();
 
                 Map<Integer, String> statusNames = new HashMap<>();
+                statusNames.put(0, "采购");
                 statusNames.put(1, "闲置");
                 statusNames.put(2, "使用中");
                 statusNames.put(3, "维修中");
                 statusNames.put(4, "报废");
+                statusNames.put(6, "取消采购");
 
                 for (Map.Entry<Integer, Long> entry : statusCount.entrySet()) {
                         String statusName = statusNames.getOrDefault(entry.getKey(), "未知");

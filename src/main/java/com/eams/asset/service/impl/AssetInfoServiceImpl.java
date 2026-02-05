@@ -49,10 +49,12 @@ public class AssetInfoServiceImpl implements AssetInfoService {
     private static final Map<Integer, String> ASSET_STATUS_MAP = new HashMap<>();
 
     static {
+        ASSET_STATUS_MAP.put(0, "采购");
         ASSET_STATUS_MAP.put(1, "闲置");
         ASSET_STATUS_MAP.put(2, "使用中");
         ASSET_STATUS_MAP.put(3, "维修中");
         ASSET_STATUS_MAP.put(4, "报废");
+        ASSET_STATUS_MAP.put(6, "取消采购");
     }
 
     /**
@@ -191,9 +193,11 @@ public class AssetInfoServiceImpl implements AssetInfoService {
             wrapper.like(AssetInfo::getCustodian, query.getCustodian());
         }
 
-        // 资产状态精确查询
+        // 资产状态精确查询（默认排除采购阶段）
         if (query.getAssetStatus() != null) {
             wrapper.eq(AssetInfo::getAssetStatus, query.getAssetStatus());
+        } else {
+            wrapper.ne(AssetInfo::getAssetStatus, 0);
         }
 
         // 按创建时间倒序排列

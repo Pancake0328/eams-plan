@@ -7,7 +7,7 @@ DROP TABLE IF EXISTS `asset_lifecycle`;
 CREATE TABLE `asset_lifecycle` (
     `id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '主键ID',
     `asset_id` BIGINT NOT NULL COMMENT '资产ID',
-    `stage` INT NOT NULL COMMENT '生命周期阶段：1-购入 2-使用中 3-维修中 4-闲置 5-报废',
+    `stage` INT NOT NULL COMMENT '生命周期阶段：1-购入 2-使用中 3-维修中 4-闲置 5-报废 6-取消采购',
     `previous_stage` INT DEFAULT NULL COMMENT '上一阶段',
     `stage_date` DATE NOT NULL COMMENT '阶段变更日期',
     `reason` VARCHAR(500) DEFAULT NULL COMMENT '变更原因',

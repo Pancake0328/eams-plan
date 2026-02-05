@@ -42,6 +42,11 @@ public class AssetInfo implements Serializable {
     private Long categoryId;
 
     /**
+     * 采购明细ID
+     */
+    private Long purchaseDetailId;
+
+    /**
      * 采购金额
      */
     private BigDecimal purchaseAmount;
@@ -62,7 +67,7 @@ public class AssetInfo implements Serializable {
     private String custodian;
 
     /**
-     * 资产状态：1-闲置，2-使用中，3-维修中，4-报废
+     * 资产状态：0-采购，1-闲置，2-使用中，3-维修中，4-报废，6-取消采购
      */
     private Integer assetStatus;
 

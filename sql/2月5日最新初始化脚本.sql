@@ -73,7 +73,7 @@ create table asset_bill_detail
     depreciation_rate        decimal(5, 4)                            null comment '折旧率',
     useful_life              int                                      null comment '使用年限（月）',
     used_months              int            default 0                 null comment '已使用月数',
-    asset_status             tinyint                                  null comment '资产状态',
+    asset_status             tinyint                                  null comment '资产状态：0-采购，1-闲置，2-使用中，3-维修中，4-报废，6-取消采购',
     create_time              datetime       default CURRENT_TIMESTAMP null comment '创建时间'
 )
     comment '资产账单明细表' charset = utf8mb4;
@@ -111,11 +111,12 @@ create table asset_info
     asset_number    varchar(50)                        not null comment '资产编号（唯一）',
     asset_name      varchar(100)                       not null comment '资产名称',
     category_id     bigint                             not null comment '资产分类ID',
+    purchase_detail_id bigint                          null comment '采购明细ID',
     purchase_amount decimal(15, 2)                     null comment '采购金额',
     purchase_date   date                               null comment '采购日期',
     department_id   bigint                             null comment '使用部门ID',
     custodian       varchar(50)                        null comment '责任人',
-    asset_status    tinyint  default 1                 not null comment '资产状态：1-闲置，2-使用中，3-维修中，4-报废',
+    asset_status    tinyint  default 1                 not null comment '资产状态：0-采购，1-闲置，2-使用中，3-维修中，4-报废，6-取消采购',
     specifications  text                               null comment '规格型号',
     manufacturer    varchar(100)                       null comment '生产厂商',
     remark          text                               null comment '备注',
@@ -202,7 +203,7 @@ create table asset_lifecycle
     id             bigint auto_increment comment '主键ID'
         primary key,
     asset_id       bigint                             not null comment '资产ID',
-    stage          int                                not null comment '生命周期阶段：1-购入 2-使用中 3-维修中 4-闲置 5-报废',
+    stage          int                                not null comment '生命周期阶段：1-购入 2-使用中 3-维修中 4-闲置 5-报废 6-取消采购',
     previous_stage int                                null comment '上一阶段',
     stage_date     date                               not null comment '阶段变更日期',
     reason         varchar(500)                       null comment '变更原因',

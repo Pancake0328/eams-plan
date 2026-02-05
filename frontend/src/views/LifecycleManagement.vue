@@ -73,6 +73,7 @@
             <el-option label="维修中" :value="3" />
             <el-option label="闲置" :value="4" />
             <el-option label="报废" :value="5" />
+            <el-option label="取消采购" :value="6" />
           </el-select>
         </el-form-item>
         <el-form-item>
@@ -120,6 +121,7 @@
             <el-option label="维修中" :value="3" />
             <el-option label="闲置" :value="4" />
             <el-option label="报废" :value="5" />
+            <el-option label="取消采购" :value="6" />
           </el-select>
         </el-form-item>
         <el-form-item label="变更日期" prop="stageDate">
@@ -274,7 +276,8 @@ const getStageColor = (stage: number): string => {
     2: '#409EFF',
     3: '#E6A23C',
     4: '#909399',
-    5: '#F56C6C'
+    5: '#F56C6C',
+    6: '#8E8E8E'
   }
   return colors[stage] || '#909399'
 }
@@ -286,7 +289,8 @@ const getStageType = (stage: number): 'success' | 'primary' | 'warning' | 'info'
     2: 'primary',
     3: 'warning',
     4: 'info',
-    5: 'danger'
+    5: 'danger',
+    6: 'info'
   }
   return types[stage] || 'info'
 }

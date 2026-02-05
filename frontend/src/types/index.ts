@@ -563,3 +563,122 @@ export interface TimeTrendStatistics {
   scrapAssets: number
   totalAssets: number
 }
+
+// ================================================================
+// 生命周期、盘点与报修类型
+// ================================================================
+
+export interface Lifecycle {
+  id: number
+  assetId: number
+  assetNumber?: string
+  assetName?: string
+  stage: number
+  stageText?: string
+  previousStage?: number
+  previousStageText?: string
+  stageDate: string
+  reason?: string
+  operator: string
+  remark?: string
+  createTime: string
+}
+
+export interface LifecycleCreateRequest {
+  assetId: number
+  stage: number
+  stageDate: string
+  reason: string
+  operator: string
+  remark?: string
+}
+
+export interface Inventory {
+  id: number
+  inventoryNumber: string
+  inventoryName: string
+  inventoryType: number
+  inventoryTypeText?: string
+  planStartDate: string
+  planEndDate: string
+  actualStartDate?: string
+  actualEndDate?: string
+  inventoryStatus: number
+  inventoryStatusText?: string
+  totalCount: number
+  actualCount: number
+  normalCount: number
+  abnormalCount: number
+  completionRate?: number
+  creator: string
+  remark?: string
+  createTime: string
+  details?: InventoryDetail[]
+}
+
+export interface InventoryDetail {
+  id: number
+  inventoryId: number
+  assetId: number
+  assetNumber?: string
+  assetName?: string
+  expectedLocation?: string
+  actualLocation?: string
+  inventoryResult: number
+  inventoryResultText?: string
+  inventoryPerson?: string
+  inventoryTime?: string
+  remark?: string
+}
+
+export interface InventoryCreateRequest {
+  inventoryName: string
+  inventoryType: number
+  planStartDate: string
+  planEndDate: string
+  creator: string
+  remark?: string
+}
+
+export interface InventoryExecuteRequest {
+  detailId: number
+  actualLocation?: string
+  inventoryResult: number
+  inventoryPerson: string
+  remark?: string
+}
+
+export interface Repair {
+  id: number
+  repairNumber: string
+  assetId: number
+  assetNumber?: string
+  assetName?: string
+  faultDescription: string
+  repairType: number
+  repairTypeText?: string
+  repairPriority: number
+  repairPriorityText?: string
+  reporter: string
+  reportTime: string
+  repairStatus: number
+  repairStatusText?: string
+  approver?: string
+  approvalTime?: string
+  repairPerson?: string
+  repairStartTime?: string
+  repairEndTime?: string
+  repairCost?: number
+  repairResult?: string
+  remark?: string
+  createTime: string
+}
+
+export interface RepairCreateRequest {
+  assetId: number
+  faultDescription: string
+  repairType: number
+  repairPriority: number
+  reporter: string
+  remark?: string
+}

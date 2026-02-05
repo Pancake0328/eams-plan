@@ -41,6 +41,7 @@ public class AssetLifecycleServiceImpl implements AssetLifecycleService {
         STAGE_MAP.put(3, "维修中");
         STAGE_MAP.put(4, "闲置");
         STAGE_MAP.put(5, "报废");
+        STAGE_MAP.put(6, "取消采购");
     }
 
     @Override
