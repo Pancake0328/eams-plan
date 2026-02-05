@@ -103,6 +103,7 @@ export interface LoginResponse {
     email?: string
     phone?: string
     avatar?: string
+    departmentId?: number
   }
 }
 
@@ -186,7 +187,6 @@ export interface AssetCreateRequest {
   purchaseAmount?: number
   purchaseDate?: string
   departmentId?: number
-  custodian?: string
   assetStatus?: number
   specifications?: string
   manufacturer?: string
@@ -202,7 +202,6 @@ export interface AssetUpdateRequest {
   purchaseAmount?: number
   purchaseDate?: string
   departmentId?: number
-  custodian?: string
   assetStatus?: number
   specifications?: string
   manufacturer?: string

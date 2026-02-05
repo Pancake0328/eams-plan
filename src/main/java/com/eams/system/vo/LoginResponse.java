@@ -94,5 +94,11 @@ public class LoginResponse implements Serializable {
          */
         @Schema(description = "头像URL")
         private String avatar;
+
+        /**
+         * 所属部门ID
+         */
+        @Schema(description = "所属部门ID")
+        private Long departmentId;
     }
 }

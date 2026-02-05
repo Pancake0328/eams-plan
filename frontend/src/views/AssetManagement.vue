@@ -247,7 +247,7 @@
             v-if="selectedDetailIds.length > 0"
         >
           <el-row :gutter="16">
-            <el-col :span="12">
+            <el-col :span="24">
               <el-form-item label="存放位置">
                 <el-input
                     v-model="inboundForm.storageLocation"
@@ -255,40 +255,9 @@
                 />
               </el-form-item>
             </el-col>
-            <el-col :span="12">
-                <el-form-item label="使用部门">
-                  <el-tree-select
-                    v-model="inboundForm.departmentId"
-                    :data="deptTree"
-                    :props="{ label: 'deptName', value: 'id', children: 'children' }"
-                    placeholder="请选择使用部门"
-                    check-strictly
-                    filterable
-                    clearable
-                    style="width: 100%"
-                />
-              </el-form-item>
-            </el-col>
           </el-row>
           <el-row :gutter="16">
-            <el-col :span="12">
-              <el-form-item label="责任人">
-                <el-select
-                    v-model="inboundForm.custodian"
-                    placeholder="请选择责任人"
-                    filterable
-                    style="width: 100%"
-                >
-                  <el-option
-                      v-for="user in userList"
-                      :key="user.id"
-                      :label="user.username"
-                      :value="user.username"
-                  />
-                </el-select>
-              </el-form-item>
-            </el-col>
-            <el-col :span="12">
+            <el-col :span="24">
               <el-form-item label="备注">
                 <el-input
                     v-model="inboundForm.remark"
@@ -355,40 +324,6 @@
           </el-col>
         </el-row>
         
-        <el-row :gutter="16">
-          <el-col :span="12">
-            <el-form-item label="使用部门" prop="departmentId">
-              <el-tree-select
-                  v-model="assetForm.departmentId"
-                  :data="deptTree"
-                  :props="{ label: 'deptName', value: 'id', children: 'children' }"
-                  placeholder="请选择使用部门"
-                  check-strictly
-                  filterable
-                  clearable
-                  style="width: 100%"
-              />
-            </el-form-item>
-          </el-col>
-          <el-col :span="12">
-            <el-form-item label="责任人" prop="custodian">
-              <el-select
-                  v-model="assetForm.custodian"
-                  placeholder="请选择责任人"
-                  filterable
-                  clearable
-                  style="width: 100%"
-              >
-                <el-option
-                    v-for="user in userList"
-                    :key="user.id"
-                    :label="user.username"
-                    :value="user.username"
-                />
-              </el-select>
-            </el-form-item>
-          </el-col>
-        </el-row>
         
         <el-row :gutter="16">
           <el-col :span="12">
@@ -584,11 +519,14 @@ import { recordApi } from '@/api/record'
 import { userApi } from '@/api/user'
 import { departmentApi } from '@/api/department'
 import { purchaseApi } from '@/api/purchase'
-import type { PurchaseDetail, BatchInboundRequest } from '@/api/purchase'
+import { useUserStore } from '@/stores/user'
+import type { PurchaseDetail } from '@/api/purchase'
 import type { Asset, AssetCreateRequest, AssetUpdateRequest, CategoryTreeNode, RecordCreateRequest, AssetRecord, User, Department } from '@/types'
 
 
 // 待入库明细列表
+const userStore = useUserStore()
+
 const pendingDetails = ref<PurchaseDetail[]>([])
 const selectedDetailIds = ref<number[]>([]) // 改为数组支持多选
 const inboundQuantities = ref<Map<number, number>>(new Map()) // 存储每个明细的入库数量
@@ -597,8 +535,6 @@ const inboundLoading = ref(false)
 // 入库表单（公共信息）
 const inboundForm = reactive({
   storageLocation: '',
-  departmentId: undefined as number | undefined,
-  custodian: '',
   remark: ''
 })
 // 列表数据
@@ -644,8 +580,6 @@ const assetForm = reactive<AssetCreateRequest & { id?: number }>({
   categoryId: 0,
   purchaseAmount: undefined,
   purchaseDate: undefined,
-  departmentId: undefined,
-  custodian: '',
   assetStatus: 1,
   specifications: '',
   manufacturer: '',
@@ -664,9 +598,6 @@ const formRules: FormRules = {
   ],
   categoryId: [
     { required: true, message: '请选择资产分类', trigger: 'change' }
-  ],
-  custodian: [
-    { max: 50, message: '责任人长度不能超过50个字符', trigger: 'blur' }
   ],
   manufacturer: [
     { max: 100, message: '生产厂商长度不能超过100个字符', trigger: 'blur' }
@@ -798,8 +729,6 @@ const handleAdd = async () => {
   inboundQuantities.value.clear()
   pendingDetails.value = []
   inboundForm.storageLocation = ''
-  inboundForm.departmentId = undefined
-  inboundForm.custodian = ''
   inboundForm.remark = ''
   
   isEdit.value = false
@@ -884,13 +813,18 @@ const handleSubmitInbound = async () => {
   console.log('公共信息:', inboundForm)
 
   try {
+    const currentDepartmentId = userStore.userInfo?.departmentId
+    if (!currentDepartmentId) {
+      ElMessage.warning('当前用户未绑定部门，无法执行操作')
+      return
+    }
+
     // 构建批量入库请求
     const inboundList = selectedDetailIds.value.map(detailId => ({
       detailId,
       quantity: inboundQuantities.value.get(detailId)!,
       storageLocation: inboundForm.storageLocation,
-      departmentId: inboundForm.departmentId,
-      custodian: inboundForm.custodian,
+      departmentId: currentDepartmentId,
       remark: inboundForm.remark
     }))
 
@@ -907,8 +841,6 @@ const handleSubmitInbound = async () => {
     inboundQuantities.value.clear()
     pendingDetails.value = []
     inboundForm.storageLocation = ''
-    inboundForm.departmentId = undefined
-    inboundForm.custodian = ''
     inboundForm.remark = ''
     
     // 刷新资产列表
@@ -935,8 +867,6 @@ const handleEdit = async (row: Asset) => {
     assetForm.categoryId = asset.categoryId
     assetForm.purchaseAmount = asset.purchaseAmount
     assetForm.purchaseDate = asset.purchaseDate
-    assetForm.departmentId = asset.departmentId
-    assetForm.custodian = asset.custodian|| ''
     assetForm.assetStatus = asset.assetStatus
     assetForm.specifications = asset.specifications || ''
     assetForm.manufacturer = asset.manufacturer || ''
@@ -973,8 +903,6 @@ const handleDialogClose = () => {
   assetForm.categoryId = null as any
   assetForm.purchaseAmount = 0
   assetForm.purchaseDate = ''
-  assetForm.departmentId = undefined
-  assetForm.custodian = ''
   assetForm.assetStatus = 1
   assetForm.specifications = ''
   assetForm.manufacturer = ''
@@ -985,8 +913,6 @@ const handleDialogClose = () => {
   inboundQuantities.value.clear()
   pendingDetails.value = []
   inboundForm.storageLocation = ''
-  inboundForm.departmentId = undefined
-  inboundForm.custodian = ''
   inboundForm.remark = ''
 }
 
@@ -1002,14 +928,19 @@ const handleSubmit = async () => {
     submitLoading.value = true
     try {
       if (isEdit.value) {
+        const currentDepartmentId = userStore.userInfo?.departmentId
+        if (!currentDepartmentId) {
+          ElMessage.warning('当前用户未绑定部门，无法执行操作')
+          return
+        }
+
         // 编辑资产
         const updateData: AssetUpdateRequest = {
           assetName: assetForm.assetName,
           categoryId: assetForm.categoryId,
           purchaseAmount: assetForm.purchaseAmount,
           purchaseDate: assetForm.purchaseDate,
-          departmentId: assetForm.departmentId,
-          custodian: assetForm.custodian,
+          departmentId: currentDepartmentId,
           assetStatus: assetForm.assetStatus,
           specifications: assetForm.specifications,
           manufacturer: assetForm.manufacturer,
@@ -1076,6 +1007,7 @@ const getStatusType = (status: number): string => {
   }
   return typeMap[status] || 'info'
 }
+
 
 /**
  * 处理操作命令

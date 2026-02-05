@@ -65,6 +65,7 @@ public class AuthServiceImpl implements AuthService {
                     .email(user.getEmail())
                     .phone(user.getPhone())
                     .avatar(user.getAvatar())
+                    .departmentId(user.getDepartmentId())
                     .build();
 
             // 构建响应

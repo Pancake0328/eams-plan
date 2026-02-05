@@ -18,6 +18,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.eams.security.SecurityContextHolder;
 import org.springframework.util.StringUtils;
 
 import java.util.HashMap;
@@ -40,6 +41,7 @@ public class AssetInfoServiceImpl implements AssetInfoService {
     private final AssetCategoryMapper categoryMapper;
     private final AssetNumberGenerator numberGenerator;
     private final com.eams.system.mapper.DepartmentMapper departmentMapper;
+    private final com.eams.system.mapper.UserMapper userMapper;
 
     /**
      * 资产状态映射
@@ -78,8 +80,8 @@ public class AssetInfoServiceImpl implements AssetInfoService {
         asset.setCategoryId(request.getCategoryId());
         asset.setPurchaseAmount(request.getPurchaseAmount());
         asset.setPurchaseDate(request.getPurchaseDate());
-        asset.setDepartmentId(request.getDepartmentId());
-        asset.setCustodian(request.getCustodian());
+        asset.setDepartmentId(getCurrentUserDepartmentId());
+        asset.setCustodian(getCurrentUsername());
         asset.setAssetStatus(request.getAssetStatus() != null ? request.getAssetStatus() : 1); // 默认闲置
         asset.setSpecifications(request.getSpecifications());
         asset.setManufacturer(request.getManufacturer());
@@ -114,8 +116,8 @@ public class AssetInfoServiceImpl implements AssetInfoService {
         asset.setCategoryId(request.getCategoryId());
         asset.setPurchaseAmount(request.getPurchaseAmount());
         asset.setPurchaseDate(request.getPurchaseDate());
-        asset.setDepartmentId(request.getDepartmentId());
-        asset.setCustodian(request.getCustodian());
+        asset.setDepartmentId(getCurrentUserDepartmentId());
+        asset.setCustodian(getCurrentUsername());
         asset.setAssetStatus(request.getAssetStatus());
         asset.setSpecifications(request.getSpecifications());
         asset.setManufacturer(request.getManufacturer());
@@ -297,5 +299,28 @@ public class AssetInfoServiceImpl implements AssetInfoService {
         }
         com.eams.system.entity.Department department = departmentMapper.selectById(departmentId);
         return department != null ? department.getDeptName() : null;
+    }
+
+    /**
+     * 获取当前登录用户名
+     */
+    private String getCurrentUsername() {
+        String username = SecurityContextHolder.getCurrentUsername();
+        if (!StringUtils.hasText(username)) {
+            throw new BusinessException("未获取到当前登录用户");
+        }
+        return username;
+    }
+
+    private Long getCurrentUserDepartmentId() {
+        Long userId = SecurityContextHolder.getCurrentUserId();
+        if (userId == null) {
+            throw new BusinessException("未获取到当前登录用户");
+        }
+        com.eams.system.entity.User user = userMapper.selectById(userId);
+        if (user == null) {
+            throw new BusinessException("当前用户不存在");
+        }
+        return user.getDepartmentId();
     }
 }

@@ -61,7 +61,6 @@ export interface AssetInboundRequest {
     quantity: number
     storageLocation?: string
     departmentId?: number
-    custodian?: string
     remark?: string
 }
 
