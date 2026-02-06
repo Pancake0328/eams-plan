@@ -80,6 +80,8 @@ public class AssetRecordServiceImpl implements AssetRecordService {
     @Transactional(rollbackFor = Exception.class)
     public Long assetIn(RecordCreateRequest request) {
         AssetInfo asset = getAssetEntityById(request.getAssetId());
+        Long fromDepartmentId = asset.getDepartmentId();
+        String fromCustodian = asset.getCustodian();
 
         // 创建入库记录
         AssetRecord record = createRecord(
@@ -96,7 +98,9 @@ public class AssetRecordServiceImpl implements AssetRecordService {
         asset.setCustodian(request.getToCustodian());
         asset.setAssetStatus(1); // 闲置
         assetInfoMapper.updateById(asset);
-        recordLifecycle(asset.getId(), 4, "资产入库", request.getRemark());
+        recordLifecycle(asset.getId(), 4, "资产入库", request.getRemark(),
+                fromDepartmentId, request.getToDepartmentId(),
+                fromCustodian, request.getToCustodian());
 
         log.info("资产入库成功，资产编号: {}", asset.getAssetNumber());
         return record.getId();
@@ -112,6 +116,8 @@ public class AssetRecordServiceImpl implements AssetRecordService {
     @Transactional(rollbackFor = Exception.class)
     public Long allocateAsset(RecordCreateRequest request) {
         AssetInfo asset = getAssetEntityById(request.getAssetId());
+        Long fromDepartmentId = asset.getDepartmentId();
+        String fromCustodian = asset.getCustodian();
 
         // 状态校验：只有闲置的资产才能分配
         if (asset.getAssetStatus() != 1) {
@@ -135,7 +141,9 @@ public class AssetRecordServiceImpl implements AssetRecordService {
         asset.setCustodian(request.getToCustodian());
         asset.setAssetStatus(2); // 使用中
         assetInfoMapper.updateById(asset);
-        recordLifecycle(asset.getId(), 2, "资产分配", request.getRemark());
+        recordLifecycle(asset.getId(), 2, "资产分配", request.getRemark(),
+                fromDepartmentId, targetDepartmentId,
+                fromCustodian, request.getToCustodian());
 
         log.info("资产分配成功，资产编号: {}, 责任人: {}", asset.getAssetNumber(), request.getToCustodian());
         return record.getId();
@@ -151,6 +159,8 @@ public class AssetRecordServiceImpl implements AssetRecordService {
     @Transactional(rollbackFor = Exception.class)
     public Long transferAsset(RecordCreateRequest request) {
         AssetInfo asset = getAssetEntityById(request.getAssetId());
+        Long fromDepartmentId = asset.getDepartmentId();
+        String fromCustodian = asset.getCustodian();
 
         // 状态校验：只有使用中的资产才能调拨
         if (asset.getAssetStatus() != 2) {
@@ -173,7 +183,9 @@ public class AssetRecordServiceImpl implements AssetRecordService {
         asset.setDepartmentId(targetDepartmentId);
         asset.setCustodian(request.getToCustodian());
         assetInfoMapper.updateById(asset);
-        recordLifecycle(asset.getId(), 2, "资产调拨", request.getRemark());
+        recordLifecycle(asset.getId(), 2, "资产调拨", request.getRemark(),
+                fromDepartmentId, targetDepartmentId,
+                fromCustodian, request.getToCustodian());
 
         log.info("资产调拨成功，资产编号: {}, 目标部门: {}",
                 asset.getAssetNumber(),
@@ -191,6 +203,8 @@ public class AssetRecordServiceImpl implements AssetRecordService {
     @Transactional(rollbackFor = Exception.class)
     public Long returnAsset(RecordCreateRequest request) {
         AssetInfo asset = getAssetEntityById(request.getAssetId());
+        Long fromDepartmentId = asset.getDepartmentId();
+        String fromCustodian = asset.getCustodian();
 
         // 状态校验：只有使用中的资产才能归还
         if (asset.getAssetStatus() != 2) {
@@ -211,7 +225,9 @@ public class AssetRecordServiceImpl implements AssetRecordService {
         asset.setCustodian(null);
         asset.setAssetStatus(1); // 闲置
         assetInfoMapper.updateById(asset);
-        recordLifecycle(asset.getId(), 4, "资产归还", request.getRemark());
+        recordLifecycle(asset.getId(), 4, "资产归还", request.getRemark(),
+                fromDepartmentId, fromDepartmentId,
+                fromCustodian, null);
 
         log.info("资产归还成功，资产编号: {}", asset.getAssetNumber());
         return record.getId();
@@ -227,6 +243,8 @@ public class AssetRecordServiceImpl implements AssetRecordService {
     @Transactional(rollbackFor = Exception.class)
     public Long scrapAsset(RecordCreateRequest request) {
         AssetInfo asset = getAssetEntityById(request.getAssetId());
+        Long fromDepartmentId = asset.getDepartmentId();
+        String fromCustodian = asset.getCustodian();
 
         // 状态校验：只有闲置的资产才能报废
         if (asset.getAssetStatus() == 4) {
@@ -249,7 +267,9 @@ public class AssetRecordServiceImpl implements AssetRecordService {
         // 更新资产信息
         asset.setAssetStatus(4); // 报废
         assetInfoMapper.updateById(asset);
-        recordLifecycle(asset.getId(), 5, "资产报废", request.getRemark());
+        recordLifecycle(asset.getId(), 5, "资产报废", request.getRemark(),
+                fromDepartmentId, fromDepartmentId,
+                fromCustodian, fromCustodian);
 
         log.info("资产报废成功，资产编号: {}", asset.getAssetNumber());
         return record.getId();
@@ -265,6 +285,8 @@ public class AssetRecordServiceImpl implements AssetRecordService {
     @Transactional(rollbackFor = Exception.class)
     public Long sendForRepair(RecordCreateRequest request) {
         AssetInfo asset = getAssetEntityById(request.getAssetId());
+        Long fromDepartmentId = asset.getDepartmentId();
+        String fromCustodian = asset.getCustodian();
 
         // 状态校验：报废的资产不能送修
         if (asset.getAssetStatus() == 4) {
@@ -288,7 +310,9 @@ public class AssetRecordServiceImpl implements AssetRecordService {
         // 更新资产信息
         asset.setAssetStatus(3); // 维修中
         assetInfoMapper.updateById(asset);
-        recordLifecycle(asset.getId(), 3, "资产送修", request.getRemark());
+        recordLifecycle(asset.getId(), 3, "资产送修", request.getRemark(),
+                fromDepartmentId, fromDepartmentId,
+                fromCustodian, fromCustodian);
 
         log.info("资产送修成功，资产编号: {}", asset.getAssetNumber());
         return record.getId();
@@ -304,6 +328,8 @@ public class AssetRecordServiceImpl implements AssetRecordService {
     @Transactional(rollbackFor = Exception.class)
     public Long repairComplete(RecordCreateRequest request) {
         AssetInfo asset = getAssetEntityById(request.getAssetId());
+        Long fromDepartmentId = asset.getDepartmentId();
+        String fromCustodian = asset.getCustodian();
 
         // 状态校验：只有维修中的资产才能完成维修
         if (asset.getAssetStatus() != 3) {
@@ -323,7 +349,9 @@ public class AssetRecordServiceImpl implements AssetRecordService {
         // 更新资产信息
         asset.setAssetStatus(1); // 闲置
         assetInfoMapper.updateById(asset);
-        recordLifecycle(asset.getId(), 4, "维修完成", request.getRemark());
+        recordLifecycle(asset.getId(), 4, "维修完成", request.getRemark(),
+                fromDepartmentId, fromDepartmentId,
+                fromCustodian, fromCustodian);
 
         log.info("资产维修完成，资产编号: {}", asset.getAssetNumber());
         return record.getId();
@@ -454,7 +482,9 @@ public class AssetRecordServiceImpl implements AssetRecordService {
         }
     }
 
-    private void recordLifecycle(Long assetId, Integer stage, String reason, String remark) {
+    private void recordLifecycle(Long assetId, Integer stage, String reason, String remark,
+                                 Long fromDepartmentId, Long toDepartmentId,
+                                 String fromCustodian, String toCustodian) {
         AssetLifecycle lifecycle = new AssetLifecycle();
         lifecycle.setAssetId(assetId);
         lifecycle.setStage(stage);
@@ -463,6 +493,12 @@ public class AssetRecordServiceImpl implements AssetRecordService {
         lifecycle.setOperator(getCurrentUsername());
         lifecycle.setRemark(remark);
         lifecycle.setPreviousStage(getLatestLifecycleStage(assetId));
+        lifecycle.setFromDepartmentId(fromDepartmentId);
+        lifecycle.setToDepartmentId(toDepartmentId);
+        lifecycle.setFromDepartment(getDepartmentName(fromDepartmentId));
+        lifecycle.setToDepartment(getDepartmentName(toDepartmentId));
+        lifecycle.setFromCustodian(fromCustodian);
+        lifecycle.setToCustodian(toCustodian);
         lifecycleMapper.insert(lifecycle);
     }
 

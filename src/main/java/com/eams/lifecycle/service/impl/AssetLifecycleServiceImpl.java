@@ -14,6 +14,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -32,6 +33,7 @@ public class AssetLifecycleServiceImpl implements AssetLifecycleService {
 
     private final AssetLifecycleMapper lifecycleMapper;
     private final AssetInfoMapper assetMapper;
+    private final com.eams.system.mapper.DepartmentMapper departmentMapper;
 
     private static final Map<Integer, String> STAGE_MAP = new HashMap<>();
 
@@ -60,6 +62,12 @@ public class AssetLifecycleServiceImpl implements AssetLifecycleService {
         AssetLifecycle lifecycle = new AssetLifecycle();
         BeanUtils.copyProperties(request, lifecycle);
         lifecycle.setPreviousStage(current != null ? current.getStage() : null);
+        lifecycle.setFromDepartmentId(asset.getDepartmentId());
+        lifecycle.setToDepartmentId(asset.getDepartmentId());
+        lifecycle.setFromDepartment(getDepartmentName(asset.getDepartmentId()));
+        lifecycle.setToDepartment(getDepartmentName(asset.getDepartmentId()));
+        lifecycle.setFromCustodian(asset.getCustodian());
+        lifecycle.setToCustodian(asset.getCustodian());
 
         lifecycleMapper.insert(lifecycle);
 
@@ -175,7 +183,21 @@ public class AssetLifecycleServiceImpl implements AssetLifecycleService {
         // 设置阶段文本
         vo.setStageText(STAGE_MAP.getOrDefault(lifecycle.getStage(), "未知"));
         vo.setPreviousStageText(STAGE_MAP.getOrDefault(lifecycle.getPreviousStage(), "无"));
+        if (!StringUtils.hasText(vo.getFromDepartment()) && vo.getFromDepartmentId() != null) {
+            vo.setFromDepartment(getDepartmentName(vo.getFromDepartmentId()));
+        }
+        if (!StringUtils.hasText(vo.getToDepartment()) && vo.getToDepartmentId() != null) {
+            vo.setToDepartment(getDepartmentName(vo.getToDepartmentId()));
+        }
 
         return vo;
+    }
+
+    private String getDepartmentName(Long departmentId) {
+        if (departmentId == null) {
+            return null;
+        }
+        com.eams.system.entity.Department department = departmentMapper.selectById(departmentId);
+        return department != null ? department.getDeptName() : null;
     }
 }

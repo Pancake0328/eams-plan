@@ -202,16 +202,22 @@ create table asset_lifecycle
 (
     id             bigint auto_increment comment '主键ID'
         primary key,
-    asset_id       bigint                             not null comment '资产ID',
-    stage          int                                not null comment '生命周期阶段：1-购入 2-使用中 3-维修中 4-闲置 5-报废 6-取消采购',
-    previous_stage int                                null comment '上一阶段',
-    stage_date     date                               not null comment '阶段变更日期',
-    reason         varchar(500)                       null comment '变更原因',
-    operator       varchar(50)                        not null comment '操作人',
-    remark         varchar(500)                       null comment '备注',
-    create_time    datetime default CURRENT_TIMESTAMP not null comment '创建时间',
-    update_time    datetime default CURRENT_TIMESTAMP not null on update CURRENT_TIMESTAMP comment '更新时间',
-    deleted        tinyint  default 0                 not null comment '逻辑删除：0-未删除 1-已删除'
+    asset_id            bigint                             not null comment '资产ID',
+    from_department_id  bigint                             null comment '变更前部门ID',
+        from_department     varchar(100)                       null comment '变更前部门',
+    to_department_id    bigint                             null comment '变更后部门ID',
+    to_department       varchar(100)                       null comment '变更后部门',
+    from_custodian      varchar(50)                        null comment '变更前责任人',
+    to_custodian        varchar(50)                        null comment '变更后责任人',
+    stage               int                                not null comment '生命周期阶段：1-购入 2-使用中 3-维修中 4-闲置 5-报废 6-取消采购',
+    previous_stage      int                                null comment '上一阶段',
+    stage_date          date                               not null comment '阶段变更日期',
+    reason              varchar(500)                       null comment '变更原因',
+    operator            varchar(50)                        not null comment '操作人',
+    remark              varchar(500)                       null comment '备注',
+    create_time         datetime default CURRENT_TIMESTAMP not null comment '创建时间',
+    update_time         datetime default CURRENT_TIMESTAMP not null on update CURRENT_TIMESTAMP comment '更新时间',
+    deleted             tinyint  default 0                 not null comment '逻辑删除：0-未删除 1-已删除'
 )
     comment '资产生命周期记录表' charset = utf8mb4;
 

@@ -35,18 +35,22 @@
       <!-- 当前阶段展示 -->
       <el-divider content-position="left">当前阶段</el-divider>
       <el-empty v-if="!currentLifecycle" description="请先选择资产查询生命周期" />
-      <el-descriptions v-else :column="3" border>
-        <el-descriptions-item label="资产编号">{{ currentLifecycle.assetNumber }}</el-descriptions-item>
-        <el-descriptions-item label="资产名称">{{ currentLifecycle.assetName }}</el-descriptions-item>
-        <el-descriptions-item label="当前阶段">
-          <el-tag :type="getStageType(currentLifecycle.stage)">
-            {{ currentLifecycle.stageText }}
-          </el-tag>
-        </el-descriptions-item>
-        <el-descriptions-item label="变更日期">{{ currentLifecycle.stageDate }}</el-descriptions-item>
-        <el-descriptions-item label="操作人">{{ currentLifecycle.operator }}</el-descriptions-item>
-        <el-descriptions-item label="变更原因">{{ currentLifecycle.reason }}</el-descriptions-item>
-      </el-descriptions>
+        <el-descriptions v-else :column="3" border>
+          <el-descriptions-item label="资产编号">{{ currentLifecycle.assetNumber }}</el-descriptions-item>
+          <el-descriptions-item label="资产名称">{{ currentLifecycle.assetName }}</el-descriptions-item>
+          <el-descriptions-item label="当前阶段">
+            <el-tag :type="getStageType(currentLifecycle.stage)">
+              {{ currentLifecycle.stageText }}
+            </el-tag>
+          </el-descriptions-item>
+          <el-descriptions-item label="变更前部门">{{ currentLifecycle.fromDepartment || '-' }}</el-descriptions-item>
+          <el-descriptions-item label="变更前责任人">{{ currentLifecycle.fromCustodian || '-' }}</el-descriptions-item>
+          <el-descriptions-item label="变更后部门">{{ currentLifecycle.toDepartment || '-' }}</el-descriptions-item>
+          <el-descriptions-item label="变更后责任人">{{ currentLifecycle.toCustodian || '-' }}</el-descriptions-item>
+          <el-descriptions-item label="变更日期">{{ currentLifecycle.stageDate }}</el-descriptions-item>
+          <el-descriptions-item label="操作人">{{ currentLifecycle.operator }}</el-descriptions-item>
+          <el-descriptions-item label="变更原因">{{ currentLifecycle.reason }}</el-descriptions-item>
+        </el-descriptions>
 
       <!-- 生命周期时间轴 -->
       <el-divider content-position="left">生命周期历史</el-divider>
@@ -59,15 +63,19 @@
           placement="top"
           :color="getStageColor(item.stage)"
         >
-          <el-card>
-            <h4>{{ item.stageText }}</h4>
-            <p><strong>资产：</strong>{{ item.assetName }} ({{ item.assetNumber }})</p>
-            <p v-if="item.previousStageText"><strong>前一阶段：</strong>{{ item.previousStageText }}</p>
-            <p><strong>变更原因：</strong>{{ item.reason }}</p>
-            <p><strong>操作人：</strong>{{ item.operator }}</p>
-            <p v-if="item.remark"><strong>备注：</strong>{{ item.remark }}</p>
-            <p class="time-text">{{ item.createTime }}</p>
-          </el-card>
+            <el-card>
+              <h4>{{ item.stageText }}</h4>
+              <p><strong>资产：</strong>{{ item.assetName }} ({{ item.assetNumber }})</p>
+              <p v-if="item.previousStageText"><strong>前一阶段：</strong>{{ item.previousStageText }}</p>
+              <p><strong>变更前部门：</strong>{{ item.fromDepartment || '-' }}</p>
+              <p><strong>变更前责任人：</strong>{{ item.fromCustodian || '-' }}</p>
+              <p><strong>变更后部门：</strong>{{ item.toDepartment || '-' }}</p>
+              <p><strong>变更后责任人：</strong>{{ item.toCustodian || '-' }}</p>
+              <p><strong>变更原因：</strong>{{ item.reason }}</p>
+              <p><strong>操作人：</strong>{{ item.operator }}</p>
+              <p v-if="item.remark"><strong>备注：</strong>{{ item.remark }}</p>
+              <p class="time-text">{{ item.createTime }}</p>
+            </el-card>
         </el-timeline-item>
       </el-timeline>
     </el-card>
@@ -94,20 +102,24 @@
         </el-form-item>
       </el-form>
 
-      <el-table :data="lifecycleList" border stripe>
-        <el-table-column prop="assetNumber" label="资产编号" width="150" />
-        <el-table-column prop="assetName" label="资产名称" width="150" />
-        <el-table-column prop="stageText" label="当前阶段" width="100">
-          <template #default="{ row }">
-            <el-tag :type="getStageType(row.stage)">{{ row.stageText }}</el-tag>
-          </template>
-        </el-table-column>
-        <el-table-column prop="previousStageText" label="前一阶段" width="100" />
-        <el-table-column prop="stageDate" label="变更日期" width="120" />
-        <el-table-column prop="reason" label="变更原因" min-width="200" show-overflow-tooltip />
-        <el-table-column prop="operator" label="操作人" width="100" />
-        <el-table-column prop="createTime" label="创建时间" width="180" />
-      </el-table>
+        <el-table :data="lifecycleList" border stripe>
+          <el-table-column prop="assetNumber" label="资产编号" width="150" />
+          <el-table-column prop="assetName" label="资产名称" width="150" />
+          <el-table-column prop="stageText" label="当前阶段" width="100">
+            <template #default="{ row }">
+              <el-tag :type="getStageType(row.stage)">{{ row.stageText }}</el-tag>
+            </template>
+          </el-table-column>
+          <el-table-column prop="previousStageText" label="前一阶段" width="100" />
+          <el-table-column prop="fromDepartment" label="变更前部门" width="120" show-overflow-tooltip />
+          <el-table-column prop="fromCustodian" label="变更前责任人" width="120" />
+          <el-table-column prop="toDepartment" label="变更后部门" width="120" show-overflow-tooltip />
+          <el-table-column prop="toCustodian" label="变更后责任人" width="120" />
+          <el-table-column prop="stageDate" label="变更日期" width="120" />
+          <el-table-column prop="reason" label="变更原因" min-width="200" show-overflow-tooltip />
+          <el-table-column prop="operator" label="操作人" width="100" />
+          <el-table-column prop="createTime" label="创建时间" width="180" />
+        </el-table>
 
       <el-pagination
         v-model:current-page="pageQuery.current"

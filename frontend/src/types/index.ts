@@ -573,6 +573,12 @@ export interface Lifecycle {
   assetId: number
   assetNumber?: string
   assetName?: string
+  fromDepartmentId?: number
+  fromDepartment?: string
+  toDepartmentId?: number
+  toDepartment?: string
+  fromCustodian?: string
+  toCustodian?: string
   stage: number
   stageText?: string
   previousStage?: number

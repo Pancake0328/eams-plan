@@ -48,6 +48,7 @@ public class PurchaseServiceImpl implements PurchaseService {
     private final AssetInfoMapper assetInfoMapper;
     private final AssetCategoryMapper categoryMapper;
     private final AssetLifecycleMapper lifecycleMapper;
+    private final com.eams.system.mapper.DepartmentMapper departmentMapper;
     private final UserMapper userMapper;
     private final AssetNumberGenerator numberGenerator;
 
@@ -137,6 +138,12 @@ public class PurchaseServiceImpl implements PurchaseService {
                 lifecycle.setReason("采购创建");
                 lifecycle.setOperator(currentUsername);
                 lifecycle.setRemark("采购单创建生成");
+                lifecycle.setFromDepartmentId(null);
+                lifecycle.setFromDepartment(null);
+                lifecycle.setFromCustodian(null);
+                lifecycle.setToDepartmentId(applicant.getDepartmentId());
+                lifecycle.setToDepartment(getDepartmentName(applicant.getDepartmentId()));
+                lifecycle.setToCustodian(currentUsername);
                 lifecycleMapper.insert(lifecycle);
             }
         }
@@ -223,6 +230,13 @@ public class PurchaseServiceImpl implements PurchaseService {
                     lifecycle.setReason("取消采购");
                     lifecycle.setOperator(currentUsername);
                     lifecycle.setRemark("采购单取消");
+                    lifecycle.setPreviousStage(getLatestLifecycleStage(asset.getId()));
+                    lifecycle.setFromDepartmentId(asset.getDepartmentId());
+                    lifecycle.setFromDepartment(getDepartmentName(asset.getDepartmentId()));
+                    lifecycle.setFromCustodian(asset.getCustodian());
+                    lifecycle.setToDepartmentId(asset.getDepartmentId());
+                    lifecycle.setToDepartment(getDepartmentName(asset.getDepartmentId()));
+                    lifecycle.setToCustodian(asset.getCustodian());
                     lifecycleMapper.insert(lifecycle);
                     asset.setAssetStatus(6);
                     assetInfoMapper.updateById(asset);
@@ -303,6 +317,9 @@ public class PurchaseServiceImpl implements PurchaseService {
                 throw new BusinessException("可入库资产不足");
             }
 
+            Long fromDepartmentId = asset.getDepartmentId();
+            String fromCustodian = asset.getCustodian();
+
             asset.setDepartmentId(currentUser.getDepartmentId());
             asset.setCustodian(currentUser.getUsername());
             asset.setAssetStatus(1);
@@ -317,6 +334,13 @@ public class PurchaseServiceImpl implements PurchaseService {
             lifecycle.setReason("采购入库");
             lifecycle.setOperator(currentUsername);
             lifecycle.setRemark("从采购单入库：" + detail.getAssetName());
+            lifecycle.setPreviousStage(getLatestLifecycleStage(asset.getId()));
+            lifecycle.setFromDepartmentId(fromDepartmentId);
+            lifecycle.setFromDepartment(getDepartmentName(fromDepartmentId));
+            lifecycle.setFromCustodian(fromCustodian);
+            lifecycle.setToDepartmentId(currentUser.getDepartmentId());
+            lifecycle.setToDepartment(getDepartmentName(currentUser.getDepartmentId()));
+            lifecycle.setToCustodian(currentUser.getUsername());
             lifecycleMapper.insert(lifecycle);
         }
 
@@ -393,5 +417,22 @@ public class PurchaseServiceImpl implements PurchaseService {
         }
 
         return vo;
+    }
+
+    private String getDepartmentName(Long departmentId) {
+        if (departmentId == null) {
+            return null;
+        }
+        com.eams.system.entity.Department department = departmentMapper.selectById(departmentId);
+        return department != null ? department.getDeptName() : null;
+    }
+
+    private Integer getLatestLifecycleStage(Long assetId) {
+        AssetLifecycle current = lifecycleMapper.selectOne(new LambdaQueryWrapper<AssetLifecycle>()
+                .eq(AssetLifecycle::getAssetId, assetId)
+                .orderByDesc(AssetLifecycle::getCreateTime)
+                .orderByDesc(AssetLifecycle::getId)
+                .last("LIMIT 1"));
+        return current != null ? current.getStage() : null;
     }
 }

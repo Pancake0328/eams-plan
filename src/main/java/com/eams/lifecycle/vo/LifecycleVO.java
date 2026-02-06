@@ -35,6 +35,36 @@ public class LifecycleVO {
     private String assetName;
 
     /**
+     * 变更前部门ID
+     */
+    private Long fromDepartmentId;
+
+    /**
+     * 变更前部门
+     */
+    private String fromDepartment;
+
+    /**
+     * 变更后部门ID
+     */
+    private Long toDepartmentId;
+
+    /**
+     * 变更后部门
+     */
+    private String toDepartment;
+
+    /**
+     * 变更前责任人
+     */
+    private String fromCustodian;
+
+    /**
+     * 变更后责任人
+     */
+    private String toCustodian;
+
+    /**
      * 生命周期阶段
      */
     private Integer stage;

@@ -28,6 +28,36 @@ public class AssetLifecycle {
     private Long assetId;
 
     /**
+     * 变更前部门ID
+     */
+    private Long fromDepartmentId;
+
+    /**
+     * 变更前部门
+     */
+    private String fromDepartment;
+
+    /**
+     * 变更后部门ID
+     */
+    private Long toDepartmentId;
+
+    /**
+     * 变更后部门
+     */
+    private String toDepartment;
+
+    /**
+     * 变更前责任人
+     */
+    private String fromCustodian;
+
+    /**
+     * 变更后责任人
+     */
+    private String toCustodian;
+
+    /**
      * 生命周期阶段：1-购入 2-使用中 3-维修中 4-闲置 5-报废 6-取消采购
      */
     private Integer stage;
