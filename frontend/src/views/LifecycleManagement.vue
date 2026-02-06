@@ -10,8 +10,21 @@
 
       <!-- 资产选择 -->
       <el-form :model="queryForm" inline>
-        <el-form-item label="资产ID">
-          <el-input-number v-model="queryForm.assetId" :min="1" placeholder="请输入资产ID" />
+        <el-form-item label="资产编号">
+          <el-input
+            v-model="queryForm.assetNumber"
+            placeholder="请输入资产编号"
+            clearable
+            style="width: 180px"
+          />
+        </el-form-item>
+        <el-form-item label="资产名称">
+          <el-input
+            v-model="queryForm.assetName"
+            placeholder="请输入资产名称"
+            clearable
+            style="width: 180px"
+          />
         </el-form-item>
         <el-form-item>
           <el-button type="primary" @click="loadLifecycleHistory">查询</el-button>
@@ -155,11 +168,14 @@
 import { ref, reactive } from 'vue'
 import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'element-plus'
 import { lifecycleApi } from '@/api/lifecycle'
-import type { Lifecycle, LifecycleCreateRequest } from '@/types'
+import { assetApi } from '@/api/asset'
+import type { Asset, Lifecycle, LifecycleCreateRequest } from '@/types'
 
 // 查询表单
 const queryForm = reactive({
-  assetId: undefined as number | undefined
+  assetId: undefined as number | undefined,
+  assetNumber: '',
+  assetName: ''
 })
 
 // 当前生命周期
@@ -198,18 +214,67 @@ const changeRules: FormRules = {
 }
 
 // 加载生命周期历史
+const resolveAssetId = async (): Promise<number | null> => {
+  const assetNumber = queryForm.assetNumber.trim()
+  const assetName = queryForm.assetName.trim()
+
+  if (!assetNumber && !assetName) {
+    if (!queryForm.assetId) {
+      ElMessage.warning('请输入资产编号或资产名称')
+      return null
+    }
+    return queryForm.assetId
+  }
+
+  const baseQuery = {
+    current: 1,
+    size: 2,
+    assetNumber: assetNumber || undefined,
+    assetName: assetName || undefined
+  }
+
+  let res = await assetApi.getAssetPage(baseQuery)
+  let records = res.data.records as Asset[]
+
+  if (records.length === 0) {
+    const purchaseRes = await assetApi.getAssetPage({ ...baseQuery, assetStatus: 0 })
+    records = purchaseRes.data.records as Asset[]
+  }
+
+  if (records.length === 0) {
+    ElMessage.warning('未找到匹配的资产')
+    return null
+  }
+  if (records.length > 1) {
+    ElMessage.warning('匹配到多条资产，请输入资产编号')
+    return null
+  }
+
+  const asset = records[0]
+  queryForm.assetId = asset.id
+  if (!assetNumber) {
+    queryForm.assetNumber = asset.assetNumber || ''
+  }
+  if (!assetName) {
+    queryForm.assetName = asset.assetName || ''
+  }
+  return asset.id
+}
+
 const loadLifecycleHistory = async () => {
-  if (!queryForm.assetId) {
-    ElMessage.warning('请输入资产ID')
+  const assetId = await resolveAssetId()
+  if (!assetId) {
+    currentLifecycle.value = null
+    lifecycleHistory.value = []
     return
   }
 
   try {
-    const res = await lifecycleApi.getAssetLifecycleHistory(queryForm.assetId)
+    const res = await lifecycleApi.getAssetLifecycleHistory(assetId)
     lifecycleHistory.value = res.data
     
     // 加载当前阶段
-    const currentRes = await lifecycleApi.getCurrentLifecycle(queryForm.assetId)
+    const currentRes = await lifecycleApi.getCurrentLifecycle(assetId)
     currentLifecycle.value = currentRes.data
   } catch (error) {
     console.error('加载失败:', error)
@@ -219,6 +284,8 @@ const loadLifecycleHistory = async () => {
 // 重置查询
 const resetQuery = () => {
   queryForm.assetId = undefined
+  queryForm.assetNumber = ''
+  queryForm.assetName = ''
   currentLifecycle.value = null
   lifecycleHistory.value = []
 }

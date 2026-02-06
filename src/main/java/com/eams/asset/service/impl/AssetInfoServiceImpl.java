@@ -193,11 +193,11 @@ public class AssetInfoServiceImpl implements AssetInfoService {
             wrapper.like(AssetInfo::getCustodian, query.getCustodian());
         }
 
-        // 资产状态精确查询（默认排除采购阶段）
+        // 资产状态精确查询（默认排除采购与取消采购阶段）
         if (query.getAssetStatus() != null) {
             wrapper.eq(AssetInfo::getAssetStatus, query.getAssetStatus());
         } else {
-            wrapper.ne(AssetInfo::getAssetStatus, 0);
+            wrapper.notIn(AssetInfo::getAssetStatus, 0, 6);
         }
 
         // 按创建时间倒序排列

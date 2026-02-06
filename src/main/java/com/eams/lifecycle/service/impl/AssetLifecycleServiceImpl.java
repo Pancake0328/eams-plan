@@ -70,7 +70,9 @@ public class AssetLifecycleServiceImpl implements AssetLifecycleService {
     public List<LifecycleVO> getAssetLifecycleHistory(Long assetId) {
         LambdaQueryWrapper<AssetLifecycle> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(AssetLifecycle::getAssetId, assetId);
-        wrapper.orderByDesc(AssetLifecycle::getStageDate);
+        wrapper.orderByAsc(AssetLifecycle::getStageDate)
+                .orderByAsc(AssetLifecycle::getCreateTime)
+                .orderByAsc(AssetLifecycle::getId);
 
         List<AssetLifecycle> lifecycles = lifecycleMapper.selectList(wrapper);
 
@@ -95,7 +97,9 @@ public class AssetLifecycleServiceImpl implements AssetLifecycleService {
 
         LambdaQueryWrapper<AssetLifecycle> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(stage != null, AssetLifecycle::getStage, stage);
-        wrapper.orderByDesc(AssetLifecycle::getStageDate);
+        wrapper.orderByDesc(AssetLifecycle::getStageDate)
+                .orderByDesc(AssetLifecycle::getCreateTime)
+                .orderByDesc(AssetLifecycle::getId);
 
         Page<AssetLifecycle> lifecyclePage = lifecycleMapper.selectPage(page, wrapper);
 
@@ -130,7 +134,9 @@ public class AssetLifecycleServiceImpl implements AssetLifecycleService {
     private AssetLifecycle getCurrentLifecycleEntity(Long assetId) {
         LambdaQueryWrapper<AssetLifecycle> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(AssetLifecycle::getAssetId, assetId);
-        wrapper.orderByDesc(AssetLifecycle::getStageDate);
+
+        wrapper.orderByDesc(AssetLifecycle::getCreateTime)
+                .orderByDesc(AssetLifecycle::getId);
         wrapper.last("LIMIT 1");
 
         return lifecycleMapper.selectOne(wrapper);

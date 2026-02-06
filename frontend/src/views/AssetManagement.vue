@@ -144,7 +144,7 @@
                   <el-dropdown-item command="repairComplete" :disabled="row.assetStatus !== 3">
                     <el-icon><CircleCheck /></el-icon> 维修完成
                   </el-dropdown-item>
-                  <el-dropdown-item command="scrap" :disabled="row.assetStatus === 4" divided>
+                  <el-dropdown-item command="scrap" :disabled="row.assetStatus !== 1" divided>
                     <el-icon><Delete /></el-icon> 报废
                   </el-dropdown-item>
                   <el-dropdown-item command="history">
