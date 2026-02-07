@@ -7,6 +7,7 @@ import com.eams.common.result.Result;
 import com.eams.lifecycle.dto.InventoryCreateRequest;
 import com.eams.lifecycle.dto.InventoryExecuteRequest;
 import com.eams.lifecycle.service.AssetInventoryService;
+import com.eams.lifecycle.vo.InventoryDetailVO;
 import com.eams.lifecycle.vo.InventoryVO;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -73,6 +74,17 @@ public class AssetInventoryController {
     public Result<InventoryVO> getInventoryDetail(@PathVariable Long inventoryId) {
         InventoryVO vo = inventoryService.getInventoryDetail(inventoryId);
         return Result.success(vo);
+    }
+
+    @Operation(summary = "分页查询盘点明细")
+    @GetMapping("/{inventoryId}/details")
+    public Result<PageResult<InventoryDetailVO>> getInventoryDetailPage(
+            @PathVariable Long inventoryId,
+            @RequestParam(defaultValue = "1") Integer current,
+            @RequestParam(defaultValue = "20") Integer size) {
+        Page<InventoryDetailVO> page = inventoryService.getInventoryDetailPage(inventoryId, current, size);
+        PageResult<InventoryDetailVO> result = PageResult.of(page.getRecords(), page.getTotal());
+        return Result.success(result);
     }
 
     @Operation(summary = "分页查询盘点计划")

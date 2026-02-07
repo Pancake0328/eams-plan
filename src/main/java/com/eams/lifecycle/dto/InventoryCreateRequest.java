@@ -42,8 +42,12 @@ public class InventoryCreateRequest {
     /**
      * 创建人
      */
-    @NotBlank(message = "创建人不能为空")
     private String creator;
+
+    /**
+     * 盘点分类（专项盘点使用）
+     */
+    private Long categoryId;
 
     /**
      * 备注

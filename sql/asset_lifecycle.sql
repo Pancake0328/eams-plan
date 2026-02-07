@@ -35,6 +35,7 @@ CREATE TABLE `asset_inventory` (
     `inventory_number` VARCHAR(50) NOT NULL COMMENT '盘点编号',
     `inventory_name` VARCHAR(100) NOT NULL COMMENT '盘点名称',
     `inventory_type` INT NOT NULL COMMENT '盘点类型：1-全面盘点 2-抽样盘点 3-专项盘点',
+    `category_id` BIGINT DEFAULT NULL COMMENT '专项盘点分类ID',
     `plan_start_date` DATE NOT NULL COMMENT '计划开始日期',
     `plan_end_date` DATE NOT NULL COMMENT '计划结束日期',
     `actual_start_date` DATE DEFAULT NULL COMMENT '实际开始日期',

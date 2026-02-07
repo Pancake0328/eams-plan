@@ -1,6 +1,5 @@
 package com.eams.lifecycle.dto;
 
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
@@ -33,7 +32,6 @@ public class InventoryExecuteRequest {
     /**
      * 盘点人
      */
-    @NotBlank(message = "盘点人不能为空")
     private String inventoryPerson;
 
     /**

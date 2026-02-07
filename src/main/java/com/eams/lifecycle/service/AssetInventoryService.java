@@ -3,6 +3,7 @@ package com.eams.lifecycle.service;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.eams.lifecycle.dto.InventoryCreateRequest;
 import com.eams.lifecycle.dto.InventoryExecuteRequest;
+import com.eams.lifecycle.vo.InventoryDetailVO;
 import com.eams.lifecycle.vo.InventoryVO;
 
 /**
@@ -56,6 +57,16 @@ public interface AssetInventoryService {
      * @return 盘点VO
      */
     InventoryVO getInventoryDetail(Long inventoryId);
+
+    /**
+     * 分页查询盘点明细
+     *
+     * @param inventoryId 盘点计划ID
+     * @param current     当前页
+     * @param size        每页大小
+     * @return 分页结果
+     */
+    Page<InventoryDetailVO> getInventoryDetailPage(Long inventoryId, Integer current, Integer size);
 
     /**
      * 分页查询盘点计划

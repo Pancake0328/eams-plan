@@ -36,6 +36,16 @@ public class InventoryVO {
     private Integer inventoryType;
 
     /**
+     * 专项盘点分类ID
+     */
+    private Long categoryId;
+
+    /**
+     * 专项盘点分类名称
+     */
+    private String categoryName;
+
+    /**
      * 盘点类型文本
      */
     private String inventoryTypeText;

@@ -612,6 +612,8 @@ export interface Inventory {
   inventoryName: string
   inventoryType: number
   inventoryTypeText?: string
+  categoryId?: number
+  categoryName?: string
   planStartDate: string
   planEndDate: string
   actualStartDate?: string
@@ -650,6 +652,7 @@ export interface InventoryCreateRequest {
   planStartDate: string
   planEndDate: string
   creator: string
+  categoryId?: number
   remark?: string
 }
 

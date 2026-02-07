@@ -2,9 +2,11 @@ package com.eams.lifecycle.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.eams.asset.entity.AssetCategory;
 import com.eams.asset.entity.AssetInfo;
+import com.eams.asset.mapper.AssetCategoryMapper;
 import com.eams.asset.mapper.AssetInfoMapper;
-import com.eams.common.exception.BusinessException;
+import com.eams.exception.BusinessException;
 import com.eams.lifecycle.dto.InventoryCreateRequest;
 import com.eams.lifecycle.dto.InventoryExecuteRequest;
 import com.eams.lifecycle.entity.AssetInventory;
@@ -14,17 +16,27 @@ import com.eams.lifecycle.mapper.AssetInventoryMapper;
 import com.eams.lifecycle.service.AssetInventoryService;
 import com.eams.lifecycle.vo.InventoryDetailVO;
 import com.eams.lifecycle.vo.InventoryVO;
+import com.eams.security.SecurityContextHolder;
 import lombok.RequiredArgsConstructor;
+import org.apache.ibatis.session.ExecutorType;
+import org.apache.ibatis.session.SqlSession;
+import org.apache.ibatis.session.SqlSessionFactory;
+import org.mybatis.spring.SqlSessionUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Deque;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * 资产盘点服务实现
@@ -39,7 +51,9 @@ public class AssetInventoryServiceImpl implements AssetInventoryService {
     private final AssetInventoryMapper inventoryMapper;
     private final AssetInventoryDetailMapper detailMapper;
     private final AssetInfoMapper assetMapper;
+    private final AssetCategoryMapper categoryMapper;
     private final com.eams.system.mapper.DepartmentMapper departmentMapper;
+    private final SqlSessionFactory sqlSessionFactory;
 
     private static final Map<Integer, String> TYPE_MAP = new HashMap<>();
     private static final Map<Integer, String> STATUS_MAP = new HashMap<>();
@@ -68,30 +82,33 @@ public class AssetInventoryServiceImpl implements AssetInventoryService {
         // 生成盘点编号
         String inventoryNumber = generateInventoryNumber();
 
+        if (request.getInventoryType() != null && request.getInventoryType() == 3) {
+            if (request.getCategoryId() == null) {
+                throw new BusinessException("专项盘点必须选择分类");
+            }
+            AssetCategory category = categoryMapper.selectById(request.getCategoryId());
+            if (category == null) {
+                throw new BusinessException("盘点分类不存在");
+            }
+        }
+
+        List<AssetInfo> assets = getAssetsByInventoryType(request.getInventoryType(), request.getCategoryId());
+
         // 创建盘点计划
         AssetInventory inventory = new AssetInventory();
         BeanUtils.copyProperties(request, inventory);
         inventory.setInventoryNumber(inventoryNumber);
         inventory.setInventoryStatus(1); // 计划中
+        inventory.setCreator(getCurrentUsername());
+        if (request.getInventoryType() == null || request.getInventoryType() != 3) {
+            inventory.setCategoryId(null);
+        }
+        inventory.setTotalCount(assets.size());
 
         inventoryMapper.insert(inventory);
 
         // 创建盘点明细（根据盘点类型查询资产）
-        List<AssetInfo> assets = getAssetsByInventoryType(request.getInventoryType());
-        inventory.setTotalCount(assets.size());
-        inventoryMapper.updateById(inventory);
-
-        for (AssetInfo asset : assets) {
-            AssetInventoryDetail detail = new AssetInventoryDetail();
-            detail.setInventoryId(inventory.getId());
-            detail.setAssetId(asset.getId());
-            detail.setAssetNumber(asset.getAssetNumber());
-            detail.setAssetName(asset.getAssetName());
-            detail.setExpectedLocation(getDepartmentName(asset.getDepartmentId())); // 查询部门名称作为预期位置
-            detail.setInventoryResult(1); // 未盘点
-
-            detailMapper.insert(detail);
-        }
+        batchInsertDetails(inventory.getId(), assets);
 
         return inventory.getId();
     }
@@ -124,7 +141,7 @@ public class AssetInventoryServiceImpl implements AssetInventoryService {
         // 更新盘点明细
         detail.setActualLocation(request.getActualLocation());
         detail.setInventoryResult(request.getInventoryResult());
-        detail.setInventoryPerson(request.getInventoryPerson());
+        detail.setInventoryPerson(getCurrentUsername());
         detail.setInventoryTime(LocalDateTime.now());
         detail.setRemark(request.getRemark());
 
@@ -174,23 +191,32 @@ public class AssetInventoryServiceImpl implements AssetInventoryService {
             throw new BusinessException("盘点计划不存在");
         }
 
-        InventoryVO vo = convertToVO(inventory);
+        return convertToVO(inventory);
+    }
 
-        // 查询盘点明细
+    @Override
+    public Page<InventoryDetailVO> getInventoryDetailPage(Long inventoryId, Integer current, Integer size) {
+        Page<AssetInventoryDetail> page = new Page<>(current, size);
+
         LambdaQueryWrapper<AssetInventoryDetail> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(AssetInventoryDetail::getInventoryId, inventoryId);
-        List<AssetInventoryDetail> details = detailMapper.selectList(wrapper);
+        wrapper.orderByAsc(AssetInventoryDetail::getId);
+
+        Page<AssetInventoryDetail> detailPage = detailMapper.selectPage(page, wrapper);
+
+        Page<InventoryDetailVO> voPage = new Page<>();
+        BeanUtils.copyProperties(detailPage, voPage, "records");
 
         List<InventoryDetailVO> detailVOs = new ArrayList<>();
-        for (AssetInventoryDetail detail : details) {
+        for (AssetInventoryDetail detail : detailPage.getRecords()) {
             InventoryDetailVO detailVO = new InventoryDetailVO();
             BeanUtils.copyProperties(detail, detailVO);
             detailVO.setInventoryResultText(RESULT_MAP.getOrDefault(detail.getInventoryResult(), "未知"));
             detailVOs.add(detailVO);
         }
-        vo.setDetails(detailVOs);
+        voPage.setRecords(detailVOs);
 
-        return vo;
+        return voPage;
     }
 
     @Override
@@ -227,14 +253,20 @@ public class AssetInventoryServiceImpl implements AssetInventoryService {
     /**
      * 根据盘点类型获取资产列表
      */
-    private List<AssetInfo> getAssetsByInventoryType(Integer inventoryType) {
+    private List<AssetInfo> getAssetsByInventoryType(Integer inventoryType, Long categoryId) {
         LambdaQueryWrapper<AssetInfo> wrapper = new LambdaQueryWrapper<>();
+        wrapper.select(AssetInfo::getId, AssetInfo::getAssetNumber, AssetInfo::getAssetName, AssetInfo::getDepartmentId);
 
-        if (inventoryType == 2) {
+        if (inventoryType != null && inventoryType == 3 && categoryId != null) {
+            List<Long> categoryIds = resolveCategoryIds(categoryId);
+            wrapper.in(AssetInfo::getCategoryId, categoryIds);
+        }
+
+        if (inventoryType != null && inventoryType == 2) {
             // 抽样盘点：随机抽取部分资产
             wrapper.last("ORDER BY RAND() LIMIT 50");
         }
-        // 全面盘点和专项盘点：查询所有资产
+        // 全面盘点：查询所有资产
 
         return assetMapper.selectList(wrapper);
     }
@@ -243,29 +275,24 @@ public class AssetInventoryServiceImpl implements AssetInventoryService {
      * 更新盘点统计
      */
     private void updateInventoryStatistics(Long inventoryId) {
-        LambdaQueryWrapper<AssetInventoryDetail> wrapper = new LambdaQueryWrapper<>();
-        wrapper.eq(AssetInventoryDetail::getInventoryId, inventoryId);
-        List<AssetInventoryDetail> details = detailMapper.selectList(wrapper);
+        long actualCount = detailMapper.selectCount(
+                new LambdaQueryWrapper<AssetInventoryDetail>()
+                        .eq(AssetInventoryDetail::getInventoryId, inventoryId)
+                        .ne(AssetInventoryDetail::getInventoryResult, 1));
+        long normalCount = detailMapper.selectCount(
+                new LambdaQueryWrapper<AssetInventoryDetail>()
+                        .eq(AssetInventoryDetail::getInventoryId, inventoryId)
+                        .eq(AssetInventoryDetail::getInventoryResult, 2));
+        long abnormalCount = detailMapper.selectCount(
+                new LambdaQueryWrapper<AssetInventoryDetail>()
+                        .eq(AssetInventoryDetail::getInventoryId, inventoryId)
+                        .notIn(AssetInventoryDetail::getInventoryResult, 1, 2));
 
-        int actualCount = 0;
-        int normalCount = 0;
-        int abnormalCount = 0;
-
-        for (AssetInventoryDetail detail : details) {
-            if (detail.getInventoryResult() != 1) { // 已盘点
-                actualCount++;
-                if (detail.getInventoryResult() == 2) { // 正常
-                    normalCount++;
-                } else {
-                    abnormalCount++;
-                }
-            }
-        }
-
-        AssetInventory inventory = inventoryMapper.selectById(inventoryId);
-        inventory.setActualCount(actualCount);
-        inventory.setNormalCount(normalCount);
-        inventory.setAbnormalCount(abnormalCount);
+        AssetInventory inventory = new AssetInventory();
+        inventory.setId(inventoryId);
+        inventory.setActualCount((int) actualCount);
+        inventory.setNormalCount((int) normalCount);
+        inventory.setAbnormalCount((int) abnormalCount);
         inventoryMapper.updateById(inventory);
     }
 
@@ -278,6 +305,9 @@ public class AssetInventoryServiceImpl implements AssetInventoryService {
 
         vo.setInventoryTypeText(TYPE_MAP.getOrDefault(inventory.getInventoryType(), "未知"));
         vo.setInventoryStatusText(STATUS_MAP.getOrDefault(inventory.getInventoryStatus(), "未知"));
+        if (inventory.getCategoryId() != null) {
+            vo.setCategoryName(getCategoryName(inventory.getCategoryId()));
+        }
 
         // 计算完成率
         if (inventory.getTotalCount() != null && inventory.getTotalCount() > 0) {
@@ -286,6 +316,65 @@ public class AssetInventoryServiceImpl implements AssetInventoryService {
         }
 
         return vo;
+    }
+
+    private void batchInsertDetails(Long inventoryId, List<AssetInfo> assets) {
+        if (assets == null || assets.isEmpty()) {
+            return;
+        }
+        Map<Long, String> departmentCache = new HashMap<>();
+        List<AssetInventoryDetail> details = new ArrayList<>(assets.size());
+        for (AssetInfo asset : assets) {
+            AssetInventoryDetail detail = new AssetInventoryDetail();
+            detail.setInventoryId(inventoryId);
+            detail.setAssetId(asset.getId());
+            detail.setAssetNumber(asset.getAssetNumber());
+            detail.setAssetName(asset.getAssetName());
+            detail.setExpectedLocation(departmentCache.computeIfAbsent(
+                    asset.getDepartmentId(), this::getDepartmentName));
+            detail.setInventoryResult(1); // 未盘点
+            details.add(detail);
+        }
+
+        SqlSession sqlSession = SqlSessionUtils.getSqlSession(sqlSessionFactory, ExecutorType.BATCH, null);
+        try {
+            AssetInventoryDetailMapper mapper = sqlSession.getMapper(AssetInventoryDetailMapper.class);
+            int batchSize = 500;
+            for (int i = 0; i < details.size(); i++) {
+                mapper.insert(details.get(i));
+                if (i % batchSize == batchSize - 1) {
+                    sqlSession.flushStatements();
+                }
+            }
+            sqlSession.flushStatements();
+        } finally {
+            SqlSessionUtils.closeSqlSession(sqlSession, sqlSessionFactory);
+        }
+    }
+
+    private List<Long> resolveCategoryIds(Long categoryId) {
+        List<AssetCategory> categories = categoryMapper.selectList(new LambdaQueryWrapper<>());
+        Map<Long, List<Long>> childrenMap = new HashMap<>();
+        for (AssetCategory category : categories) {
+            childrenMap.computeIfAbsent(category.getParentId(), key -> new ArrayList<>()).add(category.getId());
+        }
+
+        Set<Long> visited = new HashSet<>();
+        Deque<Long> stack = new ArrayDeque<>();
+        stack.push(categoryId);
+        while (!stack.isEmpty()) {
+            Long currentId = stack.pop();
+            if (!visited.add(currentId)) {
+                continue;
+            }
+            List<Long> children = childrenMap.get(currentId);
+            if (children != null) {
+                for (Long childId : children) {
+                    stack.push(childId);
+                }
+            }
+        }
+        return new ArrayList<>(visited);
     }
 
     /**
@@ -297,5 +386,21 @@ public class AssetInventoryServiceImpl implements AssetInventoryService {
         }
         com.eams.system.entity.Department department = departmentMapper.selectById(departmentId);
         return department != null ? department.getDeptName() : null;
+    }
+
+    private String getCategoryName(Long categoryId) {
+        if (categoryId == null) {
+            return null;
+        }
+        AssetCategory category = categoryMapper.selectById(categoryId);
+        return category != null ? category.getCategoryName() : null;
+    }
+
+    private String getCurrentUsername() {
+        String username = SecurityContextHolder.getCurrentUsername();
+        if (!StringUtils.hasText(username)) {
+            throw new BusinessException("未获取到当前用户");
+        }
+        return username;
     }
 }

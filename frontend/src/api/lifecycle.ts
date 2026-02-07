@@ -6,6 +6,7 @@ import type {
     LifecycleCreateRequest,
     Inventory,
     InventoryCreateRequest,
+    InventoryDetail,
     InventoryExecuteRequest,
     Repair,
     RepairCreateRequest
@@ -95,6 +96,13 @@ export const inventoryApi = {
      */
     getInventoryDetail(inventoryId: number): Promise<Result<Inventory>> {
         return request.get(`/inventory/${inventoryId}`)
+    },
+
+    /**
+     * 分页获取盘点明细
+     */
+    getInventoryDetailPage(inventoryId: number, params: any): Promise<Result<PageResult<InventoryDetail>>> {
+        return request.get(`/inventory/${inventoryId}/details`, { params })
     },
 
     /**

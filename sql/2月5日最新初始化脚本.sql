@@ -144,6 +144,7 @@ create table asset_inventory
     inventory_number  varchar(50)                        not null comment '盘点编号',
     inventory_name    varchar(100)                       not null comment '盘点名称',
     inventory_type    int                                not null comment '盘点类型：1-全面盘点 2-抽样盘点 3-专项盘点',
+    category_id       bigint                             null comment '专项盘点分类ID',
     plan_start_date   date                               not null comment '计划开始日期',
     plan_end_date     date                               not null comment '计划结束日期',
     actual_start_date date                               null comment '实际开始日期',

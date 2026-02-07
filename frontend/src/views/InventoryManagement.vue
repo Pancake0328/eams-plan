@@ -81,11 +81,21 @@
           <el-input v-model="createForm.inventoryName" placeholder="请输入盘点名称" />
         </el-form-item>
         <el-form-item label="盘点类型" prop="inventoryType">
-          <el-select v-model="createForm.inventoryType" placeholder="请选择" style="width: 100%">
+          <el-select v-model="createForm.inventoryType" placeholder="请选择" style="width: 100%" @change="handleInventoryTypeChange">
             <el-option label="全面盘点" :value="1" />
             <el-option label="抽样盘点" :value="2" />
             <el-option label="专项盘点" :value="3" />
           </el-select>
+        </el-form-item>
+        <el-form-item label="盘点分类" prop="categoryId" v-if="createForm.inventoryType === 3">
+          <el-tree-select
+            v-model="createForm.categoryId"
+            :data="categoryTree"
+            :props="{ label: 'categoryName', value: 'id' }"
+            placeholder="请选择分类"
+            check-strictly
+            style="width: 100%"
+          />
         </el-form-item>
         <el-form-item label="计划时间" prop="planStartDate">
           <el-date-picker
@@ -105,7 +115,7 @@
           />
         </el-form-item>
         <el-form-item label="创建人" prop="creator">
-          <el-input v-model="createForm.creator" placeholder="请输入创建人" />
+          <el-input v-model="createForm.creator" disabled />
         </el-form-item>
         <el-form-item label="备注">
           <el-input v-model="createForm.remark" type="textarea" :rows="3" placeholder="请输入备注" />
@@ -123,6 +133,9 @@
         <el-descriptions-item label="盘点编号">{{ currentInventory.inventoryNumber }}</el-descriptions-item>
         <el-descriptions-item label="盘点名称">{{ currentInventory.inventoryName }}</el-descriptions-item>
         <el-descriptions-item label="类型">{{ currentInventory.inventoryTypeText }}</el-descriptions-item>
+        <el-descriptions-item v-if="currentInventory.inventoryType === 3" label="盘点分类">
+          {{ currentInventory.categoryName || '-' }}
+        </el-descriptions-item>
         <el-descriptions-item label="状态">
           <el-tag :type="getStatusType(currentInventory.inventoryStatus)">
             {{ currentInventory.inventoryStatusText }}
@@ -135,7 +148,7 @@
       </el-descriptions>
 
       <el-divider>盘点明细</el-divider>
-      <el-table :data="currentInventory?.details" border stripe max-height="500">
+      <el-table :data="detailList" border stripe max-height="500">
         <el-table-column prop="assetNumber" label="资产编号" width="150" />
         <el-table-column prop="assetName" label="资产名称" width="150" />
         <el-table-column prop="expectedLocation" label="预期位置" width="150" />
@@ -153,6 +166,16 @@
           </template>
         </el-table-column>
       </el-table>
+      <el-pagination
+        v-model:current-page="detailQuery.current"
+        v-model:page-size="detailQuery.size"
+        :total="detailTotal"
+        :page-sizes="[20, 50, 100, 200]"
+        layout="total, sizes, prev, pager, next, jumper"
+        @current-change="handleDetailPageChange"
+        @size-change="handleDetailPageChange"
+        style="margin-top: 16px; justify-content: flex-end"
+      />
     </el-dialog>
 
     <!-- 执行盘点对话框 -->
@@ -176,7 +199,7 @@
           </el-select>
         </el-form-item>
         <el-form-item label="盘点人" prop="inventoryPerson">
-          <el-input v-model="executeForm.inventoryPerson" placeholder="请输入盘点人" />
+          <el-input v-model="executeForm.inventoryPerson" disabled />
         </el-form-item>
         <el-form-item label="备注">
           <el-input v-model="executeForm.remark" type="textarea" :rows="2" placeholder="请输入备注" />
@@ -194,7 +217,9 @@
 import { ref, reactive } from 'vue'
 import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'element-plus'
 import { inventoryApi } from '@/api/lifecycle'
-import type { Inventory, InventoryCreateRequest, InventoryExecuteRequest, InventoryDetail } from '@/types'
+import { categoryApi } from '@/api/category'
+import { useUserStore } from '@/stores/user'
+import type { Inventory, InventoryCreateRequest, InventoryExecuteRequest, InventoryDetail, CategoryTreeNode } from '@/types'
 
 // 查询表单
 const queryForm = reactive({
@@ -206,6 +231,9 @@ const queryForm = reactive({
 const inventoryList = ref<Inventory[]>([])
 const total = ref(0)
 
+const userStore = useUserStore()
+const categoryTree = ref<CategoryTreeNode[]>([])
+
 // 创建对话框
 const createDialogVisible = ref(false)
 const createFormRef = ref<FormInstance>()
@@ -215,20 +243,35 @@ const createForm = reactive<InventoryCreateRequest>({
   planStartDate: '',
   planEndDate: '',
   creator: '',
+  categoryId: undefined,
   remark: ''
 })
+
+const validateCategory = (_rule: any, value: number | undefined, callback: (error?: Error) => void) => {
+  if (createForm.inventoryType === 3 && !value) {
+    callback(new Error('请选择盘点分类'))
+    return
+  }
+  callback()
+}
 
 const createRules: FormRules = {
   inventoryName: [{ required: true, message: '请输入盘点名称', trigger: 'blur' }],
   inventoryType: [{ required: true, message: '请选择盘点类型', trigger: 'change' }],
   planStartDate: [{ required: true, message: '请选择开始日期', trigger: 'change' }],
   planEndDate: [{ required: true, message: '请选择结束日期', trigger: 'change' }],
-  creator: [{ required: true, message: '请输入创建人', trigger: 'blur' }]
+  categoryId: [{ validator: validateCategory, trigger: 'change' }]
 }
 
 // 详情对话框
 const detailDialogVisible = ref(false)
 const currentInventory = ref<Inventory | null>(null)
+const detailList = ref<InventoryDetail[]>([])
+const detailTotal = ref(0)
+const detailQuery = reactive({
+  current: 1,
+  size: 20
+})
 
 // 执行盘点对话框
 const executeDialogVisible = ref(false)
@@ -243,8 +286,7 @@ const executeForm = reactive<InventoryExecuteRequest>({
 })
 
 const executeRules: FormRules = {
-  inventoryResult: [{ required: true, message: '请选择盘点结果', trigger: 'change' }],
-  inventoryPerson: [{ required: true, message: '请输入盘点人', trigger: 'blur' }]
+  inventoryResult: [{ required: true, message: '请选择盘点结果', trigger: 'change' }]
 }
 
 // 加载盘点列表
@@ -262,14 +304,42 @@ const loadInventoryList = async () => {
   }
 }
 
+const loadCategoryTree = async () => {
+  try {
+    const res = await categoryApi.getCategoryTree()
+    categoryTree.value = res.data
+  } catch (error) {
+    console.error('加载分类失败:', error)
+  }
+}
+
+const getCurrentUsername = () => {
+  return userStore.userInfo?.username || ''
+}
+
 // 显示创建对话框
 const showCreateDialog = () => {
+  createForm.inventoryName = ''
+  createForm.inventoryType = 1
+  createForm.planStartDate = ''
+  createForm.planEndDate = ''
+  createForm.creator = getCurrentUsername()
+  createForm.categoryId = undefined
+  createForm.remark = ''
   createDialogVisible.value = true
+}
+
+const handleInventoryTypeChange = (value: number) => {
+  if (value !== 3) {
+    createForm.categoryId = undefined
+  }
 }
 
 // 创建盘点计划
 const handleCreate = async () => {
   if (!createFormRef.value) return
+
+  createForm.creator = getCurrentUsername()
 
   await createFormRef.value.validate(async (valid) => {
     if (!valid) return
@@ -291,9 +361,30 @@ const viewDetail = async (id: number) => {
     const res = await inventoryApi.getInventoryDetail(id)
     currentInventory.value = res.data
     detailDialogVisible.value = true
+    detailQuery.current = 1
+    await loadInventoryDetails(id)
   } catch (error) {
     console.error('加载失败:', error)
   }
+}
+
+const loadInventoryDetails = async (inventoryId?: number) => {
+  const id = inventoryId ?? currentInventory.value?.id
+  if (!id) return
+  try {
+    const res = await inventoryApi.getInventoryDetailPage(id, {
+      current: detailQuery.current,
+      size: detailQuery.size
+    })
+    detailList.value = res.data.records
+    detailTotal.value = res.data.total
+  } catch (error) {
+    console.error('加载明细失败:', error)
+  }
+}
+
+const handleDetailPageChange = () => {
+  loadInventoryDetails()
 }
 
 // 开始盘点
@@ -337,12 +428,15 @@ const executeInventory = (detail: InventoryDetail) => {
   currentDetail.value = detail
   executeForm.detailId = detail.id
   executeForm.actualLocation = detail.expectedLocation || ''
+  executeForm.inventoryPerson = getCurrentUsername()
   executeDialogVisible.value = true
 }
 
 // 处理执行盘点
 const handleExecute = async () => {
   if (!executeFormRef.value) return
+
+  executeForm.inventoryPerson = getCurrentUsername()
 
   await executeFormRef.value.validate(async (valid) => {
     if (!valid) return
@@ -354,7 +448,10 @@ const handleExecute = async () => {
       
       // 刷新详情
       if (currentInventory.value) {
-        viewDetail(currentInventory.value.id)
+        const res = await inventoryApi.getInventoryDetail(currentInventory.value.id)
+        currentInventory.value = res.data
+        await loadInventoryDetails()
+        loadInventoryList()
       }
     } catch (error) {
       console.error('提交失败:', error)
@@ -387,6 +484,7 @@ const getResultType = (result: number): 'info' | 'success' | 'warning' | 'danger
 
 // 初始化
 loadInventoryList()
+loadCategoryTree()
 </script>
 
 <style scoped>

@@ -38,6 +38,11 @@ public class AssetInventory {
     private Integer inventoryType;
 
     /**
+     * 专项盘点分类ID
+     */
+    private Long categoryId;
+
+    /**
      * 计划开始日期
      */
     private LocalDate planStartDate;
