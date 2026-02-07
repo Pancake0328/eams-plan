@@ -18,6 +18,9 @@ import com.eams.purchase.entity.PurchaseOrderDetail;
 import com.eams.purchase.mapper.PurchaseOrderDetailMapper;
 import com.eams.purchase.mapper.PurchaseOrderMapper;
 import com.eams.purchase.service.PurchaseService;
+import com.eams.purchase.vo.PurchaseBillStatisticVO;
+import com.eams.purchase.vo.PurchaseFundOverviewVO;
+import com.eams.purchase.vo.PurchaseFundStatisticVO;
 import com.eams.purchase.vo.PurchaseVO;
 import com.eams.system.entity.User;
 import com.eams.system.mapper.UserMapper;
@@ -31,8 +34,11 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.YearMonth;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -377,6 +383,68 @@ public class PurchaseServiceImpl implements PurchaseService {
         }
 
         return allAssetIds;
+    }
+
+    @Override
+    public PurchaseBillStatisticVO getMonthlyBillStatistic(int year, int month) {
+        YearMonth yearMonth = YearMonth.of(year, month);
+        LocalDate startDate = yearMonth.atDay(1);
+        LocalDate endDate = yearMonth.atEndOfMonth();
+        PurchaseFundOverviewVO overview = normalizeOverview(purchaseMapper.selectSummaryByDateRange(startDate, endDate));
+        return buildBillStatistic(overview, yearMonth.format(DateTimeFormatter.ofPattern("yyyy-MM")), "月度");
+    }
+
+    @Override
+    public PurchaseBillStatisticVO getAnnualBillStatistic(int year) {
+        LocalDate startDate = LocalDate.of(year, 1, 1);
+        LocalDate endDate = LocalDate.of(year, 12, 31);
+        PurchaseFundOverviewVO overview = normalizeOverview(purchaseMapper.selectSummaryByDateRange(startDate, endDate));
+        return buildBillStatistic(overview, String.valueOf(year), "年度");
+    }
+
+    @Override
+    public PurchaseFundOverviewVO getFundOverview() {
+        return normalizeOverview(purchaseMapper.selectTotalSummary());
+    }
+
+    @Override
+    public List<PurchaseFundStatisticVO> getFundStatisticsBySupplier() {
+        return purchaseMapper.selectSupplierStatistics();
+    }
+
+    @Override
+    public List<PurchaseFundStatisticVO> getFundStatisticsByTime(LocalDate startDate, LocalDate endDate) {
+        return purchaseMapper.selectTimeStatistics(startDate, endDate);
+    }
+
+    private PurchaseFundOverviewVO normalizeOverview(PurchaseFundOverviewVO overview) {
+        if (overview == null) {
+            overview = new PurchaseFundOverviewVO();
+            overview.setOrderCount(0L);
+            overview.setTotalAmount(BigDecimal.ZERO);
+        }
+        if (overview.getOrderCount() == null) {
+            overview.setOrderCount(0L);
+        }
+        if (overview.getTotalAmount() == null) {
+            overview.setTotalAmount(BigDecimal.ZERO);
+        }
+        if (overview.getOrderCount() > 0) {
+            overview.setAverageAmount(overview.getTotalAmount().divide(BigDecimal.valueOf(overview.getOrderCount()), 2, RoundingMode.HALF_UP));
+        } else {
+            overview.setAverageAmount(BigDecimal.ZERO);
+        }
+        return overview;
+    }
+
+    private PurchaseBillStatisticVO buildBillStatistic(PurchaseFundOverviewVO overview, String period, String type) {
+        PurchaseBillStatisticVO stat = new PurchaseBillStatisticVO();
+        stat.setBillPeriod(period);
+        stat.setBillType(type);
+        stat.setOrderCount(overview.getOrderCount());
+        stat.setTotalAmount(overview.getTotalAmount());
+        stat.setAverageAmount(overview.getAverageAmount());
+        return stat;
     }
 
     private void updatePurchaseStatus(Long purchaseId) {

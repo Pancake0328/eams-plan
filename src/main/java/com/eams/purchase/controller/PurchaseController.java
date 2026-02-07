@@ -6,14 +6,19 @@ import com.eams.purchase.dto.AssetInboundRequest;
 import com.eams.purchase.dto.BatchInboundRequest;
 import com.eams.purchase.dto.PurchaseCreateRequest;
 import com.eams.purchase.service.PurchaseService;
+import com.eams.purchase.vo.PurchaseBillStatisticVO;
+import com.eams.purchase.vo.PurchaseFundOverviewVO;
+import com.eams.purchase.vo.PurchaseFundStatisticVO;
 import com.eams.purchase.vo.PurchaseVO;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @Tag(name = "采购管理")
@@ -84,5 +89,49 @@ public class PurchaseController {
     public Result<List<Long>> batchInbound(@Valid @RequestBody BatchInboundRequest request) {
         List<Long> assetIds = purchaseService.batchInbound(request);
         return Result.success(assetIds);
+    }
+
+    @Operation(summary = "月度账单统计")
+    @GetMapping("/statistics/bill/monthly")
+    @PreAuthorize("hasAuthority('finance:bill:list')")
+    public Result<PurchaseBillStatisticVO> getMonthlyBillStatistic(
+            @RequestParam Integer year,
+            @RequestParam Integer month) {
+        PurchaseBillStatisticVO stat = purchaseService.getMonthlyBillStatistic(year, month);
+        return Result.success(stat);
+    }
+
+    @Operation(summary = "年度账单统计")
+    @GetMapping("/statistics/bill/annual")
+    @PreAuthorize("hasAuthority('finance:bill:list')")
+    public Result<PurchaseBillStatisticVO> getAnnualBillStatistic(@RequestParam Integer year) {
+        PurchaseBillStatisticVO stat = purchaseService.getAnnualBillStatistic(year);
+        return Result.success(stat);
+    }
+
+    @Operation(summary = "采购资金概览")
+    @GetMapping("/statistics/overview")
+    @PreAuthorize("hasAuthority('finance:statistics:view')")
+    public Result<PurchaseFundOverviewVO> getFundOverview() {
+        PurchaseFundOverviewVO overview = purchaseService.getFundOverview();
+        return Result.success(overview);
+    }
+
+    @Operation(summary = "按供应商统计")
+    @GetMapping("/statistics/by-supplier")
+    @PreAuthorize("hasAuthority('finance:statistics:view')")
+    public Result<List<PurchaseFundStatisticVO>> getFundStatisticsBySupplier() {
+        List<PurchaseFundStatisticVO> stats = purchaseService.getFundStatisticsBySupplier();
+        return Result.success(stats);
+    }
+
+    @Operation(summary = "按时间统计")
+    @GetMapping("/statistics/by-time")
+    @PreAuthorize("hasAuthority('finance:statistics:view')")
+    public Result<List<PurchaseFundStatisticVO>> getFundStatisticsByTime(
+            @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate startDate,
+            @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate endDate) {
+        List<PurchaseFundStatisticVO> stats = purchaseService.getFundStatisticsByTime(startDate, endDate);
+        return Result.success(stats);
     }
 }

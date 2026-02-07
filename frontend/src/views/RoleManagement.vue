@@ -150,7 +150,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed } from 'vue'
+import { ref, reactive, computed, nextTick } from 'vue'
 import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'element-plus'
 import { Search, Refresh, Plus, Edit, Delete, Key } from '@element-plus/icons-vue'
 import { roleApi, permissionApi } from '@/api/permission'
@@ -362,6 +362,8 @@ const handleAssignPermission = async (row: Role) => {
     const checkedSet = new Set(roleMenuRes.data)
     normalizeCheckedMenuIds(menuTree.value, checkedSet)
     checkedMenuIds.value = Array.from(checkedSet)
+    await nextTick()
+    treeRef.value?.setCheckedKeys(checkedMenuIds.value, false)
   } catch (error) {
     ElMessage.error('加载权限数据失败')
   } finally {
@@ -398,6 +400,7 @@ const handleSavePermissions = async () => {
 const handlePermissionDialogClose = () => {
   checkedMenuIds.value = []
   menuTree.value = []
+  treeRef.value?.setCheckedKeys([], false)
 }
 
 // 初始化加载

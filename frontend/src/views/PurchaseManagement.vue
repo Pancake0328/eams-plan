@@ -1,7 +1,7 @@
 <template>
   <div class="purchase-management">
     <el-tabs v-model="activeTab" type="border-card">
-      <el-tab-pane label="采购管理" name="purchase">
+      <el-tab-pane v-if="canViewPurchase" label="采购管理" name="purchase">
         <el-card>
           <!-- 搜索栏 -->
           <el-form :inline="true" :model="searchForm">
@@ -77,7 +77,7 @@
         </el-card>
       </el-tab-pane>
 
-      <el-tab-pane label="账单统计" name="bill" v-permission="'finance:bill:list'">
+      <el-tab-pane v-if="canViewBill" label="账单统计" name="bill">
         <el-card shadow="never">
           <div style="margin-bottom: 16px">
             <el-date-picker
@@ -97,72 +97,49 @@
           </div>
 
           <el-table :data="billList" v-loading="billLoading" border>
-            <el-table-column prop="billNumber" label="账单编号" width="180" />
-            <el-table-column prop="billTypeText" label="类型" width="100" align="center" />
-            <el-table-column label="账单期间" width="150">
-              <template #default="{ row }">
-                {{ row.billYear }}年{{ row.billMonth ? row.billMonth + '月' : '' }}
-              </template>
+            <el-table-column prop="billPeriod" label="账单期间" width="160" />
+            <el-table-column prop="billType" label="账单类型" width="100" align="center" />
+            <el-table-column prop="orderCount" label="采购单数" width="120" align="right" />
+            <el-table-column prop="totalAmount" label="采购总额" width="150" align="right">
+              <template #default="{ row }">¥{{ row.totalAmount.toFixed(2) }}</template>
             </el-table-column>
-            <el-table-column prop="totalPurchaseAmount" label="采购总额" width="130" align="right">
-              <template #default="{ row }">¥{{ row.totalPurchaseAmount.toFixed(2) }}</template>
-            </el-table-column>
-            <el-table-column prop="totalDepreciationAmount" label="折旧总额" width="130" align="right">
-              <template #default="{ row }">¥{{ row.totalDepreciationAmount.toFixed(2) }}</template>
-            </el-table-column>
-            <el-table-column prop="totalNetValue" label="净值总额" width="130" align="right">
-              <template #default="{ row }">¥{{ row.totalNetValue.toFixed(2) }}</template>
-            </el-table-column>
-            <el-table-column prop="billStatusText" label="状态" width="100" align="center">
-              <template #default="{ row }">
-                <el-tag :type="row.billStatus === 2 ? 'success' : 'info'">
-                  {{ row.billStatusText }}
-                </el-tag>
-              </template>
-            </el-table-column>
-            <el-table-column prop="generateTime" label="生成时间" width="180" />
-            <el-table-column label="操作" width="150" fixed="right">
-              <template #default="{ row }">
-                <el-button v-if="row.billStatus !== 2" link type="primary" v-permission="'finance:bill:confirm'" @click="handleConfirmBill(row)">
-                  确认
-                </el-button>
-                <el-button link type="danger" v-permission="'finance:bill:delete'" @click="handleDeleteBill(row)">删除</el-button>
-              </template>
+            <el-table-column prop="averageAmount" label="平均金额" width="150" align="right">
+              <template #default="{ row }">¥{{ row.averageAmount.toFixed(2) }}</template>
             </el-table-column>
           </el-table>
         </el-card>
       </el-tab-pane>
 
-      <el-tab-pane label="资金统计" name="statistics" v-permission="'finance:statistics:view'">
+      <el-tab-pane v-if="canViewStatistics" label="资金统计" name="statistics">
         <el-row :gutter="16">
           <el-col :span="24">
             <el-card shadow="never" style="marginbottom: 16px">
               <template #header>
-                <span>财务概览</span>
+                <span>采购资金概览</span>
               </template>
               <el-row :gutter="16">
                 <el-col :span="6">
                   <div class="stat-item">
-                    <div class="stat-label">资产数量</div>
-                    <div class="stat-value">{{ overview.assetCount }}</div>
+                    <div class="stat-label">采购单数</div>
+                    <div class="stat-value">{{ overview.orderCount }}</div>
                   </div>
                 </el-col>
                 <el-col :span="6">
                   <div class="stat-item">
                     <div class="stat-label">采购总额</div>
-                    <div class="stat-value">¥{{ overview.totalPurchaseAmount?.toFixed(2) || '0.00' }}</div>
+                    <div class="stat-value">¥{{ overview.totalAmount?.toFixed(2) || '0.00' }}</div>
                   </div>
                 </el-col>
                 <el-col :span="6">
                   <div class="stat-item">
-                    <div class="stat-label">累计折旧</div>
-                    <div class="stat-value">¥{{ overview.totalDepreciation?.toFixed(2) || '0.00' }}</div>
+                    <div class="stat-label">平均采购金额</div>
+                    <div class="stat-value">¥{{ overview.averageAmount?.toFixed(2) || '0.00' }}</div>
                   </div>
                 </el-col>
                 <el-col :span="6">
                   <div class="stat-item">
-                    <div class="stat-label">资产净值</div>
-                    <div class="stat-value">¥{{ overview.totalNetValue?.toFixed(2) || '0.00' }}</div>
+                    <div class="stat-label">供应商数量</div>
+                    <div class="stat-value">{{ supplierCount }}</div>
                   </div>
                 </el-col>
               </el-row>
@@ -172,7 +149,7 @@
           <el-col :span="12">
             <el-card shadow="never">
               <template #header>
-                <span>按部门统计</span>
+                <span>按供应商统计</span>
               </template>
               <div ref="deptChartRef" style="width: 100%; height: 300px"></div>
             </el-card>
@@ -336,10 +313,9 @@ import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'elem
 import { Search, Refresh, Plus, View, Close } from '@element-plus/icons-vue'
 import { purchaseApi } from '@/api/purchase'
 import { categoryApi } from '@/api/category'
-import { financeApi } from '@/api/finance'
 import { usePermissionStore } from '@/stores/permission'
-import type { Purchase, PurchaseCreateRequest } from '@/api/purchase'
-import type { Bill, FinanceStatistics } from '@/types'
+import type { Purchase, PurchaseCreateRequest, PurchaseBillStatistic, PurchaseFundOverview, PurchaseFundStatistic } from '@/api/purchase'
+import type { CategoryTreeNode } from '@/types'
 import * as echarts from 'echarts'
 
 // 搜索表单
@@ -350,6 +326,7 @@ const searchForm = reactive({
 
 const activeTab = ref('purchase')
 const permissionStore = usePermissionStore()
+const canViewPurchase = computed(() => permissionStore.hasPermission('purchase:list'))
 const canViewBill = computed(() => permissionStore.hasPermission('finance:bill:list'))
 const canViewStatistics = computed(() => permissionStore.hasPermission('finance:statistics:view'))
 
@@ -358,7 +335,7 @@ const purchaseList = ref<Purchase[]>([])
 const loading = ref(false)
 
 // 分类列表
-const categories = ref<Category[]>([])
+const categories = ref<CategoryTreeNode[]>([])
 
 // 分页
 const pagination = reactive({
@@ -373,15 +350,16 @@ const detailDialogVisible = ref(false)
 const currentPurchase = ref<Purchase>()
 
 // 账单
-const billList = ref<Bill[]>([])
+const billList = ref<PurchaseBillStatistic[]>([])
 const billLoading = ref(false)
 const selectedMonth = ref<Date>()
 const selectedYear = ref<Date>()
 
 // 统计
-const overview = ref<FinanceStatistics>({} as FinanceStatistics)
-const deptStats = ref<FinanceStatistics[]>([])
-const timeStats = ref<FinanceStatistics[]>([])
+const overview = ref<PurchaseFundOverview>({} as PurchaseFundOverview)
+const supplierStats = ref<PurchaseFundStatistic[]>([])
+const timeStats = ref<PurchaseFundStatistic[]>([])
+const supplierCount = computed(() => supplierStats.value.length)
 const deptChartRef = ref<HTMLElement>()
 const timeChartRef = ref<HTMLElement>()
 
@@ -434,9 +412,9 @@ const loadCategories = async () => {
 /**
  * 展平分类树
  */
-const flattenCategories = (tree: Category[]): Category[] => {
-  const result: Category[] = []
-  const flatten = (nodes: Category[]) => {
+const flattenCategories = (tree: CategoryTreeNode[]): CategoryTreeNode[] => {
+  const result: CategoryTreeNode[] = []
+  const flatten = (nodes: CategoryTreeNode[]) => {
     nodes.forEach(node => {
       result.push(node)
       if (node.children && node.children.length > 0) {
@@ -573,13 +551,23 @@ const getStatusType = (status: number) => {
   return types[status] || 'info'
 }
 
+const upsertBillStatistic = (stat: PurchaseBillStatistic) => {
+  const index = billList.value.findIndex(item => item.billPeriod === stat.billPeriod && item.billType === stat.billType)
+  if (index >= 0) {
+    billList.value.splice(index, 1, stat)
+  } else {
+    billList.value.unshift(stat)
+  }
+}
+
 const loadBillList = async () => {
   billLoading.value = true
   try {
-    const res = await financeApi.getBillPage({ current: 1, size: 100 })
-    billList.value = res.data.records
+    const now = new Date()
+    const res = await purchaseApi.getMonthlyBillStatistic(now.getFullYear(), now.getMonth() + 1)
+    billList.value = [res.data]
   } catch (error) {
-    console.error('加载账单失败:', error)
+    console.error('加载账单统计失败:', error)
   } finally {
     billLoading.value = false
   }
@@ -593,9 +581,9 @@ const handleGenerateMonthlyBill = async () => {
   const year = selectedMonth.value.getFullYear()
   const month = selectedMonth.value.getMonth() + 1
   try {
-    await financeApi.generateMonthlyBill(year, month)
-    ElMessage.success('账单生成成功')
-    loadBillList()
+    const res = await purchaseApi.getMonthlyBillStatistic(year, month)
+    upsertBillStatistic(res.data)
+    ElMessage.success('账单统计生成成功')
   } catch (error) {
     console.error('生成账单失败:', error)
   }
@@ -608,45 +596,31 @@ const handleGenerateAnnualBill = async () => {
   }
   const year = selectedYear.value.getFullYear()
   try {
-    await financeApi.generateAnnualBill(year)
-    ElMessage.success('账单生成成功')
-    loadBillList()
+    const res = await purchaseApi.getAnnualBillStatistic(year)
+    upsertBillStatistic(res.data)
+    ElMessage.success('账单统计生成成功')
   } catch (error) {
     console.error('生成账单失败:', error)
   }
 }
 
-const handleConfirmBill = async (row: Bill) => {
-  await ElMessageBox.confirm('确定确认该账单吗？', '提示', { type: 'warning' })
-  try {
-    await financeApi.confirmBill(row.id)
-    ElMessage.success('确认成功')
-    loadBillList()
-  } catch (error) {
-    console.error('确认失败:', error)
-  }
-}
-
-const handleDeleteBill = async (row: Bill) => {
-  await ElMessageBox.confirm('确定删除该账单吗？删除后将同时删除账单明细。', '提示', { type: 'warning' })
-  try {
-    await financeApi.deleteBill(row.id)
-    ElMessage.success('删除成功')
-    loadBillList()
-  } catch (error) {
-    console.error('删除失败:', error)
-  }
-}
-
 const loadStatistics = async () => {
   try {
-    const [overviewRes, deptRes, timeRes] = await Promise.all([
-      financeApi.getFinanceOverview(),
-      financeApi.statisticsByDepartment(),
-      financeApi.statisticsByTime('2024-01-01', '2026-12-31')
+    const now = new Date()
+    const startDate = new Date(now.getFullYear(), 0, 1)
+    const endDate = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+    const formatDate = (date: Date) => {
+      const month = String(date.getMonth() + 1).padStart(2, '0')
+      const day = String(date.getDate()).padStart(2, '0')
+      return `${date.getFullYear()}-${month}-${day}`
+    }
+    const [overviewRes, supplierRes, timeRes] = await Promise.all([
+      purchaseApi.getFundOverview(),
+      purchaseApi.getFundStatisticsBySupplier(),
+      purchaseApi.getFundStatisticsByTime(formatDate(startDate), formatDate(endDate))
     ])
     overview.value = overviewRes.data
-    deptStats.value = deptRes.data
+    supplierStats.value = supplierRes.data
     timeStats.value = timeRes.data
 
     nextTick(() => {
@@ -665,13 +639,13 @@ const renderDeptChart = () => {
     tooltip: { trigger: 'axis' },
     xAxis: {
       type: 'category',
-      data: deptStats.value.map(s => s.dimension)
+      data: supplierStats.value.map(s => s.dimension)
     },
     yAxis: { type: 'value' },
     series: [{
-      name: '资产净值',
+      name: '采购总额',
       type: 'bar',
-      data: deptStats.value.map(s => s.totalNetValue),
+      data: supplierStats.value.map(s => s.totalAmount),
       itemStyle: { color: '#409EFF' }
     }]
   })
@@ -690,7 +664,7 @@ const renderTimeChart = () => {
     series: [{
       name: '采购总额',
       type: 'line',
-      data: timeStats.value.map(s => s.totalPurchaseAmount),
+      data: timeStats.value.map(s => s.totalAmount),
       smooth: true,
       itemStyle: { color: '#67C23A' }
     }]
@@ -698,7 +672,7 @@ const renderTimeChart = () => {
 }
 
 const setDefaultTab = () => {
-  if (permissionStore.hasPermission('purchase:list')) {
+  if (canViewPurchase.value) {
     activeTab.value = 'purchase'
     return
   }

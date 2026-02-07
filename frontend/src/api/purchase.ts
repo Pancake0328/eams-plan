@@ -56,6 +56,27 @@ export interface PurchaseDetailRequest {
     remark?: string
 }
 
+// ==================== 采购统计 ====================
+export interface PurchaseBillStatistic {
+    billPeriod: string
+    billType: string
+    orderCount: number
+    totalAmount: number
+    averageAmount: number
+}
+
+export interface PurchaseFundOverview {
+    orderCount: number
+    totalAmount: number
+    averageAmount: number
+}
+
+export interface PurchaseFundStatistic {
+    dimension: string
+    orderCount: number
+    totalAmount: number
+}
+
 export interface AssetInboundRequest {
     detailId: number
     quantity: number
@@ -128,5 +149,40 @@ export const purchaseApi = {
      */
     batchInbound(data: BatchInboundRequest): Promise<Result<number[]>> {
         return request.post('/purchase/batch-inbound', data)
+    },
+
+    /**
+     * 月度账单统计
+     */
+    getMonthlyBillStatistic(year: number, month: number): Promise<Result<PurchaseBillStatistic>> {
+        return request.get('/purchase/statistics/bill/monthly', { params: { year, month } })
+    },
+
+    /**
+     * 年度账单统计
+     */
+    getAnnualBillStatistic(year: number): Promise<Result<PurchaseBillStatistic>> {
+        return request.get('/purchase/statistics/bill/annual', { params: { year } })
+    },
+
+    /**
+     * 资金概览
+     */
+    getFundOverview(): Promise<Result<PurchaseFundOverview>> {
+        return request.get('/purchase/statistics/overview')
+    },
+
+    /**
+     * 按供应商统计
+     */
+    getFundStatisticsBySupplier(): Promise<Result<PurchaseFundStatistic[]>> {
+        return request.get('/purchase/statistics/by-supplier')
+    },
+
+    /**
+     * 按时间统计
+     */
+    getFundStatisticsByTime(startDate: string, endDate: string): Promise<Result<PurchaseFundStatistic[]>> {
+        return request.get('/purchase/statistics/by-time', { params: { startDate, endDate } })
     }
 }

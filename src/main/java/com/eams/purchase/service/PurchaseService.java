@@ -4,9 +4,13 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.eams.purchase.dto.AssetInboundRequest;
 import com.eams.purchase.dto.BatchInboundRequest;
 import com.eams.purchase.dto.PurchaseCreateRequest;
+import com.eams.purchase.vo.PurchaseBillStatisticVO;
+import com.eams.purchase.vo.PurchaseFundOverviewVO;
+import com.eams.purchase.vo.PurchaseFundStatisticVO;
 import com.eams.purchase.vo.PurchaseVO;
 
 import java.util.List;
+import java.time.LocalDate;
 
 public interface PurchaseService {
 
@@ -33,4 +37,14 @@ public interface PurchaseService {
      * @return 入库的资产ID列表
      */
     List<Long> batchInbound(BatchInboundRequest request);
+
+    PurchaseBillStatisticVO getMonthlyBillStatistic(int year, int month);
+
+    PurchaseBillStatisticVO getAnnualBillStatistic(int year);
+
+    PurchaseFundOverviewVO getFundOverview();
+
+    List<PurchaseFundStatisticVO> getFundStatisticsBySupplier();
+
+    List<PurchaseFundStatisticVO> getFundStatisticsByTime(LocalDate startDate, LocalDate endDate);
 }
