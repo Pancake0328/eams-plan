@@ -56,7 +56,7 @@ public class RoleController {
 
     @Operation(summary = "获取角色详情")
     @GetMapping("/{id}")
-    @PreAuthorize("hasAuthority('system:role:view')")
+    @PreAuthorize("hasAuthority('system:role:list')")
     public Result<RoleVO> getRoleById(@PathVariable Long id) {
         RoleVO role = roleService.getRoleById(id);
         return Result.success(role);

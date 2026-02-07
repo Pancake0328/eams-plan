@@ -33,7 +33,7 @@ public class AssetRepairController {
     @Operation(summary = "创建报修记录")
     @PostMapping
     @OperationLog(module = "报修管理", action = "创建报修")
-    @PreAuthorize("hasAuthority('repair:create')")
+    @PreAuthorize("hasAuthority('repair:create') or hasAuthority('asset:record:repair')")
     public Result<Long> createRepair(@Valid @RequestBody RepairCreateRequest request) {
         Long id = repairService.createRepair(request);
         return Result.success(id);

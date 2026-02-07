@@ -206,6 +206,7 @@ public class AssetRecordServiceImpl implements AssetRecordService {
         AssetInfo asset = getAssetEntityById(request.getAssetId());
         Long fromDepartmentId = asset.getDepartmentId();
         String fromCustodian = asset.getCustodian();
+        String operator = getCurrentUsername();
 
         // 状态校验：只有使用中的资产才能归还
         if (asset.getAssetStatus() != 2) {
@@ -217,18 +218,18 @@ public class AssetRecordServiceImpl implements AssetRecordService {
                 asset,
                 4, // 归还
                 asset.getDepartmentId(), null,
-                asset.getCustodian(), null,
+                asset.getCustodian(), operator,
                 asset.getAssetStatus(), 1, // 状态变更为闲置
                 request.getRemark());
         recordMapper.insert(record);
 
         // 更新资产信息
-        asset.setCustodian(null);
+        asset.setCustodian(operator);
         asset.setAssetStatus(1); // 闲置
         assetInfoMapper.updateById(asset);
         recordLifecycle(asset.getId(), 4, "资产归还", request.getRemark(),
                 fromDepartmentId, fromDepartmentId,
-                fromCustodian, null);
+                fromCustodian, operator);
 
         log.info("资产归还成功，资产编号: {}", asset.getAssetNumber());
         return record.getId();
@@ -246,6 +247,7 @@ public class AssetRecordServiceImpl implements AssetRecordService {
         AssetInfo asset = getAssetEntityById(request.getAssetId());
         Long fromDepartmentId = asset.getDepartmentId();
         String fromCustodian = asset.getCustodian();
+        String operator = getCurrentUsername();
 
         // 状态校验：只有闲置的资产才能报废
         if (asset.getAssetStatus() == 4) {
@@ -260,17 +262,18 @@ public class AssetRecordServiceImpl implements AssetRecordService {
                 asset,
                 5, // 报废
                 asset.getDepartmentId(), null,
-                asset.getCustodian(), null,
+                asset.getCustodian(), operator,
                 asset.getAssetStatus(), 4, // 状态变更为报废
                 request.getRemark());
         recordMapper.insert(record);
 
         // 更新资产信息
+        asset.setCustodian(operator);
         asset.setAssetStatus(4); // 报废
         assetInfoMapper.updateById(asset);
         recordLifecycle(asset.getId(), 5, "资产报废", request.getRemark(),
                 fromDepartmentId, fromDepartmentId,
-                fromCustodian, fromCustodian);
+                fromCustodian, operator);
 
         log.info("资产报废成功，资产编号: {}", asset.getAssetNumber());
         return record.getId();

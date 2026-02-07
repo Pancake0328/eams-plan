@@ -77,7 +77,7 @@
         </el-card>
       </el-tab-pane>
 
-      <el-tab-pane v-if="canViewBill" label="账单统计" name="bill">
+      <el-tab-pane v-if="canViewBill" label="账单统计" name="bill" lazy>
         <el-card shadow="never">
           <div style="margin-bottom: 16px">
             <el-date-picker
@@ -110,7 +110,7 @@
         </el-card>
       </el-tab-pane>
 
-      <el-tab-pane v-if="canViewStatistics" label="资金统计" name="statistics">
+      <el-tab-pane v-if="canViewStatistics" label="资金统计" name="statistics" lazy>
         <el-row :gutter="16">
           <el-col :span="24">
             <el-card shadow="never" style="marginbottom: 16px">
@@ -308,7 +308,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted, computed, nextTick } from 'vue'
+import { ref, reactive, onMounted, computed, nextTick, watch } from 'vue'
 import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'element-plus'
 import { Search, Refresh, Plus, View, Close } from '@element-plus/icons-vue'
 import { purchaseApi } from '@/api/purchase'
@@ -329,6 +329,9 @@ const permissionStore = usePermissionStore()
 const canViewPurchase = computed(() => permissionStore.hasPermission('purchase:list'))
 const canViewBill = computed(() => permissionStore.hasPermission('finance:bill:list'))
 const canViewStatistics = computed(() => permissionStore.hasPermission('finance:statistics:view'))
+
+const billLoaded = ref(false)
+const statisticsLoaded = ref(false)
 
 // 采购单列表
 const purchaseList = ref<Purchase[]>([])
@@ -566,6 +569,7 @@ const loadBillList = async () => {
     const now = new Date()
     const res = await purchaseApi.getMonthlyBillStatistic(now.getFullYear(), now.getMonth() + 1)
     billList.value = [res.data]
+    billLoaded.value = true
   } catch (error) {
     console.error('加载账单统计失败:', error)
   } finally {
@@ -627,6 +631,7 @@ const loadStatistics = async () => {
       renderDeptChart()
       renderTimeChart()
     })
+    statisticsLoaded.value = true
   } catch (error) {
     console.error('加载统计数据失败:', error)
   }
@@ -685,6 +690,19 @@ const setDefaultTab = () => {
   }
 }
 
+watch(
+  activeTab,
+  (tab) => {
+    if (tab === 'bill' && canViewBill.value && !billLoaded.value) {
+      loadBillList()
+    }
+    if (tab === 'statistics' && canViewStatistics.value && !statisticsLoaded.value) {
+      loadStatistics()
+    }
+  },
+  { immediate: true }
+)
+
 // 初始化
 onMounted(() => {
   setDefaultTab()
@@ -693,12 +711,6 @@ onMounted(() => {
   }
   if (permissionStore.hasPermission('purchase:create')) {
     loadCategories()
-  }
-  if (canViewBill.value) {
-    loadBillList()
-  }
-  if (canViewStatistics.value) {
-    loadStatistics()
   }
 })
 </script>

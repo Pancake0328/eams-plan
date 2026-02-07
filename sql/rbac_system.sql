@@ -101,15 +101,11 @@ INSERT INTO sys_menu (id, parent_id, menu_name, menu_type, permission_code, path
 (17, 6, '盘点管理', 'MENU', 'inventory:list', '/inventory', 'InventoryManagement', 'Checked', 2),
 (18, 6, '报修管理', 'MENU', 'repair:list', '/repair', 'RepairManagement', 'Tools', 3),
 
--- 仪表盘按钮权限
-(19, 1, '导出报表', 'BUTTON', 'dashboard:export', NULL, NULL, NULL, 1),
-
 -- 角色管理按钮权限
 (20, 8, '新增角色', 'BUTTON', 'system:role:add', NULL, NULL, NULL, 1),
 (21, 8, '编辑角色', 'BUTTON', 'system:role:edit', NULL, NULL, NULL, 2),
 (22, 8, '删除角色', 'BUTTON', 'system:role:delete', NULL, NULL, NULL, 3),
 (23, 8, '分配权限', 'BUTTON', 'system:role:permission', NULL, NULL, NULL, 4),
-(24, 8, '查看角色', 'BUTTON', 'system:role:view', NULL, NULL, NULL, 5),
 (25, 8, '更新状态', 'BUTTON', 'system:role:status', NULL, NULL, NULL, 6),
 
 -- 用户管理按钮权限
@@ -128,18 +124,14 @@ INSERT INTO sys_menu (id, parent_id, menu_name, menu_type, permission_code, path
 (36, 10, '查看部门', 'BUTTON', 'system:department:view', NULL, NULL, NULL, 4),
 
 -- 资产信息按钮权限
-(46, 13, '新增资产', 'BUTTON', 'asset:info:add', NULL, NULL, NULL, 1),
 (47, 13, '编辑资产', 'BUTTON', 'asset:info:edit', NULL, NULL, NULL, 2),
-(48, 13, '删除资产', 'BUTTON', 'asset:info:delete', NULL, NULL, NULL, 3),
 (49, 13, '查看资产', 'BUTTON', 'asset:info:view', NULL, NULL, NULL, 4),
-(50, 13, '更新状态', 'BUTTON', 'asset:info:status', NULL, NULL, NULL, 5),
 (51, 13, '资产入库', 'BUTTON', 'asset:record:in', NULL, NULL, NULL, 6),
 (52, 13, '分配资产', 'BUTTON', 'asset:record:allocate', NULL, NULL, NULL, 7),
 (53, 13, '调拨资产', 'BUTTON', 'asset:record:transfer', NULL, NULL, NULL, 8),
 (54, 13, '归还资产', 'BUTTON', 'asset:record:return', NULL, NULL, NULL, 9),
 (55, 13, '报废资产', 'BUTTON', 'asset:record:scrap', NULL, NULL, NULL, 10),
 (56, 13, '送修资产', 'BUTTON', 'asset:record:repair', NULL, NULL, NULL, 11),
-(57, 13, '维修完成', 'BUTTON', 'asset:record:repair-complete', NULL, NULL, NULL, 12),
 (58, 13, '查看流转历史', 'BUTTON', 'asset:record:history', NULL, NULL, NULL, 13),
 
 -- 资产分类按钮权限
@@ -152,7 +144,6 @@ INSERT INTO sys_menu (id, parent_id, menu_name, menu_type, permission_code, path
 (63, 16, '创建生命周期', 'BUTTON', 'lifecycle:create', NULL, NULL, NULL, 1),
 (64, 16, '查询历史', 'BUTTON', 'lifecycle:history', NULL, NULL, NULL, 2),
 (65, 16, '当前阶段', 'BUTTON', 'lifecycle:current', NULL, NULL, NULL, 3),
-(66, 16, '变更阶段', 'BUTTON', 'lifecycle:change', NULL, NULL, NULL, 4),
 
 -- 盘点按钮权限
 (67, 17, '创建盘点', 'BUTTON', 'inventory:create', NULL, NULL, NULL, 1),
@@ -173,9 +164,6 @@ INSERT INTO sys_menu (id, parent_id, menu_name, menu_type, permission_code, path
 (78, 4, '新建采购', 'BUTTON', 'purchase:create', NULL, NULL, NULL, 1),
 (79, 4, '查看采购', 'BUTTON', 'purchase:view', NULL, NULL, NULL, 2),
 (80, 4, '取消采购', 'BUTTON', 'purchase:cancel', NULL, NULL, NULL, 3),
-(81, 4, '待入库列表', 'BUTTON', 'purchase:pending-inbound', NULL, NULL, NULL, 4),
-(82, 4, '采购入库', 'BUTTON', 'purchase:inbound', NULL, NULL, NULL, 5),
-(83, 4, '批量入库', 'BUTTON', 'purchase:batch-inbound', NULL, NULL, NULL, 6),
 
 -- 账单与资金统计权限（挂载在采购管理下）
 (89, 4, '账单列表', 'BUTTON', 'finance:bill:list', NULL, NULL, NULL, 6),

@@ -137,6 +137,7 @@
           :props="{ children: 'children', label: 'menuName' }"
           node-key="id"
           show-checkbox
+          check-strictly
           default-expand-all
           :default-checked-keys="checkedMenuIds"
         />

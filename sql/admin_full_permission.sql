@@ -37,13 +37,10 @@ VALUES
   (17, 6, '盘点管理', 'MENU', 'inventory:list', '/inventory', 'InventoryManagement', 'Checked', 2, 1, 1, NULL, 0),
   (18, 6, '报修管理', 'MENU', 'repair:list', '/repair', 'RepairManagement', 'Tools', 3, 1, 1, NULL, 0),
 
-  (19, 1, '导出报表', 'BUTTON', 'dashboard:export', NULL, NULL, NULL, 1, 1, 1, NULL, 0),
-
   (20, 8, '新增角色', 'BUTTON', 'system:role:add', NULL, NULL, NULL, 1, 1, 1, NULL, 0),
   (21, 8, '编辑角色', 'BUTTON', 'system:role:edit', NULL, NULL, NULL, 2, 1, 1, NULL, 0),
   (22, 8, '删除角色', 'BUTTON', 'system:role:delete', NULL, NULL, NULL, 3, 1, 1, NULL, 0),
   (23, 8, '分配权限', 'BUTTON', 'system:role:permission', NULL, NULL, NULL, 4, 1, 1, NULL, 0),
-  (24, 8, '查看角色', 'BUTTON', 'system:role:view', NULL, NULL, NULL, 5, 1, 1, NULL, 0),
   (25, 8, '更新状态', 'BUTTON', 'system:role:status', NULL, NULL, NULL, 6, 1, 1, NULL, 0),
 
   (26, 9, '新增用户', 'BUTTON', 'system:user:add', NULL, NULL, NULL, 1, 1, 1, NULL, 0),
@@ -59,18 +56,14 @@ VALUES
   (35, 10, '删除部门', 'BUTTON', 'system:department:delete', NULL, NULL, NULL, 3, 1, 1, NULL, 0),
   (36, 10, '查看部门', 'BUTTON', 'system:department:view', NULL, NULL, NULL, 4, 1, 1, NULL, 0),
 
-  (46, 13, '新增资产', 'BUTTON', 'asset:info:add', NULL, NULL, NULL, 1, 1, 1, NULL, 0),
   (47, 13, '编辑资产', 'BUTTON', 'asset:info:edit', NULL, NULL, NULL, 2, 1, 1, NULL, 0),
-  (48, 13, '删除资产', 'BUTTON', 'asset:info:delete', NULL, NULL, NULL, 3, 1, 1, NULL, 0),
   (49, 13, '查看资产', 'BUTTON', 'asset:info:view', NULL, NULL, NULL, 4, 1, 1, NULL, 0),
-  (50, 13, '更新状态', 'BUTTON', 'asset:info:status', NULL, NULL, NULL, 5, 1, 1, NULL, 0),
   (51, 13, '资产入库', 'BUTTON', 'asset:record:in', NULL, NULL, NULL, 6, 1, 1, NULL, 0),
   (52, 13, '分配资产', 'BUTTON', 'asset:record:allocate', NULL, NULL, NULL, 7, 1, 1, NULL, 0),
   (53, 13, '调拨资产', 'BUTTON', 'asset:record:transfer', NULL, NULL, NULL, 8, 1, 1, NULL, 0),
   (54, 13, '归还资产', 'BUTTON', 'asset:record:return', NULL, NULL, NULL, 9, 1, 1, NULL, 0),
   (55, 13, '报废资产', 'BUTTON', 'asset:record:scrap', NULL, NULL, NULL, 10, 1, 1, NULL, 0),
   (56, 13, '送修资产', 'BUTTON', 'asset:record:repair', NULL, NULL, NULL, 11, 1, 1, NULL, 0),
-  (57, 13, '维修完成', 'BUTTON', 'asset:record:repair-complete', NULL, NULL, NULL, 12, 1, 1, NULL, 0),
   (58, 13, '查看流转历史', 'BUTTON', 'asset:record:history', NULL, NULL, NULL, 13, 1, 1, NULL, 0),
 
   (59, 14, '新增分类', 'BUTTON', 'asset:category:add', NULL, NULL, NULL, 1, 1, 1, NULL, 0),
@@ -81,7 +74,6 @@ VALUES
   (63, 16, '创建生命周期', 'BUTTON', 'lifecycle:create', NULL, NULL, NULL, 1, 1, 1, NULL, 0),
   (64, 16, '查询历史', 'BUTTON', 'lifecycle:history', NULL, NULL, NULL, 2, 1, 1, NULL, 0),
   (65, 16, '当前阶段', 'BUTTON', 'lifecycle:current', NULL, NULL, NULL, 3, 1, 1, NULL, 0),
-  (66, 16, '变更阶段', 'BUTTON', 'lifecycle:change', NULL, NULL, NULL, 4, 1, 1, NULL, 0),
 
   (67, 17, '创建盘点', 'BUTTON', 'inventory:create', NULL, NULL, NULL, 1, 1, 1, NULL, 0),
   (68, 17, '开始盘点', 'BUTTON', 'inventory:start', NULL, NULL, NULL, 2, 1, 1, NULL, 0),
@@ -99,9 +91,6 @@ VALUES
   (78, 4, '新建采购', 'BUTTON', 'purchase:create', NULL, NULL, NULL, 1, 1, 1, NULL, 0),
   (79, 4, '查看采购', 'BUTTON', 'purchase:view', NULL, NULL, NULL, 2, 1, 1, NULL, 0),
   (80, 4, '取消采购', 'BUTTON', 'purchase:cancel', NULL, NULL, NULL, 3, 1, 1, NULL, 0),
-  (81, 4, '待入库列表', 'BUTTON', 'purchase:pending-inbound', NULL, NULL, NULL, 4, 1, 1, NULL, 0),
-  (82, 4, '采购入库', 'BUTTON', 'purchase:inbound', NULL, NULL, NULL, 5, 1, 1, NULL, 0),
-  (83, 4, '批量入库', 'BUTTON', 'purchase:batch-inbound', NULL, NULL, NULL, 6, 1, 1, NULL, 0),
 
   (89, 4, '账单列表', 'BUTTON', 'finance:bill:list', NULL, NULL, NULL, 6, 1, 1, NULL, 0),
   (90, 4, '生成账单', 'BUTTON', 'finance:bill:generate', NULL, NULL, NULL, 7, 1, 1, NULL, 0),

@@ -67,7 +67,7 @@ public class PurchaseController {
 
     @Operation(summary = "获取待入库明细列表")
     @GetMapping("/pending-inbound")
-    @PreAuthorize("hasAuthority('purchase:pending-inbound')")
+    @PreAuthorize("hasAuthority('asset:record:in') or hasAuthority('purchase:pending-inbound') or hasAuthority('purchase:batch-inbound')")
     public Result<Page<PurchaseVO.PurchaseDetailVO>> getPendingInboundDetails(
             @RequestParam(defaultValue = "1") int current,
             @RequestParam(defaultValue = "10") int size) {
@@ -77,7 +77,7 @@ public class PurchaseController {
 
     @Operation(summary = "资产入库")
     @PostMapping("/inbound")
-    @PreAuthorize("hasAuthority('purchase:inbound')")
+    @PreAuthorize("hasAuthority('asset:record:in') or hasAuthority('purchase:inbound') or hasAuthority('purchase:batch-inbound')")
     public Result<List<Long>> inboundAsset(@Valid @RequestBody AssetInboundRequest request) {
         List<Long> assetIds = purchaseService.inboundAsset(request);
         return Result.success(assetIds);
@@ -85,7 +85,7 @@ public class PurchaseController {
 
     @Operation(summary = "批量入库")
     @PostMapping("/batch-inbound")
-    @PreAuthorize("hasAuthority('purchase:batch-inbound')")
+    @PreAuthorize("hasAuthority('asset:record:in') or hasAuthority('purchase:batch-inbound')")
     public Result<List<Long>> batchInbound(@Valid @RequestBody BatchInboundRequest request) {
         List<Long> assetIds = purchaseService.batchInbound(request);
         return Result.success(assetIds);

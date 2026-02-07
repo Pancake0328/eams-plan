@@ -69,19 +69,19 @@
       </el-form>
 
       <div class="toolbar">
-        <el-button type="primary" :icon="Plus" v-permission="'purchase:batch-inbound'" @click="handleAdd">
+        <el-button v-if="canInbound" type="primary" :icon="Plus" @click="handleAdd">
           资产入库
         </el-button>
-        <el-button v-permission="'asset:record:allocate'" :disabled="!canBatchAllocate" @click="handleBatchOperation('allocate')">
+        <el-button v-if="canAllocate" :disabled="!canBatchAllocate" @click="handleBatchOperation('allocate')">
           批量分配
         </el-button>
-        <el-button v-permission="'asset:record:transfer'" :disabled="!canBatchTransfer" @click="handleBatchOperation('transfer')">
+        <el-button v-if="canTransfer" :disabled="!canBatchTransfer" @click="handleBatchOperation('transfer')">
           批量调拨
         </el-button>
-        <el-button v-permission="'asset:record:return'" :disabled="!canBatchReturn" @click="handleBatchOperation('return')">
+        <el-button v-if="canReturn" :disabled="!canBatchReturn" @click="handleBatchOperation('return')">
           批量归还
         </el-button>
-        <el-button v-permission="'asset:record:scrap'" :disabled="!canBatchScrap" @click="handleBatchOperation('scrap')">
+        <el-button v-if="canScrap" :disabled="!canBatchScrap" @click="handleBatchOperation('scrap')">
           批量报废
         </el-button>
       </div>
@@ -149,22 +149,22 @@
               </el-button>
               <template #dropdown>
                 <el-dropdown-menu>
-                  <el-dropdown-item command="allocate" v-permission="'asset:record:allocate'" :disabled="row.assetStatus !== 1">
+                  <el-dropdown-item v-if="canAllocate" command="allocate" :disabled="row.assetStatus !== 1">
                     <el-icon><UserFilled /></el-icon> 分配
                   </el-dropdown-item>
-                  <el-dropdown-item command="transfer" v-permission="'asset:record:transfer'" :disabled="row.assetStatus !== 2">
+                  <el-dropdown-item v-if="canTransfer" command="transfer" :disabled="row.assetStatus !== 2">
                     <el-icon><Switch /></el-icon> 调拨
                   </el-dropdown-item>
-                  <el-dropdown-item command="return" v-permission="'asset:record:return'" :disabled="row.assetStatus !== 2">
+                  <el-dropdown-item v-if="canReturn" command="return" :disabled="row.assetStatus !== 2">
                     <el-icon><RefreshLeft /></el-icon> 归还
                   </el-dropdown-item>
-                  <el-dropdown-item command="repair" v-permission="'asset:record:repair'" :disabled="row.assetStatus !== 1 && row.assetStatus !== 2">
+                  <el-dropdown-item v-if="canRepair" command="repair" :disabled="row.assetStatus !== 1 && row.assetStatus !== 2">
                     <el-icon><Tools /></el-icon> 送修
                   </el-dropdown-item>
-                  <el-dropdown-item command="scrap" v-permission="'asset:record:scrap'" :disabled="row.assetStatus !== 1" divided>
+                  <el-dropdown-item v-if="canScrap" command="scrap" :disabled="row.assetStatus !== 1" divided>
                     <el-icon><Delete /></el-icon> 报废
                   </el-dropdown-item>
-                  <el-dropdown-item command="history" v-permission="'asset:record:history'">
+                  <el-dropdown-item v-if="canHistory" command="history">
                     <el-icon><Clock /></el-icon> 流转历史
                   </el-dropdown-item>
                 </el-dropdown-menu>
@@ -372,11 +372,10 @@
       <template #footer>
         <el-button @click="dialogVisible = false">取消</el-button>
         <el-button
-            v-if="!isEdit"
+            v-if="!isEdit && canInbound"
             type="primary"
             @click="handleSubmitInbound"
             :disabled="selectedDetailIds.length === 0"
-            v-permission="'purchase:batch-inbound'"
         >
           确认入库（{{ selectedDetailIds.length }}项）
         </el-button>
@@ -680,14 +679,22 @@ const canBatchScrap = computed(() =>
   hasSelection.value && selectedAssets.value.every(asset => asset.assetStatus === 1)
 )
 
-const canShowMoreActions = computed(() => permissionStore.hasAnyPermission(
-  'asset:record:allocate',
-  'asset:record:transfer',
-  'asset:record:return',
-  'asset:record:repair',
-  'asset:record:scrap',
-  'asset:record:history'
-))
+const canInbound = computed(() => permissionStore.hasPermission('asset:record:in'))
+const canAllocate = computed(() => permissionStore.hasPermission('asset:record:allocate'))
+const canTransfer = computed(() => permissionStore.hasPermission('asset:record:transfer'))
+const canReturn = computed(() => permissionStore.hasPermission('asset:record:return'))
+const canRepair = computed(() => permissionStore.hasPermission('asset:record:repair'))
+const canScrap = computed(() => permissionStore.hasPermission('asset:record:scrap'))
+const canHistory = computed(() => permissionStore.hasPermission('asset:record:history'))
+
+const canShowMoreActions = computed(() =>
+  canAllocate.value ||
+  canTransfer.value ||
+  canReturn.value ||
+  canRepair.value ||
+  canScrap.value ||
+  canHistory.value
+)
 
 const selectedUserDepartmentId = computed(() => {
   const selectedUser = userList.value.find(user => user.username === operationForm.toCustodian)

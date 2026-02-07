@@ -263,12 +263,13 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, onMounted, computed } from 'vue'
 import { ElMessage, ElMessageBox, FormInstance, FormRules } from 'element-plus'
 import { Search, Refresh, Plus, Edit, Delete, Key, UserFilled } from '@element-plus/icons-vue'
 import { userApi } from '@/api/user'
 import { roleApi, permissionApi } from '@/api/permission'
 import { departmentApi } from '@/api/department'
+import { usePermissionStore } from '@/stores/permission'
 import type { User, UserCreateRequest, UserUpdateRequest, UserPageQuery } from '@/types'
 import type { Role } from '@/api/permission'
 
@@ -285,6 +286,9 @@ const pagination = reactive({
   size: 10,
   total: 0
 })
+
+const permissionStore = usePermissionStore()
+const canLoadDepartment = computed(() => permissionStore.hasPermission('system:department:list'))
 
 // 表格数据
 const tableData = ref<User[]>([])
@@ -384,6 +388,9 @@ const getUserList = async () => {
  * 加载部门树
  */
 const loadDepartmentTree = async () => {
+  if (!canLoadDepartment.value) {
+    return
+  }
   try {
     const res = await departmentApi.getDepartmentTree()
     departmentTree.value = res.data
