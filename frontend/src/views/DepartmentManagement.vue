@@ -8,7 +8,7 @@
 
     <!-- 操作栏 -->
     <el-card class="action-card" shadow="never">
-      <el-button type="primary" :icon="Plus" @click="handleAdd(0)">
+      <el-button type="primary" :icon="Plus" v-permission="'system:department:add'" @click="handleAdd(0)">
         新增顶级部门
       </el-button>
       <el-button :icon="Refresh" @click="loadDepartmentTree">刷新</el-button>
@@ -36,13 +36,13 @@
               </el-tag>
             </span>
             <span class="node-actions">
-              <el-button type="primary" size="small" link @click="handleAdd(data.id)">
+              <el-button type="primary" size="small" link v-permission="'system:department:add'" @click="handleAdd(data.id)">
                 新增子部门
               </el-button>
-              <el-button type="primary" size="small" link @click="handleEdit(data)">
+              <el-button type="primary" size="small" link v-permission="'system:department:edit'" @click="handleEdit(data)">
                 编辑
               </el-button>
-              <el-button type="danger" size="small" link @click="handleDelete(data)">
+              <el-button type="danger" size="small" link v-permission="'system:department:delete'" @click="handleDelete(data)">
                 删除
               </el-button>
             </span>
@@ -104,7 +104,7 @@
       </el-form>
       <template #footer>
         <el-button @click="dialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="handleSubmit" :loading="submitLoading">
+        <el-button type="primary" v-permission="['system:department:add','system:department:edit']" @click="handleSubmit" :loading="submitLoading">
           确定
         </el-button>
       </template>

@@ -3,12 +3,18 @@ package com.eams.security;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.eams.system.entity.User;
 import com.eams.system.mapper.UserMapper;
+import com.eams.system.service.PermissionService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 /**
  * 用户详情服务实现
  *
@@ -20,6 +26,7 @@ import org.springframework.stereotype.Service;
 public class UserDetailsServiceImpl implements UserDetailsService {
 
     private final UserMapper userMapper;
+    private final PermissionService permissionService;
 
     /**
      * 根据用户名加载用户详情
@@ -39,6 +46,11 @@ public class UserDetailsServiceImpl implements UserDetailsService {
             throw new UsernameNotFoundException("用户不存在: " + username);
         }
 
-        return new UserDetailsImpl(user);
+        Set<String> permissions = permissionService.getUserPermissions(user.getId());
+        List<GrantedAuthority> authorities = permissions.stream()
+                .map(SimpleGrantedAuthority::new)
+                .collect(Collectors.toList());
+
+        return new UserDetailsImpl(user, authorities);
     }
 }

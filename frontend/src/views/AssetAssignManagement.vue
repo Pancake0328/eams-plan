@@ -53,7 +53,7 @@
         </el-form-item>
       </el-form>
       <div style="margin-top: 16px">
-        <el-button type="primary" :icon="Plus" @click="handleAssign">
+        <el-button type="primary" :icon="Plus" v-permission="'system:asset-assign:assign'" @click="handleAssign">
           分配资产
         </el-button>
       </div>
@@ -147,7 +147,7 @@
       </el-form>
       <template #footer>
         <el-button @click="assignVisible = false">取消</el-button>
-        <el-button type="primary" @click="handleAssignSubmit" :loading="submitLoading">
+        <el-button type="primary" v-permission="'system:asset-assign:assign'" @click="handleAssignSubmit" :loading="submitLoading">
           确定
         </el-button>
       </template>
@@ -162,6 +162,7 @@ import { Plus, Search, Refresh } from '@element-plus/icons-vue'
 import { assignApi } from '@/api/assign'
 import { assetApi } from '@/api/asset'
 import { employeeApi } from '@/api/employee'
+import { usePermissionStore } from '@/stores/permission'
 import type { AssetAssignRecord, AssetAssignRequest, Asset, Employee } from '@/types'
 
 // 列表数据
@@ -174,6 +175,8 @@ const pagination = reactive({
   size: 10,
   total: 0
 })
+
+const permissionStore = usePermissionStore()
 
 // 搜索表单
 const assetNumber = ref('')
@@ -349,9 +352,13 @@ const getAssignTypeTag = (type: number): string => {
 
 // 初始化
 onMounted(() => {
-  loadIdleAssets()
-  loadEmployeeList()
   loadAssignRecords()
+  if (permissionStore.hasPermission('system:asset-assign:list')) {
+    loadIdleAssets()
+  }
+  if (permissionStore.hasPermission('system:employee:list')) {
+    loadEmployeeList()
+  }
 })
 </script>
 

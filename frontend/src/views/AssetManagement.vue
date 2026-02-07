@@ -69,19 +69,19 @@
       </el-form>
 
       <div class="toolbar">
-        <el-button type="primary" :icon="Plus" @click="handleAdd">
+        <el-button type="primary" :icon="Plus" v-permission="'purchase:batch-inbound'" @click="handleAdd">
           资产入库
         </el-button>
-        <el-button :disabled="!canBatchAllocate" @click="handleBatchOperation('allocate')">
+        <el-button v-permission="'asset:record:allocate'" :disabled="!canBatchAllocate" @click="handleBatchOperation('allocate')">
           批量分配
         </el-button>
-        <el-button :disabled="!canBatchTransfer" @click="handleBatchOperation('transfer')">
+        <el-button v-permission="'asset:record:transfer'" :disabled="!canBatchTransfer" @click="handleBatchOperation('transfer')">
           批量调拨
         </el-button>
-        <el-button :disabled="!canBatchReturn" @click="handleBatchOperation('return')">
+        <el-button v-permission="'asset:record:return'" :disabled="!canBatchReturn" @click="handleBatchOperation('return')">
           批量归还
         </el-button>
-        <el-button :disabled="!canBatchScrap" @click="handleBatchOperation('scrap')">
+        <el-button v-permission="'asset:record:scrap'" :disabled="!canBatchScrap" @click="handleBatchOperation('scrap')">
           批量报废
         </el-button>
       </div>
@@ -128,6 +128,7 @@
               size="small"
               link
               :icon="View"
+              v-permission="'asset:info:view'"
               @click="handleView(row)"
             >
               详情
@@ -137,6 +138,7 @@
               size="small"
               link
               :icon="Edit"
+              v-permission="'asset:info:edit'"
               @click="handleEdit(row)"
             >
               编辑
@@ -147,22 +149,22 @@
               </el-button>
               <template #dropdown>
                 <el-dropdown-menu>
-                  <el-dropdown-item command="allocate" :disabled="row.assetStatus !== 1">
+                  <el-dropdown-item command="allocate" v-permission="'asset:record:allocate'" :disabled="row.assetStatus !== 1">
                     <el-icon><UserFilled /></el-icon> 分配
                   </el-dropdown-item>
-                  <el-dropdown-item command="transfer" :disabled="row.assetStatus !== 2">
+                  <el-dropdown-item command="transfer" v-permission="'asset:record:transfer'" :disabled="row.assetStatus !== 2">
                     <el-icon><Switch /></el-icon> 调拨
                   </el-dropdown-item>
-                  <el-dropdown-item command="return" :disabled="row.assetStatus !== 2">
+                  <el-dropdown-item command="return" v-permission="'asset:record:return'" :disabled="row.assetStatus !== 2">
                     <el-icon><RefreshLeft /></el-icon> 归还
                   </el-dropdown-item>
-                  <el-dropdown-item command="repair" :disabled="row.assetStatus !== 1 && row.assetStatus !== 2">
+                  <el-dropdown-item command="repair" v-permission="'asset:record:repair'" :disabled="row.assetStatus !== 1 && row.assetStatus !== 2">
                     <el-icon><Tools /></el-icon> 送修
                   </el-dropdown-item>
-                  <el-dropdown-item command="scrap" :disabled="row.assetStatus !== 1" divided>
+                  <el-dropdown-item command="scrap" v-permission="'asset:record:scrap'" :disabled="row.assetStatus !== 1" divided>
                     <el-icon><Delete /></el-icon> 报废
                   </el-dropdown-item>
-                  <el-dropdown-item command="history">
+                  <el-dropdown-item command="history" v-permission="'asset:record:history'">
                     <el-icon><Clock /></el-icon> 流转历史
                   </el-dropdown-item>
                 </el-dropdown-menu>
@@ -374,6 +376,7 @@
             type="primary"
             @click="handleSubmitInbound"
             :disabled="selectedDetailIds.length === 0"
+            v-permission="'purchase:batch-inbound'"
         >
           确认入库（{{ selectedDetailIds.length }}项）
         </el-button>
@@ -381,6 +384,7 @@
             v-else
             type="primary"
             @click="handleSubmit"
+            v-permission="'asset:info:edit'"
         >
           保存
         </el-button>

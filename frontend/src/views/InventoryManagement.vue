@@ -4,7 +4,7 @@
       <template #header>
         <div class="card-header">
           <span>资产盘点管理</span>
-          <el-button type="primary" @click="showCreateDialog">创建盘点计划</el-button>
+          <el-button type="primary" v-permission="'inventory:create'" @click="showCreateDialog">创建盘点计划</el-button>
         </div>
       </template>
 
@@ -55,9 +55,9 @@
         <el-table-column label="操作" width="300" fixed="right">
           <template #default="{ row }">
             <el-button link type="primary" @click="viewDetail(row.id)">查看详情</el-button>
-            <el-button link type="primary" v-if="row.inventoryStatus === 1" @click="startInventory(row.id)">开始盘点</el-button>
-            <el-button link type="success" v-if="row.inventoryStatus === 2" @click="completeInventory(row.id)">完成盘点</el-button>
-            <el-button link type="danger" v-if="row.inventoryStatus === 1 || row.inventoryStatus === 2" @click="cancelInventory(row.id)">取消</el-button>
+            <el-button link type="primary" v-permission="'inventory:start'" v-if="row.inventoryStatus === 1" @click="startInventory(row.id)">开始盘点</el-button>
+            <el-button link type="success" v-permission="'inventory:complete'" v-if="row.inventoryStatus === 2" @click="completeInventory(row.id)">完成盘点</el-button>
+            <el-button link type="danger" v-permission="'inventory:cancel'" v-if="row.inventoryStatus === 1 || row.inventoryStatus === 2" @click="cancelInventory(row.id)">取消</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -126,7 +126,7 @@
       </el-form>
       <template #footer>
         <el-button @click="createDialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="handleCreate">确定</el-button>
+        <el-button type="primary" v-permission="'inventory:create'" @click="handleCreate">确定</el-button>
       </template>
     </el-dialog>
 
@@ -168,7 +168,7 @@
         <el-table-column prop="inventoryTime" label="盘点时间" width="180" />
         <el-table-column label="操作" width="100" fixed="right" v-if="currentInventory.inventoryStatus === 2">
           <template #default="{ row }">
-            <el-button link type="primary" @click="executeInventory(row)">执行盘点</el-button>
+            <el-button link type="primary" v-permission="'inventory:execute'" @click="executeInventory(row)">执行盘点</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -213,7 +213,7 @@
       </el-form>
       <template #footer>
         <el-button @click="executeDialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="handleExecute">确定</el-button>
+        <el-button type="primary" v-permission="'inventory:execute'" @click="handleExecute">确定</el-button>
       </template>
     </el-dialog>
   </div>

@@ -14,7 +14,7 @@
         router
       >
       <!-- 仪表盘 -->
-      <el-menu-item index="/dashboard">
+      <el-menu-item index="/dashboard" v-permission="'dashboard:view'">
         <el-icon><DataLine /></el-icon>
         <span>仪表盘</span>
       </el-menu-item>
@@ -27,55 +27,64 @@
 <!--          <el-menu-item index="/roles">角色管理</el-menu-item>-->
 <!--          <el-menu-item index="/permissions">权限管理</el-menu-item>-->
 <!--        </el-sub-menu>-->
-        <el-sub-menu index="3">
+        <el-sub-menu index="system" v-if="hasAnyPermission('system:role:list')">
+          <template #title>
+            <el-icon><Setting /></el-icon>
+            <span>系统管理</span>
+          </template>
+          <el-menu-item index="/role" v-permission="'system:role:list'">
+            <el-icon><UserFilled /></el-icon>
+            <span>角色管理</span>
+          </el-menu-item>
+        </el-sub-menu>
+        <el-sub-menu index="3" v-if="hasAnyPermission('asset:info:list','asset:category:list','asset:record:list')">
           <template #title>
             <el-icon><Grid /></el-icon>
             <span>资产管理</span>
           </template>
-          <el-menu-item index="/assets">资产列表</el-menu-item>
-          <el-menu-item index="/categories">资产分类</el-menu-item>
-          <el-menu-item index="/records">流转记录</el-menu-item>
+          <el-menu-item index="/assets" v-permission="'asset:info:list'">资产列表</el-menu-item>
+          <el-menu-item index="/categories" v-permission="'asset:category:list'">资产分类</el-menu-item>
+          <el-menu-item index="/records" v-permission="'asset:record:list'">流转记录</el-menu-item>
         </el-sub-menu>
-        <el-menu-item index="/purchase">
+        <el-menu-item index="/purchase" v-permission="'purchase:list'">
           <el-icon><ShoppingCart /></el-icon>
           <span>采购管理</span>
         </el-menu-item>
         
-        <el-sub-menu index="4">
+        <el-sub-menu index="4" v-if="hasAnyPermission('system:user:list','system:department:list','system:employee:list','system:asset-assign:list')">
           <template #title>
             <el-icon><User /></el-icon>
             <span>人员管理</span>
           </template>
-          <el-menu-item index="/">
+          <el-menu-item index="/" v-permission="'system:user:list'">
             <el-icon><UserFilled /></el-icon>
             <span>用户管理</span>
           </el-menu-item>
-          <el-menu-item index="/departments">部门管理</el-menu-item>
-          <!-- 员工管理和资产分配功能暂时隐藏，保留代码以便将来启用 -->
-          <!-- <el-menu-item index="/employees">员工管理</el-menu-item> -->
-          <!-- <el-menu-item index="/asset-assigns">资产分配</el-menu-item> -->
+          <el-menu-item index="/departments" v-permission="'system:department:list'">部门管理</el-menu-item>
+          <el-menu-item index="/employees" v-permission="'system:employee:list'">员工管理</el-menu-item>
+          <el-menu-item index="/asset-assigns" v-permission="'system:asset-assign:list'">资产分配</el-menu-item>
         </el-sub-menu>
         
-<!--        <el-menu-item index="/finance">-->
-<!--          <el-icon><Money /></el-icon>-->
-<!--          <template #title>财务管理</template>-->
-<!--        </el-menu-item>-->
+        <el-menu-item index="/finance" v-permission="'finance:list'">
+          <el-icon><Money /></el-icon>
+          <template #title>财务管理</template>
+        </el-menu-item>
 
         <!-- 生命周期与盘点模块 -->
-        <el-sub-menu index="lifecycle-inventory">
+        <el-sub-menu index="lifecycle-inventory" v-if="hasAnyPermission('lifecycle:list','inventory:list','repair:list')">
           <template #title>
             <el-icon><Refresh /></el-icon>
             <span>生命周期与盘点</span>
           </template>
-          <el-menu-item index="/lifecycle">
+          <el-menu-item index="/lifecycle" v-permission="'lifecycle:list'">
             <el-icon><Clock /></el-icon>
             <span>生命周期管理</span>
           </el-menu-item>
-          <el-menu-item index="/inventory">
+          <el-menu-item index="/inventory" v-permission="'inventory:list'">
             <el-icon><Checked /></el-icon>
             <span>盘点管理</span>
           </el-menu-item>
-          <el-menu-item index="/repair">
+          <el-menu-item index="/repair" v-permission="'repair:list'">
             <el-icon><Tools /></el-icon>
             <span>报修管理</span>
           </el-menu-item>
@@ -152,16 +161,20 @@ import {
   DataLine
 } from '@element-plus/icons-vue'
 import { useUserStore } from '@/stores/user'
+import { usePermissionStore } from '@/stores/permission'
 
 const router = useRouter()
 const route = useRoute()
 const userStore = useUserStore()
+const permissionStore = usePermissionStore()
 
 // 侧边栏折叠状态
 const isCollapsed = ref(false)
 
 // 当前激活的菜单
 const activeMenu = computed(() => route.path)
+
+const hasAnyPermission = (...permissions: string[]) => permissionStore.hasAnyPermission(...permissions)
 
 // 面包屑
 const breadcrumb = computed(() => {
@@ -187,7 +200,8 @@ const breadcrumb = computed(() => {
     '/asset-assigns': '资产分配管理',
     '/roles': '角色管理',
     '/permissions': '权限管理',
-    '/asset-categories': '资产分类'
+    '/asset-categories': '资产分类',
+    '/role': '角色管理'
   }
   return breadcrumbMap[path] || ''
 })

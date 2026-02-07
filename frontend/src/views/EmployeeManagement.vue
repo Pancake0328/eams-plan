@@ -55,7 +55,7 @@
         </el-form-item>
       </el-form>
       <div style="margin-top: 16px">
-        <el-button type="primary" :icon="Plus" @click="handleAdd">
+        <el-button type="primary" :icon="Plus" v-permission="'system:employee:add'" @click="handleAdd">
           新增员工
         </el-button>
       </div>
@@ -89,6 +89,7 @@
               type="primary"
               size="small"
               link
+              v-permission="'system:employee:edit'"
               @click="handleEdit(row)"
             >
               编辑
@@ -97,6 +98,7 @@
               :type="row.status === 1 ? 'warning' : 'success'"
               size="small"
               link
+              v-permission="'system:employee:status'"
               @click="handleToggleStatus(row)"
             >
               {{ row.status === 1 ? '离职' : '激活' }}
@@ -105,6 +107,7 @@
               type="danger"
               size="small"
               link
+              v-permission="'system:employee:delete'"
               @click="handleDelete(row)"
             >
               删除
@@ -190,7 +193,7 @@
       </el-form>
       <template #footer>
         <el-button @click="dialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="handleSubmit" :loading="submitLoading">
+        <el-button type="primary" v-permission="['system:employee:add','system:employee:edit']" @click="handleSubmit" :loading="submitLoading">
           确定
         </el-button>
       </template>

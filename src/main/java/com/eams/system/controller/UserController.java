@@ -13,6 +13,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -39,6 +40,7 @@ public class UserController {
     @PostMapping
     @Operation(summary = "创建用户", description = "创建新用户")
     @OperationLog(value = "创建用户", type = "CREATE")
+    @PreAuthorize("hasAuthority('system:user:add')")
     public Result<Long> createUser(@Validated @RequestBody UserCreateRequest request) {
         Long userId = userService.createUser(request);
         return Result.success("创建用户成功", userId);
@@ -54,6 +56,7 @@ public class UserController {
     @PutMapping("/{id}")
     @Operation(summary = "更新用户", description = "更新用户信息")
     @OperationLog(value = "更新用户", type = "UPDATE")
+    @PreAuthorize("hasAuthority('system:user:edit')")
     public Result<Void> updateUser(
             @Parameter(description = "用户ID") @PathVariable Long id,
             @Validated @RequestBody UserUpdateRequest request) {
@@ -70,6 +73,7 @@ public class UserController {
     @DeleteMapping("/{id}")
     @Operation(summary = "删除用户", description = "逻辑删除用户")
     @OperationLog(value = "删除用户", type = "DELETE")
+    @PreAuthorize("hasAuthority('system:user:delete')")
     public Result<Void> deleteUser(@Parameter(description = "用户ID") @PathVariable Long id) {
         userService.deleteUser(id);
         return Result.success();
@@ -83,6 +87,7 @@ public class UserController {
      */
     @GetMapping("/{id}")
     @Operation(summary = "获取用户详情", description = "根据ID获取用户详细信息")
+    @PreAuthorize("hasAuthority('system:user:view')")
     public Result<UserVO> getUserById(@Parameter(description = "用户ID") @PathVariable Long id) {
         UserVO userVO = userService.getUserById(id);
         return Result.success(userVO);
@@ -96,6 +101,7 @@ public class UserController {
      */
     @GetMapping
     @Operation(summary = "分页查询用户", description = "根据条件分页查询用户列表")
+    @PreAuthorize("hasAuthority('system:user:list')")
     public Result<Page<UserVO>> getUserPage(UserPageQuery query) {
         Page<UserVO> page = userService.getUserPage(query);
         return Result.success(page);
@@ -111,6 +117,7 @@ public class UserController {
     @PutMapping("/{id}/status")
     @Operation(summary = "更新用户状态", description = "启用或禁用用户")
     @OperationLog(value = "更新用户状态", type = "UPDATE")
+    @PreAuthorize("hasAuthority('system:user:status')")
     public Result<Void> updateUserStatus(
             @Parameter(description = "用户ID") @PathVariable Long id,
             @Parameter(description = "状态：0-禁用，1-正常") @RequestParam Integer status) {
@@ -128,6 +135,7 @@ public class UserController {
     @PutMapping("/{id}/password")
     @Operation(summary = "重置密码", description = "重置用户密码")
     @OperationLog(value = "重置密码", type = "UPDATE")
+    @PreAuthorize("hasAuthority('system:user:reset')")
     public Result<Void> resetPassword(
             @Parameter(description = "用户ID") @PathVariable Long id,
             @Validated @RequestBody ResetPasswordRequest request) {

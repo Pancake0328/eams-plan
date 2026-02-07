@@ -9,6 +9,7 @@ import com.eams.finance.vo.BillVO;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 /**
@@ -28,6 +29,7 @@ public class AssetBillController {
     @Operation(summary = "生成月度账单")
     @PostMapping("/monthly")
     @OperationLog(module = "账单管理", action = "生成月度账单")
+    @PreAuthorize("hasAuthority('finance:bill:generate')")
     public Result<Long> generateMonthlyBill(@RequestParam Integer year, @RequestParam Integer month) {
         Long billId = billService.generateMonthlyBill(year, month);
         return Result.success(billId);
@@ -36,6 +38,7 @@ public class AssetBillController {
     @Operation(summary = "生成年度账单")
     @PostMapping("/annual")
     @OperationLog(module = "账单管理", action = "生成年度账单")
+    @PreAuthorize("hasAuthority('finance:bill:generate')")
     public Result<Long> generateAnnualBill(@RequestParam Integer year) {
         Long billId = billService.generateAnnualBill(year);
         return Result.success(billId);
@@ -43,6 +46,7 @@ public class AssetBillController {
 
     @Operation(summary = "获取账单详情")
     @GetMapping("/{billId}")
+    @PreAuthorize("hasAuthority('finance:bill:view')")
     public Result<BillVO> getBillDetail(@PathVariable Long billId) {
         BillVO bill = billService.getBillDetail(billId);
         return Result.success(bill);
@@ -51,6 +55,7 @@ public class AssetBillController {
     @Operation(summary = "确认账单")
     @PutMapping("/{billId}/confirm")
     @OperationLog(module = "账单管理", action = "确认账单")
+    @PreAuthorize("hasAuthority('finance:bill:confirm')")
     public Result<Void> confirmBill(@PathVariable Long billId) {
         billService.confirmBill(billId);
         return Result.success();
@@ -58,6 +63,7 @@ public class AssetBillController {
 
     @Operation(summary = "分页查询账单")
     @GetMapping
+    @PreAuthorize("hasAuthority('finance:bill:list')")
     public Result<PageResult<BillVO>> getBillPage(
             @RequestParam(defaultValue = "1") Integer current,
             @RequestParam(defaultValue = "10") Integer size,
@@ -72,6 +78,7 @@ public class AssetBillController {
     @Operation(summary = "删除账单")
     @DeleteMapping("/{billId}")
     @OperationLog(module = "账单管理", action = "删除账单")
+    @PreAuthorize("hasAuthority('finance:bill:delete')")
     public Result<Void> deleteBill(@PathVariable Long billId) {
         billService.deleteBill(billId);
         return Result.success();

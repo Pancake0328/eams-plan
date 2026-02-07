@@ -11,6 +11,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -25,6 +26,7 @@ public class PurchaseController {
 
     @Operation(summary = "创建采购单")
     @PostMapping
+    @PreAuthorize("hasAuthority('purchase:create')")
     public Result<Long> createPurchase(@Valid @RequestBody PurchaseCreateRequest request) {
         Long id = purchaseService.createPurchase(request);
         return Result.success(id);
@@ -32,6 +34,7 @@ public class PurchaseController {
 
     @Operation(summary = "获取采购单详情")
     @GetMapping("/{id}")
+    @PreAuthorize("hasAuthority('purchase:view')")
     public Result<PurchaseVO> getPurchaseById(@PathVariable Long id) {
         PurchaseVO purchase = purchaseService.getPurchaseById(id);
         return Result.success(purchase);
@@ -39,6 +42,7 @@ public class PurchaseController {
 
     @Operation(summary = "分页查询采购单")
     @GetMapping
+    @PreAuthorize("hasAuthority('purchase:list')")
     public Result<Page<PurchaseVO>> getPurchasePage(
             @RequestParam(defaultValue = "1") int current,
             @RequestParam(defaultValue = "10") int size,
@@ -50,6 +54,7 @@ public class PurchaseController {
 
     @Operation(summary = "取消采购单")
     @PutMapping("/{id}/cancel")
+    @PreAuthorize("hasAuthority('purchase:cancel')")
     public Result<Void> cancelPurchase(@PathVariable Long id) {
         purchaseService.cancelPurchase(id);
         return Result.success();
@@ -57,6 +62,7 @@ public class PurchaseController {
 
     @Operation(summary = "获取待入库明细列表")
     @GetMapping("/pending-inbound")
+    @PreAuthorize("hasAuthority('purchase:pending-inbound')")
     public Result<Page<PurchaseVO.PurchaseDetailVO>> getPendingInboundDetails(
             @RequestParam(defaultValue = "1") int current,
             @RequestParam(defaultValue = "10") int size) {
@@ -66,6 +72,7 @@ public class PurchaseController {
 
     @Operation(summary = "资产入库")
     @PostMapping("/inbound")
+    @PreAuthorize("hasAuthority('purchase:inbound')")
     public Result<List<Long>> inboundAsset(@Valid @RequestBody AssetInboundRequest request) {
         List<Long> assetIds = purchaseService.inboundAsset(request);
         return Result.success(assetIds);
@@ -73,6 +80,7 @@ public class PurchaseController {
 
     @Operation(summary = "批量入库")
     @PostMapping("/batch-inbound")
+    @PreAuthorize("hasAuthority('purchase:batch-inbound')")
     public Result<List<Long>> batchInbound(@Valid @RequestBody BatchInboundRequest request) {
         List<Long> assetIds = purchaseService.batchInbound(request);
         return Result.success(assetIds);

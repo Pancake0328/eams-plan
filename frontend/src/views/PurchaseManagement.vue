@@ -23,7 +23,7 @@
 
       <!-- 操作按钮 -->
       <div class="action-bar">
-        <el-button type="primary" :icon="Plus" @click="handleAdd">新建采购</el-button>
+        <el-button type="primary" :icon="Plus" v-permission="'purchase:create'" @click="handleAdd">新建采购</el-button>
       </div>
 
       <!-- 采购单列表 -->
@@ -47,12 +47,13 @@
         <el-table-column prop="createTime" label="创建时间" width="180" />
         <el-table-column label="操作" width="180" fixed="right">
           <template #default="{ row }">
-            <el-button link type="primary" :icon="View" @click="handleView(row)">查看</el-button>
+            <el-button link type="primary" :icon="View" v-permission="'purchase:view'" @click="handleView(row)">查看</el-button>
             <el-button 
               link 
               type="danger" 
               :icon="Close"
               v-if="row.purchaseStatus === 1"
+              v-permission="'purchase:cancel'"
               @click="handleCancel(row)"
             >
               取消
@@ -165,7 +166,7 @@
       </el-form>
       <template #footer>
         <el-button @click="dialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="handleSubmit">确定</el-button>
+        <el-button type="primary" v-permission="'purchase:create'" @click="handleSubmit">确定</el-button>
       </template>
     </el-dialog>
 

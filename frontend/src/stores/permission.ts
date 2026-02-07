@@ -13,6 +13,8 @@ export const usePermissionStore = defineStore('permission', () => {
     // 用户菜单树
     const menuTree = ref<Menu[]>([])
 
+    const loaded = ref(false)
+
     /**
      * 加载用户权限
      */
@@ -37,6 +39,11 @@ export const usePermissionStore = defineStore('permission', () => {
             console.error('加载用户菜单失败:', error)
             menuTree.value = []
         }
+    }
+
+    const initializePermissions = async (userId: number) => {
+        await Promise.all([loadUserPermissions(userId), loadUserMenuTree(userId)])
+        loaded.value = true
     }
 
     /**
@@ -66,13 +73,16 @@ export const usePermissionStore = defineStore('permission', () => {
     const clearPermissions = () => {
         permissions.value.clear()
         menuTree.value = []
+        loaded.value = false
     }
 
     return {
         permissions,
         menuTree,
+        loaded,
         loadUserPermissions,
         loadUserMenuTree,
+        initializePermissions,
         hasPermission,
         hasAnyPermission,
         hasAllPermissions,

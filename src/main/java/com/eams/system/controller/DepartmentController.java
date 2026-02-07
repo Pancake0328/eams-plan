@@ -10,6 +10,7 @@ import com.eams.system.vo.DepartmentTreeNode;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -32,6 +33,7 @@ public class DepartmentController {
     @Operation(summary = "创建部门")
     @PostMapping
     @OperationLog(module = "部门管理", action = "创建部门")
+    @PreAuthorize("hasAuthority('system:department:add')")
     public Result<Long> createDepartment(@Validated @RequestBody DepartmentCreateRequest request) {
         Long id = departmentService.createDepartment(request);
         return Result.success(id);
@@ -40,6 +42,7 @@ public class DepartmentController {
     @Operation(summary = "更新部门")
     @PutMapping("/{id}")
     @OperationLog(module = "部门管理", action = "更新部门")
+    @PreAuthorize("hasAuthority('system:department:edit')")
     public Result<Void> updateDepartment(@PathVariable Long id,
             @Validated @RequestBody DepartmentUpdateRequest request) {
         departmentService.updateDepartment(id, request);
@@ -49,6 +52,7 @@ public class DepartmentController {
     @Operation(summary = "删除部门")
     @DeleteMapping("/{id}")
     @OperationLog(module = "部门管理", action = "删除部门")
+    @PreAuthorize("hasAuthority('system:department:delete')")
     public Result<Void> deleteDepartment(@PathVariable Long id) {
         departmentService.deleteDepartment(id);
         return Result.success();
@@ -56,6 +60,7 @@ public class DepartmentController {
 
     @Operation(summary = "获取部门详情")
     @GetMapping("/{id}")
+    @PreAuthorize("hasAuthority('system:department:view')")
     public Result<Department> getDepartment(@PathVariable Long id) {
         Department department = departmentService.getDepartmentById(id);
         return Result.success(department);
@@ -63,6 +68,7 @@ public class DepartmentController {
 
     @Operation(summary = "获取部门树")
     @GetMapping("/tree")
+    @PreAuthorize("hasAuthority('system:department:list')")
     public Result<List<DepartmentTreeNode>> getDepartmentTree() {
         List<DepartmentTreeNode> tree = departmentService.getDepartmentTree();
         return Result.success(tree);
@@ -70,6 +76,7 @@ public class DepartmentController {
 
     @Operation(summary = "获取子部门列表")
     @GetMapping("/children/{parentId}")
+    @PreAuthorize("hasAuthority('system:department:list')")
     public Result<List<Department>> getChildDepartments(@PathVariable Long parentId) {
         List<Department> children = departmentService.getChildDepartments(parentId);
         return Result.success(children);

@@ -6,7 +6,6 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.Collection;
-import java.util.Collections;
 
 /**
  * Spring Security 用户详情实现
@@ -23,9 +22,11 @@ public class UserDetailsImpl implements UserDetails {
      * 用户实体
      */
     private final User user;
+    private final Collection<? extends GrantedAuthority> authorities;
 
-    public UserDetailsImpl(User user) {
+    public UserDetailsImpl(User user, Collection<? extends GrantedAuthority> authorities) {
         this.user = user;
+        this.authorities = authorities;
     }
 
     /**
@@ -35,7 +36,7 @@ public class UserDetailsImpl implements UserDetails {
      */
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return Collections.emptyList();
+        return authorities;
     }
 
     /**

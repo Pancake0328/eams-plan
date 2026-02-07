@@ -9,7 +9,7 @@
     <!-- 操作栏和树形表格 -->
     <el-card class="tree-card" shadow="never">
       <div class="toolbar">
-        <el-button type="primary" :icon="Plus" @click="handleAddRoot">
+        <el-button type="primary" :icon="Plus" v-permission="'asset:category:add'" @click="handleAddRoot">
           新增顶级分类
         </el-button>
         <el-button :icon="Refresh" @click="loadCategoryTree">
@@ -40,6 +40,7 @@
               size="small"
               link
               :icon="Plus"
+              v-permission="'asset:category:add'"
               @click="handleAddChild(row)"
             >
               新增子分类
@@ -49,6 +50,7 @@
               size="small"
               link
               :icon="Edit"
+              v-permission="'asset:category:edit'"
               @click="handleEdit(row)"
             >
               编辑
@@ -58,6 +60,7 @@
               size="small"
               link
               :icon="Delete"
+              v-permission="'asset:category:delete'"
               @click="handleDelete(row)"
             >
               删除
@@ -114,7 +117,7 @@
       </el-form>
       <template #footer>
         <el-button @click="dialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="handleSubmit" :loading="submitLoading">
+        <el-button type="primary" v-permission="[ 'asset:category:add','asset:category:edit' ]" @click="handleSubmit" :loading="submitLoading">
           确定
         </el-button>
       </template>

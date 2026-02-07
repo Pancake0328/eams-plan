@@ -6,6 +6,7 @@ import com.eams.finance.vo.FinanceStatisticsVO;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -31,6 +32,7 @@ public class AssetFinanceController {
 
     @Operation(summary = "按部门统计资产金额")
     @GetMapping("/by-department")
+    @PreAuthorize("hasAuthority('finance:statistics:view')")
     public Result<List<FinanceStatisticsVO>> statisticsByDepartment() {
         List<FinanceStatisticsVO> result = financeService.statisticsByDepartment();
         return Result.success(result);
@@ -38,6 +40,7 @@ public class AssetFinanceController {
 
     @Operation(summary = "按时间统计资金使用情况")
     @GetMapping("/by-time")
+    @PreAuthorize("hasAuthority('finance:statistics:view')")
     public Result<List<FinanceStatisticsVO>> statisticsByTime(
             @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate startDate,
             @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate endDate) {
@@ -47,6 +50,7 @@ public class AssetFinanceController {
 
     @Operation(summary = "获取财务概览")
     @GetMapping("/overview")
+    @PreAuthorize("hasAuthority('finance:statistics:view')")
     public Result<FinanceStatisticsVO> getFinanceOverview() {
         FinanceStatisticsVO overview = financeService.getFinanceOverview();
         return Result.success(overview);

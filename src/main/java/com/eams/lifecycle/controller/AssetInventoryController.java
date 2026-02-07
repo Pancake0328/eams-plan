@@ -13,6 +13,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 /**
@@ -32,6 +33,7 @@ public class AssetInventoryController {
     @Operation(summary = "创建盘点计划")
     @PostMapping
     @OperationLog(module = "盘点管理", action = "创建盘点计划")
+    @PreAuthorize("hasAuthority('inventory:create')")
     public Result<Long> createInventory(@Valid @RequestBody InventoryCreateRequest request) {
         Long id = inventoryService.createInventory(request);
         return Result.success(id);
@@ -40,6 +42,7 @@ public class AssetInventoryController {
     @Operation(summary = "开始盘点")
     @PutMapping("/{inventoryId}/start")
     @OperationLog(module = "盘点管理", action = "开始盘点")
+    @PreAuthorize("hasAuthority('inventory:start')")
     public Result<Void> startInventory(@PathVariable Long inventoryId) {
         inventoryService.startInventory(inventoryId);
         return Result.success();
@@ -48,6 +51,7 @@ public class AssetInventoryController {
     @Operation(summary = "执行盘点")
     @PutMapping("/execute")
     @OperationLog(module = "盘点管理", action = "执行盘点")
+    @PreAuthorize("hasAuthority('inventory:execute')")
     public Result<Void> executeInventory(@Valid @RequestBody InventoryExecuteRequest request) {
         inventoryService.executeInventory(request);
         return Result.success();
@@ -56,6 +60,7 @@ public class AssetInventoryController {
     @Operation(summary = "完成盘点")
     @PutMapping("/{inventoryId}/complete")
     @OperationLog(module = "盘点管理", action = "完成盘点")
+    @PreAuthorize("hasAuthority('inventory:complete')")
     public Result<Void> completeInventory(@PathVariable Long inventoryId) {
         inventoryService.completeInventory(inventoryId);
         return Result.success();
@@ -64,6 +69,7 @@ public class AssetInventoryController {
     @Operation(summary = "取消盘点")
     @PutMapping("/{inventoryId}/cancel")
     @OperationLog(module = "盘点管理", action = "取消盘点")
+    @PreAuthorize("hasAuthority('inventory:cancel')")
     public Result<Void> cancelInventory(@PathVariable Long inventoryId) {
         inventoryService.cancelInventory(inventoryId);
         return Result.success();
@@ -71,6 +77,7 @@ public class AssetInventoryController {
 
     @Operation(summary = "获取盘点详情")
     @GetMapping("/{inventoryId}")
+    @PreAuthorize("hasAuthority('inventory:view')")
     public Result<InventoryVO> getInventoryDetail(@PathVariable Long inventoryId) {
         InventoryVO vo = inventoryService.getInventoryDetail(inventoryId);
         return Result.success(vo);
@@ -78,6 +85,7 @@ public class AssetInventoryController {
 
     @Operation(summary = "分页查询盘点明细")
     @GetMapping("/{inventoryId}/details")
+    @PreAuthorize("hasAuthority('inventory:view')")
     public Result<PageResult<InventoryDetailVO>> getInventoryDetailPage(
             @PathVariable Long inventoryId,
             @RequestParam(defaultValue = "1") Integer current,
@@ -89,6 +97,7 @@ public class AssetInventoryController {
 
     @Operation(summary = "分页查询盘点计划")
     @GetMapping
+    @PreAuthorize("hasAuthority('inventory:list')")
     public Result<PageResult<InventoryVO>> getInventoryPage(
             @RequestParam(defaultValue = "1") Integer current,
             @RequestParam(defaultValue = "10") Integer size,

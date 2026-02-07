@@ -11,6 +11,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
@@ -32,6 +33,7 @@ public class AssetRepairController {
     @Operation(summary = "创建报修记录")
     @PostMapping
     @OperationLog(module = "报修管理", action = "创建报修")
+    @PreAuthorize("hasAuthority('repair:create')")
     public Result<Long> createRepair(@Valid @RequestBody RepairCreateRequest request) {
         Long id = repairService.createRepair(request);
         return Result.success(id);
@@ -40,6 +42,7 @@ public class AssetRepairController {
     @Operation(summary = "审批报修")
     @PutMapping("/{repairId}/approve")
     @OperationLog(module = "报修管理", action = "审批报修")
+    @PreAuthorize("hasAuthority('repair:approve')")
     public Result<Void> approveRepair(
             @PathVariable Long repairId,
             @RequestParam Boolean approved,
@@ -51,6 +54,7 @@ public class AssetRepairController {
     @Operation(summary = "开始维修")
     @PutMapping("/{repairId}/start")
     @OperationLog(module = "报修管理", action = "开始维修")
+    @PreAuthorize("hasAuthority('repair:start')")
     public Result<Void> startRepair(
             @PathVariable Long repairId,
             @RequestParam String repairPerson) {
@@ -61,6 +65,7 @@ public class AssetRepairController {
     @Operation(summary = "完成维修")
     @PutMapping("/{repairId}/complete")
     @OperationLog(module = "报修管理", action = "完成维修")
+    @PreAuthorize("hasAuthority('repair:complete')")
     public Result<Void> completeRepair(
             @PathVariable Long repairId,
             @RequestParam BigDecimal repairCost,
@@ -71,6 +76,7 @@ public class AssetRepairController {
 
     @Operation(summary = "获取报修详情")
     @GetMapping("/{repairId}")
+    @PreAuthorize("hasAuthority('repair:view')")
     public Result<RepairVO> getRepairDetail(@PathVariable Long repairId) {
         RepairVO vo = repairService.getRepairDetail(repairId);
         return Result.success(vo);
@@ -78,6 +84,7 @@ public class AssetRepairController {
 
     @Operation(summary = "分页查询报修记录")
     @GetMapping
+    @PreAuthorize("hasAuthority('repair:list')")
     public Result<PageResult<RepairVO>> getRepairPage(
             @RequestParam(defaultValue = "1") Integer current,
             @RequestParam(defaultValue = "10") Integer size,

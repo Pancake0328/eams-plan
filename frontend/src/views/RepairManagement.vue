@@ -52,11 +52,11 @@
         <el-table-column prop="reportTime" label="报修时间" width="180" />
         <el-table-column label="操作" width="280" fixed="right">
           <template #default="{ row }">
-            <el-button link type="primary" @click="viewDetail(row.id)">详情</el-button>
-            <el-button link type="success" v-if="row.repairStatus === 1" @click="approveRepair(row.id, true)">审批通过</el-button>
-            <el-button link type="danger" v-if="row.repairStatus === 1" @click="approveRepair(row.id, false)">拒绝</el-button>
-            <el-button link type="primary" v-if="row.repairStatus === 2" @click="startRepair(row)">开始维修</el-button>
-            <el-button link type="success" v-if="row.repairStatus === 3" @click="completeRepair(row)">完成维修</el-button>
+            <el-button link type="primary" v-permission="'repair:view'" @click="viewDetail(row.id)">详情</el-button>
+            <el-button link type="success" v-permission="'repair:approve'" v-if="row.repairStatus === 1" @click="approveRepair(row.id, true)">审批通过</el-button>
+            <el-button link type="danger" v-permission="'repair:approve'" v-if="row.repairStatus === 1" @click="approveRepair(row.id, false)">拒绝</el-button>
+            <el-button link type="primary" v-permission="'repair:start'" v-if="row.repairStatus === 2" @click="startRepair(row)">开始维修</el-button>
+            <el-button link type="success" v-permission="'repair:complete'" v-if="row.repairStatus === 3" @click="completeRepair(row)">完成维修</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -112,7 +112,7 @@
       </el-form>
       <template #footer>
         <el-button @click="completeDialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="handleCompleteRepair">确定</el-button>
+        <el-button type="primary" v-permission="'repair:complete'" @click="handleCompleteRepair">确定</el-button>
       </template>
     </el-dialog>
   </div>

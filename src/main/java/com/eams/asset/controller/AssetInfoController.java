@@ -12,6 +12,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -38,6 +39,7 @@ public class AssetInfoController {
     @PostMapping
     @Operation(summary = "创建资产", description = "登记新的资产信息")
     @OperationLog(value = "创建资产", type = "CREATE")
+    @PreAuthorize("hasAuthority('asset:info:add')")
     public Result<Long> createAsset(@Validated @RequestBody AssetCreateRequest request) {
         Long assetId = assetInfoService.createAsset(request);
         return Result.success("创建资产成功", assetId);
@@ -53,6 +55,7 @@ public class AssetInfoController {
     @PutMapping("/{id}")
     @Operation(summary = "更新资产", description = "更新资产信息")
     @OperationLog(value = "更新资产", type = "UPDATE")
+    @PreAuthorize("hasAuthority('asset:info:edit')")
     public Result<Void> updateAsset(
             @Parameter(description = "资产ID") @PathVariable Long id,
             @Validated @RequestBody AssetUpdateRequest request) {
@@ -69,6 +72,7 @@ public class AssetInfoController {
     @DeleteMapping("/{id}")
     @Operation(summary = "删除资产", description = "逻辑删除资产")
     @OperationLog(value = "删除资产", type = "DELETE")
+    @PreAuthorize("hasAuthority('asset:info:delete')")
     public Result<Void> deleteAsset(@Parameter(description = "资产ID") @PathVariable Long id) {
         assetInfoService.deleteAsset(id);
         return Result.success();
@@ -82,6 +86,7 @@ public class AssetInfoController {
      */
     @GetMapping("/{id}")
     @Operation(summary = "获取资产详情", description = "根据ID获取资产详细信息")
+    @PreAuthorize("hasAuthority('asset:info:view')")
     public Result<AssetVO> getAssetById(@Parameter(description = "资产ID") @PathVariable Long id) {
         AssetVO assetVO = assetInfoService.getAssetById(id);
         return Result.success(assetVO);
@@ -95,6 +100,7 @@ public class AssetInfoController {
      */
     @GetMapping
     @Operation(summary = "分页查询资产", description = "根据条件分页查询资产列表")
+    @PreAuthorize("hasAuthority('asset:info:list')")
     public Result<Page<AssetVO>> getAssetPage(AssetPageQuery query) {
         Page<AssetVO> page = assetInfoService.getAssetPage(query);
         return Result.success(page);
@@ -110,6 +116,7 @@ public class AssetInfoController {
     @PutMapping("/{id}/status")
     @Operation(summary = "更新资产状态", description = "更新资产的使用状态")
     @OperationLog(value = "更新资产状态", type = "UPDATE")
+    @PreAuthorize("hasAuthority('asset:info:status')")
     public Result<Void> updateAssetStatus(
             @Parameter(description = "资产ID") @PathVariable Long id,
             @Parameter(description = "资产状态：1-闲置，2-使用中，3-维修中，4-报废") @RequestParam Integer status) {

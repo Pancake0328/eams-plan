@@ -6,6 +6,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
@@ -26,18 +27,21 @@ public class ReportExportController {
 
     @Operation(summary = "导出资产列表Excel")
     @GetMapping("/asset-list")
+    @PreAuthorize("hasAuthority('dashboard:export')")
     public void exportAssetList(HttpServletResponse response) {
         exportService.exportAssetListToExcel(response);
     }
 
     @Operation(summary = "导出仪表盘统计报表Excel")
     @GetMapping("/dashboard-statistics")
+    @PreAuthorize("hasAuthority('dashboard:export')")
     public void exportDashboardStatistics(HttpServletResponse response) {
         exportService.exportDashboardStatisticsToExcel(response);
     }
 
     @Operation(summary = "导出时间趋势统计Excel")
     @GetMapping("/time-trend")
+    @PreAuthorize("hasAuthority('dashboard:export')")
     public void exportTimeTrend(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,

@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import type { LoginResponse } from '@/types'
+import { usePermissionStore } from '@/stores/permission'
 
 /**
  * 用户状态管理
@@ -42,10 +43,12 @@ export const useUserStore = defineStore('user', () => {
      * 登出
      */
     const logout = () => {
+        const permissionStore = usePermissionStore()
         token.value = ''
         userInfo.value = null
         localStorage.removeItem('token')
         localStorage.removeItem('userInfo')
+        permissionStore.clearPermissions()
     }
 
     /**

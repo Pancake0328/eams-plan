@@ -62,10 +62,12 @@ import { ElMessage, FormInstance, FormRules } from 'element-plus'
 import { User, Lock } from '@element-plus/icons-vue'
 import { userApi } from '@/api/user'
 import { useUserStore } from '@/stores/user'
+import { usePermissionStore } from '@/stores/permission'
 import type { LoginRequest } from '@/types'
 
 const router = useRouter()
 const userStore = useUserStore()
+const permissionStore = usePermissionStore()
 
 // 登录表单
 const loginFormRef = ref<FormInstance>()
@@ -102,6 +104,9 @@ const handleLogin = async () => {
       
       // 保存登录信息
       userStore.login(res.data)
+      if (res.data.userInfo?.id) {
+        await permissionStore.initializePermissions(res.data.userInfo.id)
+      }
       
       ElMessage.success('登录成功')
       

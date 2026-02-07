@@ -11,6 +11,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -39,6 +40,7 @@ public class AssetCategoryController {
     @PostMapping
     @Operation(summary = "创建资产分类", description = "创建新的资产分类")
     @OperationLog(value = "创建资产分类", type = "CREATE")
+    @PreAuthorize("hasAuthority('asset:category:add')")
     public Result<Long> createCategory(@Validated @RequestBody CategoryCreateRequest request) {
         Long categoryId = categoryService.createCategory(request);
         return Result.success("创建资产分类成功", categoryId);
@@ -54,6 +56,7 @@ public class AssetCategoryController {
     @PutMapping("/{id}")
     @Operation(summary = "更新资产分类", description = "更新资产分类信息")
     @OperationLog(value = "更新资产分类", type = "UPDATE")
+    @PreAuthorize("hasAuthority('asset:category:edit')")
     public Result<Void> updateCategory(
             @Parameter(description = "分类ID") @PathVariable Long id,
             @Validated @RequestBody CategoryUpdateRequest request) {
@@ -70,6 +73,7 @@ public class AssetCategoryController {
     @DeleteMapping("/{id}")
     @Operation(summary = "删除资产分类", description = "逻辑删除资产分类")
     @OperationLog(value = "删除资产分类", type = "DELETE")
+    @PreAuthorize("hasAuthority('asset:category:delete')")
     public Result<Void> deleteCategory(@Parameter(description = "分类ID") @PathVariable Long id) {
         categoryService.deleteCategory(id);
         return Result.success();
@@ -83,6 +87,7 @@ public class AssetCategoryController {
      */
     @GetMapping("/{id}")
     @Operation(summary = "获取分类详情", description = "根据ID获取资产分类详细信息")
+    @PreAuthorize("hasAuthority('asset:category:view')")
     public Result<CategoryVO> getCategoryById(@Parameter(description = "分类ID") @PathVariable Long id) {
         CategoryVO categoryVO = categoryService.getCategoryById(id);
         return Result.success(categoryVO);
@@ -95,6 +100,7 @@ public class AssetCategoryController {
      */
     @GetMapping("/tree")
     @Operation(summary = "获取完整分类树", description = "获取树形结构的完整资产分类列表")
+    @PreAuthorize("hasAuthority('asset:category:list')")
     public Result<List<CategoryTreeVO>> getCategoryTree() {
         List<CategoryTreeVO> tree = categoryService.getCategoryTree();
         return Result.success(tree);
@@ -108,6 +114,7 @@ public class AssetCategoryController {
      */
     @GetMapping("/children/{parentId}")
     @Operation(summary = "获取子分类列表", description = "根据父分类ID获取子分类列表")
+    @PreAuthorize("hasAuthority('asset:category:list')")
     public Result<List<CategoryVO>> getChildCategories(
             @Parameter(description = "父分类ID") @PathVariable Long parentId) {
         List<CategoryVO> children = categoryService.getChildCategories(parentId);

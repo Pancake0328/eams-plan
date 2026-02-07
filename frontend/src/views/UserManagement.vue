@@ -51,7 +51,7 @@
     <!-- 操作栏和表格 -->
     <el-card class="table-card" shadow="never">
       <div class="toolbar">
-        <el-button type="primary" :icon="Plus" @click="handleAdd">
+        <el-button type="primary" :icon="Plus" v-permission="'system:user:add'" @click="handleAdd">
           新增用户
         </el-button>
       </div>
@@ -74,6 +74,7 @@
               v-model="row.status"
               :active-value="1"
               :inactive-value="0"
+              v-permission="'system:user:status'"
               @change="handleStatusChange(row)"
             />
           </template>
@@ -86,15 +87,27 @@
               size="small"
               link
               :icon="Edit"
+              v-permission="'system:user:edit'"
               @click="handleEdit(row)"
             >
               编辑
+            </el-button>
+            <el-button
+              type="primary"
+              size="small"
+              link
+              :icon="UserFilled"
+              v-permission="'system:user:assign'"
+              @click="handleAssignRoles(row)"
+            >
+              分配角色
             </el-button>
             <el-button
               type="warning"
               size="small"
               link
               :icon="Key"
+              v-permission="'system:user:reset'"
               @click="handleResetPassword(row)"
             >
               重置密码
@@ -104,6 +117,7 @@
               size="small"
               link
               :icon="Delete"
+              v-permission="'system:user:delete'"
               @click="handleDelete(row)"
             >
               删除
@@ -221,16 +235,42 @@
         </el-button>
       </template>
     </el-dialog>
+
+    <!-- 分配角色对话框 -->
+    <el-dialog
+      v-model="roleDialogVisible"
+      title="分配角色"
+      width="500px"
+      @close="handleRoleDialogClose"
+    >
+      <div v-loading="roleLoading">
+        <el-checkbox-group v-model="selectedRoleIds">
+          <el-checkbox
+            v-for="role in roleList"
+            :key="role.id"
+            :label="role.id"
+          >
+            {{ role.roleName }}
+          </el-checkbox>
+        </el-checkbox-group>
+      </div>
+      <template #footer>
+        <el-button @click="roleDialogVisible = false">取消</el-button>
+        <el-button type="primary" @click="handleSaveRoles">确定</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox, FormInstance, FormRules } from 'element-plus'
-import { Search, Refresh, Plus, Edit, Delete, Key } from '@element-plus/icons-vue'
+import { Search, Refresh, Plus, Edit, Delete, Key, UserFilled } from '@element-plus/icons-vue'
 import { userApi } from '@/api/user'
+import { roleApi, permissionApi } from '@/api/permission'
 import { departmentApi } from '@/api/department'
 import type { User, UserCreateRequest, UserUpdateRequest, UserPageQuery } from '@/types'
+import type { Role } from '@/api/permission'
 
 // 搜索表单
 const searchForm = reactive<UserPageQuery>({
@@ -304,6 +344,13 @@ const passwordForm = reactive({
   userId: 0,
   newPassword: ''
 })
+
+// 角色分配对话框
+const roleDialogVisible = ref(false)
+const roleLoading = ref(false)
+const roleList = ref<Role[]>([])
+const selectedRoleIds = ref<number[]>([])
+const currentRoleUserId = ref<number>()
 
 const passwordFormRules: FormRules = {
   newPassword: [
@@ -488,6 +535,42 @@ const handleDelete = (row: User) => {
   }).catch(() => {
     // 取消删除
   })
+}
+
+/**
+ * 分配角色
+ */
+const handleAssignRoles = async (row: User) => {
+  currentRoleUserId.value = row.id
+  roleDialogVisible.value = true
+  roleLoading.value = true
+  try {
+    if (roleList.value.length === 0) {
+      const roleRes = await roleApi.getAllRoles()
+      roleList.value = roleRes.data
+    }
+    const roleIdsRes = await permissionApi.getUserRoleIds(row.id)
+    selectedRoleIds.value = roleIdsRes.data
+  } catch (error) {
+    console.error('加载角色失败:', error)
+  } finally {
+    roleLoading.value = false
+  }
+}
+
+const handleSaveRoles = async () => {
+  if (!currentRoleUserId.value) return
+  try {
+    await permissionApi.assignRolesToUser(currentRoleUserId.value, selectedRoleIds.value)
+    ElMessage.success('角色分配成功')
+    roleDialogVisible.value = false
+  } catch (error) {
+    console.error('角色分配失败:', error)
+  }
+}
+
+const handleRoleDialogClose = () => {
+  selectedRoleIds.value = []
 }
 
 /**

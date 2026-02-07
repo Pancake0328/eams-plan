@@ -7,6 +7,7 @@ import com.eams.finance.vo.DepreciationInfo;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.*;
 
@@ -29,6 +30,7 @@ public class AssetDepreciationController {
 
     @Operation(summary = "计算单个资产折旧")
     @GetMapping("/asset/{assetId}")
+    @PreAuthorize("hasAuthority('finance:depreciation:view')")
     public Result<DepreciationInfo> calculateAssetDepreciation(
             @PathVariable Long assetId,
             @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate targetDate) {
@@ -41,6 +43,7 @@ public class AssetDepreciationController {
 
     @Operation(summary = "批量计算资产折旧")
     @PostMapping("/batch")
+    @PreAuthorize("hasAuthority('finance:depreciation:view')")
     public Result<List<DepreciationInfo>> batchCalculateDepreciation(
             @RequestBody List<Long> assetIds,
             @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate targetDate) {
@@ -53,6 +56,7 @@ public class AssetDepreciationController {
 
     @Operation(summary = "计算所有资产折旧")
     @GetMapping("/all")
+    @PreAuthorize("hasAuthority('finance:depreciation:view')")
     public Result<List<DepreciationInfo>> calculateAllDepreciation(
             @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate targetDate) {
         if (targetDate == null) {

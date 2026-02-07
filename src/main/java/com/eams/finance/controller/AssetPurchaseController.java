@@ -11,6 +11,7 @@ import com.eams.finance.vo.PurchaseVO;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -31,6 +32,7 @@ public class AssetPurchaseController {
     @Operation(summary = "创建采购记录")
     @PostMapping
     @OperationLog(module = "采购管理", action = "创建采购记录")
+    @PreAuthorize("hasAuthority('finance:purchase:create')")
     public Result<Long> createPurchase(@Validated @RequestBody PurchaseCreateRequest request) {
         Long id = purchaseService.createPurchase(request);
         return Result.success(id);
@@ -38,6 +40,7 @@ public class AssetPurchaseController {
 
     @Operation(summary = "获取采购记录详情")
     @GetMapping("/{id}")
+    @PreAuthorize("hasAuthority('finance:purchase:view')")
     public Result<PurchaseVO> getPurchaseById(@PathVariable Long id) {
         PurchaseVO purchase = purchaseService.getPurchaseById(id);
         return Result.success(purchase);
@@ -45,6 +48,7 @@ public class AssetPurchaseController {
 
     @Operation(summary = "分页查询采购记录")
     @GetMapping
+    @PreAuthorize("hasAuthority('finance:purchase:list')")
     public Result<PageResult<PurchaseVO>> getPurchasePage(PurchasePageQuery query) {
         Page<PurchaseVO> page = purchaseService.getPurchasePage(query);
         PageResult<PurchaseVO> result = PageResult.of(page.getRecords(), page.getTotal());
@@ -54,6 +58,7 @@ public class AssetPurchaseController {
     @Operation(summary = "审批采购记录")
     @PutMapping("/{id}/approve")
     @OperationLog(module = "采购管理", action = "审批采购记录")
+    @PreAuthorize("hasAuthority('finance:purchase:approve')")
     public Result<Void> approvePurchase(
             @PathVariable Long id,
             @RequestParam Boolean approved,
@@ -65,6 +70,7 @@ public class AssetPurchaseController {
     @Operation(summary = "删除采购记录")
     @DeleteMapping("/{id}")
     @OperationLog(module = "采购管理", action = "删除采购记录")
+    @PreAuthorize("hasAuthority('finance:purchase:delete')")
     public Result<Void> deletePurchase(@PathVariable Long id) {
         purchaseService.deletePurchase(id);
         return Result.success();

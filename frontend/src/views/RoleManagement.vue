@@ -63,6 +63,7 @@
             <el-button
               link
               :type="row.status === 1 ? 'warning' : 'success'"
+              v-permission="'system:role:status'"
               @click="handleToggleStatus(row)"
             >
               {{ row.status === 1 ? '禁用' : '启用' }}

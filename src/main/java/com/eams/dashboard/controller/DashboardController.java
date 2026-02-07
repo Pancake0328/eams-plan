@@ -9,6 +9,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
@@ -30,6 +31,7 @@ public class DashboardController {
 
     @Operation(summary = "获取仪表盘概览数据")
     @GetMapping("/statistics")
+    @PreAuthorize("hasAuthority('dashboard:view')")
     public Result<DashboardStatistics> getDashboardStatistics() {
         DashboardStatistics statistics = dashboardService.getDashboardStatistics();
         return Result.success(statistics);
@@ -37,6 +39,7 @@ public class DashboardController {
 
     @Operation(summary = "获取部门资产分布")
     @GetMapping("/distribution/department")
+    @PreAuthorize("hasAuthority('dashboard:view')")
     public Result<List<AssetDistribution>> getDepartmentDistribution() {
         List<AssetDistribution> distributions = dashboardService.getDepartmentDistribution();
         return Result.success(distributions);
@@ -44,6 +47,7 @@ public class DashboardController {
 
     @Operation(summary = "获取资产分类分布")
     @GetMapping("/distribution/category")
+    @PreAuthorize("hasAuthority('dashboard:view')")
     public Result<List<AssetDistribution>> getCategoryDistribution() {
         List<AssetDistribution> distributions = dashboardService.getCategoryDistribution();
         return Result.success(distributions);
@@ -51,6 +55,7 @@ public class DashboardController {
 
     @Operation(summary = "获取资产状态分布")
     @GetMapping("/distribution/status")
+    @PreAuthorize("hasAuthority('dashboard:view')")
     public Result<List<AssetDistribution>> getStatusDistribution() {
         List<AssetDistribution> distributions = dashboardService.getStatusDistribution();
         return Result.success(distributions);
@@ -58,6 +63,7 @@ public class DashboardController {
 
     @Operation(summary = "获取时间趋势统计")
     @GetMapping("/trend")
+    @PreAuthorize("hasAuthority('dashboard:view')")
     public Result<List<TimeTrendStatistics>> getTimeTrendStatistics(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
