@@ -9,10 +9,10 @@
     <!-- 搜索栏 -->
     <el-card class="search-card" shadow="never">
       <el-form :model="searchForm" inline>
-        <el-form-item label="用户名">
+        <el-form-item label="工号">
           <el-input
             v-model="searchForm.username"
-            placeholder="请输入用户名"
+            placeholder="请输入工号"
             clearable
             style="width: 200px"
             @clear="handleSearch"
@@ -63,9 +63,8 @@
         stripe
         style="width: 100%"
       >
-        <el-table-column prop="id" label="ID" width="80" />
-        <el-table-column prop="username" label="用户名" width="120" />
-        <el-table-column prop="nickname" label="昵称" width="120" />
+        <el-table-column prop="username" label="工号" width="120" />
+        <el-table-column prop="nickname" label="姓名" width="120" />
         <el-table-column prop="email" label="邮箱" min-width="180" />
         <el-table-column prop="phone" label="手机号" width="130" />
         <el-table-column prop="departmentName" label="所属部门" width="150" />
@@ -140,10 +139,10 @@
         :rules="formRules"
         label-width="100px"
       >
-        <el-form-item label="用户名" prop="username">
+        <el-form-item label="工号" prop="username">
           <el-input
             v-model="userForm.username"
-            placeholder="请输入用户名"
+            placeholder="请输入工号"
             :disabled="isEdit"
           />
         </el-form-item>
@@ -155,8 +154,8 @@
             show-password
           />
         </el-form-item>
-        <el-form-item label="昵称" prop="nickname">
-          <el-input v-model="userForm.nickname" placeholder="请输入昵称" />
+        <el-form-item label="姓名" prop="nickname">
+          <el-input v-model="userForm.nickname" placeholder="请输入姓名" />
         </el-form-item>
         <el-form-item label="邮箱" prop="email">
           <el-input v-model="userForm.email" placeholder="请输入邮箱" />
@@ -275,17 +274,17 @@ const userForm = reactive<UserCreateRequest & { id?: number; departmentId?: numb
 // 表单校验规则
 const formRules: FormRules = {
   username: [
-    { required: true, message: '请输入用户名', trigger: 'blur' },
-    { min: 4, max: 20, message: '用户名长度在4-20个字符之间', trigger: 'blur' },
-    { pattern: /^[a-zA-Z0-9_]+$/, message: '用户名只能包含字母、数字和下划线', trigger: 'blur' }
+    { required: true, message: '请输入工号', trigger: 'blur' },
+    { min: 4, max: 20, message: '工号长度在4-20个字符之间', trigger: 'blur' },
+    { pattern: /^[a-zA-Z0-9_]+$/, message: '工号只能包含字母、数字和下划线', trigger: 'blur' }
   ],
   password: [
     { required: true, message: '请输入密码', trigger: 'blur' },
     { min: 6, max: 20, message: '密码长度在6-20个字符之间', trigger: 'blur' }
   ],
   nickname: [
-    { required: true, message: '请输入昵称', trigger: 'blur' },
-    { max: 50, message: '昵称长度不能超过50个字符', trigger: 'blur' }
+    { required: true, message: '请输入姓名', trigger: 'blur' },
+    { max: 50, message: '姓名长度不能超过50个字符', trigger: 'blur' }
   ],
   email: [
     { type: 'email', message: '请输入正确的邮箱地址', trigger: 'blur' }

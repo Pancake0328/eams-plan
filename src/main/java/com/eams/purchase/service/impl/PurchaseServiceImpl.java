@@ -28,6 +28,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -116,10 +117,18 @@ public class PurchaseServiceImpl implements PurchaseService {
 
             // 创建采购阶段资产信息（先不展示，入库时继续使用）
             for (int i = 0; i < detail.getQuantity(); i++) {
+                if (detail.getCategoryId() == null) {
+                    throw new BusinessException("资产分类不能为空");
+                }
+                AssetCategory category = categoryMapper.selectById(detail.getCategoryId());
+                if (category == null) {
+                    throw new BusinessException("资产分类不存在");
+                }
+
                 AssetInfo asset = new AssetInfo();
-                asset.setAssetNumber(numberGenerator.generateAssetNumber());
+                asset.setAssetNumber(numberGenerator.generateAssetNumber(resolveCategoryPrefix(category)));
                 asset.setAssetName(detail.getAssetName());
-                asset.setCategoryId(detail.getCategoryId());
+                asset.setCategoryId(category.getId());
                 asset.setPurchaseDetailId(purchaseDetail.getId());
                 asset.setPurchaseAmount(detail.getUnitPrice());
                 asset.setPurchaseDate(request.getPurchaseDate());
@@ -396,11 +405,20 @@ public class PurchaseServiceImpl implements PurchaseService {
         if (purchase.getApplicantId() != null) {
             User applicant = userMapper.selectById(purchase.getApplicantId());
             if (applicant != null) {
-                vo.setApplicantName(applicant.getUsername());
+                vo.setApplicantName(StringUtils.hasText(applicant.getNickname())
+                        ? applicant.getNickname()
+                        : applicant.getUsername());
             }
         }
 
         return vo;
+    }
+
+    private String resolveCategoryPrefix(AssetCategory category) {
+        if (category == null) {
+            return null;
+        }
+        return StringUtils.hasText(category.getCategoryCode()) ? category.getCategoryCode() : null;
     }
 
     private PurchaseVO.PurchaseDetailVO convertDetailToVO(PurchaseOrderDetail detail) {

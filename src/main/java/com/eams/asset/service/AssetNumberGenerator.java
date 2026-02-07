@@ -8,6 +8,7 @@ import com.eams.purchase.mapper.PurchaseOrderMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -32,20 +33,29 @@ public class AssetNumberGenerator {
      */
     @Transactional(rollbackFor = Exception.class)
     public String generateAssetNumber() {
-        String date = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"));
-        String prefix = "AST";
+        return generateAssetNumber("AST");
+    }
 
-        assetNumberSequenceMapper.insertIgnore(prefix, date);
+    /**
+     * 生成资产编号（指定前缀）
+     * 格式：PREFIX-YYYYMMDD-XXXX
+     */
+    @Transactional(rollbackFor = Exception.class)
+    public String generateAssetNumber(String prefix) {
+        String date = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"));
+        String normalizedPrefix = StringUtils.hasText(prefix) ? prefix.trim().toUpperCase() : "AST";
+
+        assetNumberSequenceMapper.insertIgnore(normalizedPrefix, date);
 
         for (int i = 0; i < 5; i++) {
-            AssetNumberSequence sequence = assetNumberSequenceMapper.selectForUpdate(prefix, date);
+            AssetNumberSequence sequence = assetNumberSequenceMapper.selectForUpdate(normalizedPrefix, date);
             if (sequence == null) {
                 throw new IllegalStateException("资产编号序列初始化失败");
             }
             int nextNumber = sequence.getCurrentNumber() + 1;
-            assetNumberSequenceMapper.incrementSequence(prefix, date);
+            assetNumberSequenceMapper.incrementSequence(normalizedPrefix, date);
 
-            String assetNumber = String.format("%s-%s-%04d", prefix, date, nextNumber);
+            String assetNumber = String.format("%s-%s-%04d", normalizedPrefix, date, nextNumber);
             if (assetInfoMapper.countByAssetNumber(assetNumber) == 0) {
                 return assetNumber;
             }

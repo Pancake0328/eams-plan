@@ -72,8 +72,8 @@ public class AssetInfoServiceImpl implements AssetInfoService {
             throw new BusinessException("资产分类不存在");
         }
 
-        // 生成资产编号
-        String assetNumber = numberGenerator.generateAssetNumber();
+        // 生成资产编号（使用分类编码作为前缀）
+        String assetNumber = numberGenerator.generateAssetNumber(resolveCategoryPrefix(category));
 
         // 创建资产
         AssetInfo asset = new AssetInfo();
@@ -281,6 +281,7 @@ public class AssetInfoServiceImpl implements AssetInfoService {
                 .departmentId(asset.getDepartmentId())
                 .departmentName(getDepartmentName(asset.getDepartmentId()))
                 .custodian(asset.getCustodian())
+                .custodianName(getCustodianName(asset.getCustodian()))
                 .assetStatus(asset.getAssetStatus())
                 .assetStatusText(ASSET_STATUS_MAP.get(asset.getAssetStatus()))
                 .specifications(asset.getSpecifications())
@@ -303,6 +304,26 @@ public class AssetInfoServiceImpl implements AssetInfoService {
         }
         com.eams.system.entity.Department department = departmentMapper.selectById(departmentId);
         return department != null ? department.getDeptName() : null;
+    }
+
+    private String getCustodianName(String username) {
+        if (!StringUtils.hasText(username)) {
+            return null;
+        }
+        com.eams.system.entity.User user = userMapper.selectOne(
+                new LambdaQueryWrapper<com.eams.system.entity.User>()
+                        .eq(com.eams.system.entity.User::getUsername, username));
+        if (user == null) {
+            return username;
+        }
+        return StringUtils.hasText(user.getNickname()) ? user.getNickname() : user.getUsername();
+    }
+
+    private String resolveCategoryPrefix(AssetCategory category) {
+        if (category == null) {
+            return null;
+        }
+        return StringUtils.hasText(category.getCategoryCode()) ? category.getCategoryCode() : null;
     }
 
     /**

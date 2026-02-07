@@ -89,6 +89,12 @@ public class AssetVO implements Serializable {
     private String custodian;
 
     /**
+     * 责任人姓名
+     */
+    @Schema(description = "责任人姓名")
+    private String custodianName;
+
+    /**
      * 资产状态：1-闲置，2-使用中，3-维修中，4-报废
      */
     @Schema(description = "资产状态")

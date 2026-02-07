@@ -169,6 +169,7 @@ export interface Asset {
   departmentId?: number
   departmentName?: string
   custodian?: string
+  custodianName?: string
   assetStatus: number
   assetStatusText?: string
   specifications?: string

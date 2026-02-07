@@ -54,7 +54,6 @@
             clearable
             style="width: 120px"
           >
-            <el-option label="采购" :value="0" />
             <el-option label="闲置" :value="1" />
             <el-option label="使用中" :value="2" />
             <el-option label="维修中" :value="3" />
@@ -109,7 +108,11 @@
           </template>
         </el-table-column>
         <el-table-column prop="departmentName" label="使用部门" width="120" show-overflow-tooltip />
-        <el-table-column prop="custodian" label="责任人" width="100" />
+        <el-table-column label="责任人" width="100">
+          <template #default="{ row }">
+            {{ row.custodianName || row.custodian || '-' }}
+          </template>
+        </el-table-column>
         <el-table-column prop="assetStatus" label="资产状态" width="100" align="center">
           <template #default="{ row }">
             <el-tag :type="getStatusType(row.assetStatus)">
@@ -405,7 +408,7 @@
         </el-descriptions-item>
         <el-descriptions-item label="采购日期">{{ detailData.purchaseDate || '-' }}</el-descriptions-item>
         <el-descriptions-item label="使用部门">{{ detailData.departmentName || '-' }}</el-descriptions-item>
-        <el-descriptions-item label="责任人">{{ detailData.custodian || '-' }}</el-descriptions-item>
+        <el-descriptions-item label="责任人">{{ detailData.custodianName || detailData.custodian || '-' }}</el-descriptions-item>
         <el-descriptions-item label="资产状态">
           <el-tag :type="getStatusType(detailData.assetStatus)">
             {{ detailData.assetStatusText }}

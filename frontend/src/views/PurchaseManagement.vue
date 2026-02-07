@@ -43,7 +43,7 @@
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="applicant" label="申请人" width="100" />
+        <el-table-column prop="applicantName" label="申请人" width="100" />
         <el-table-column prop="createTime" label="创建时间" width="180" />
         <el-table-column label="操作" width="180" fixed="right">
           <template #default="{ row }">
@@ -357,6 +357,11 @@ const handleSubmit = async () => {
 
   if (formData.details.length === 0) {
     ElMessage.warning('请至少添加一条采购明细')
+    return
+  }
+  const missingCategory = formData.details.find(detail => !detail.categoryId)
+  if (missingCategory) {
+    ElMessage.warning('请为所有明细选择资产分类')
     return
   }
 

@@ -26,6 +26,7 @@ public class PurchaseCreateRequest {
     public static class PurchaseDetailRequest {
         @NotBlank(message = "资产名称不能为空")
         private String assetName;
+        @NotNull(message = "资产分类不能为空")
         private Long categoryId;
         private String specifications;
         private String manufacturer;
