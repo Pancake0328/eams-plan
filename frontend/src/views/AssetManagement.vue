@@ -435,12 +435,14 @@
         <el-form-item label="已选资产" v-if="isBatchOperation">
           <el-input :model-value="`共 ${operationTargets.length} 项`" disabled />
         </el-form-item>
-        <el-form-item label="资产编号" v-else>
-          <el-input :value="currentAsset?.assetNumber" disabled />
-        </el-form-item>
-        <el-form-item label="资产名称" v-else>
-          <el-input :value="currentAsset?.assetName" disabled />
-        </el-form-item>
+        <template v-else>
+          <el-form-item label="资产编号">
+            <el-input :value="currentAsset?.assetNumber" disabled />
+          </el-form-item>
+          <el-form-item label="资产名称">
+            <el-input :value="currentAsset?.assetName" disabled />
+          </el-form-item>
+        </template>
         <el-form-item label="目标责任人" prop="toCustodian" v-if="showCustodianField">
           <el-select
             v-model="operationForm.toCustodian"
