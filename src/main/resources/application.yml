@@ -12,8 +12,8 @@ spring:
   # 数据源配置
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-#    url: jdbc:mysql://localhost:3306/eams_plan?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true
-    url: jdbc:mysql://192.168.5.175:3306/eams_plan?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true
+    url: jdbc:mysql://localhost:3306/eams_plan?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true
+#    url: jdbc:mysql://192.168.5.175:3306/eams_plan?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true
     username: root
     password: root
     
@@ -94,9 +94,3 @@ logging:
   pattern:
     console: '%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{50} - %msg%n'
 
-# 折旧配置
-asset:
-  depreciation:
-    residual-rate: 5        # 残值率5%
-    default-useful-life: 60 # 默认60个月
-    scale: 2                # 2位小数

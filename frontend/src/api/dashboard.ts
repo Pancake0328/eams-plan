@@ -48,31 +48,3 @@ export const dashboardApi = {
     }
 }
 
-/**
- * 报表导出 API
- */
-export const exportApi = {
-    /**
-     * 导出资产列表
-     */
-    exportAssetList() {
-        window.open(`${import.meta.env.VITE_API_BASE_URL}/export/asset-list`, '_blank')
-    },
-
-    /**
-     * 导出仪表盘统计报表
-     */
-    exportDashboardStatistics() {
-        window.open(`${import.meta.env.VITE_API_BASE_URL}/export/dashboard-statistics`, '_blank')
-    },
-
-    /**
-     * 导出时间趋势统计
-     */
-    exportTimeTrend(startDate: string, endDate: string) {
-        window.open(
-            `${import.meta.env.VITE_API_BASE_URL}/export/time-trend?startDate=${startDate}&endDate=${endDate}`,
-            '_blank'
-        )
-    }
-}

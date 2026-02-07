@@ -76,11 +76,6 @@
               <span class="label">进行中盘点:</span>
               <span class="value primary">{{ statistics.ongoingInventories }}</span>
             </div>
-            <div style="flex: 1"></div>
-            <el-button-group>
-              <el-button type="primary" :icon="Download" @click="exportAssetList">导出资产列表</el-button>
-              <el-button type="success" :icon="Download" @click="exportStatistics">导出统计报表</el-button>
-            </el-button-group>
           </div>
         </el-card>
       </el-col>
@@ -147,12 +142,11 @@
 
 <script setup lang="ts">
 import { ref, reactive, onMounted, onBeforeUnmount } from 'vue'
-import { Grid, Money, Warning, SuccessFilled, Download } from '@element-plus/icons-vue'
+import { Grid, Money, Warning, SuccessFilled } from '@element-plus/icons-vue'
 import * as echarts from 'echarts'
 import type { EChartsOption } from 'echarts'
-import { dashboardApi, exportApi } from '@/api/dashboard'
+import { dashboardApi } from '@/api/dashboard'
 import type { DashboardStatistics, AssetDistribution, TimeTrendStatistics } from '@/types'
-import { ElMessage } from 'element-plus'
 
 // 统计数据
 const statistics = reactive<DashboardStatistics>({
@@ -449,18 +443,6 @@ const renderCategoryChart = (data: AssetDistribution[]) => {
   }
 
   categoryChart.setOption(option)
-}
-
-// 导出资产列表
-const exportAssetList = () => {
-  exportApi.exportAssetList()
-  ElMessage.success('开始导出资产列表')
-}
-
-// 导出统计报表
-const exportStatistics = () => {
-  exportApi.exportDashboardStatistics()
-  ElMessage.success('开始导出统计报表')
 }
 
 // 窗口大小改变时重新渲染图表

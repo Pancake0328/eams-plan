@@ -27,8 +27,8 @@ Set<String> permissions = permissionService.getUserPermissions(userId);
 - system:user:edit      // 系统模块-用户资源-编辑操作
 - system:user:delete    // 系统模块-用户资源-删除操作
 - system:role:permission // 系统模块-角色资源-分配权限操作
-- asset:info:add        // 资产模块-信息资源-添加操作
-- asset:info:export     // 资产模块-信息资源-导出操作
+- asset:info:view       // 资产模块-信息资源-查看操作
+- asset:info:edit       // 资产模块-信息资源-编辑操作
 ```
 
 ## 二、权限校验流程
@@ -200,10 +200,8 @@ GET /permission/user/1/permissions
   "code": 200,
   "data": [
     "asset:info:list",
-    "asset:info:add",
-    "asset:info:edit",
-    "asset:info:delete",
-    "asset:info:export"
+    "asset:info:view",
+    "asset:info:edit"
   ]
 }
 ```
