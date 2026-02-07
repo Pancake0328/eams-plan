@@ -72,15 +72,20 @@ public class AssetRepairServiceImpl implements AssetRepairService {
         if (asset == null) {
             throw new BusinessException("资产不存在");
         }
-        if (asset.getAssetStatus() == 4) {
+        Integer originalStatus = asset.getAssetStatus();
+        if (originalStatus == 4) {
             throw new BusinessException("报废的资产不能报修");
         }
-        if (asset.getAssetStatus() == 3) {
+        if (originalStatus == 3) {
             throw new BusinessException("资产已处于维修中");
+        }
+        if (originalStatus != 1 && originalStatus != 2) {
+            throw new BusinessException("只有闲置或使用中的资产才能报修");
         }
 
         // 生成报修编号
         String repairNumber = generateRepairNumber();
+        String operator = getCurrentUsername();
 
         // 创建报修记录
         AssetRepair repair = new AssetRepair();
@@ -91,10 +96,11 @@ public class AssetRepairServiceImpl implements AssetRepairService {
         repair.setReportTime(LocalDateTime.now());
         repair.setRepairStatus(1); // 待审批
         repair.setRepairCost(BigDecimal.ZERO);
+        repair.setReporter(operator);
+        repair.setOriginalStatus(originalStatus);
 
         repairMapper.insert(repair);
 
-        Integer oldStatus = asset.getAssetStatus();
         Long fromDepartmentId = asset.getDepartmentId();
         String fromCustodian = asset.getCustodian();
 
@@ -106,7 +112,7 @@ public class AssetRepairServiceImpl implements AssetRepairService {
                 6,
                 fromDepartmentId, fromDepartmentId,
                 fromCustodian, fromCustodian,
-                oldStatus, 3,
+                originalStatus, 3,
                 request.getRemark());
         recordMapper.insert(record);
 
@@ -129,7 +135,8 @@ public class AssetRepairServiceImpl implements AssetRepairService {
             throw new BusinessException("只有待审批的报修才能审批");
         }
 
-        repair.setApprover(approver);
+        String operator = getCurrentUsername();
+        repair.setApprover(operator);
         repair.setApprovalTime(LocalDateTime.now());
         repair.setRepairStatus(approved ? 2 : 5); // 2-已审批 5-已拒绝
 
@@ -138,11 +145,26 @@ public class AssetRepairServiceImpl implements AssetRepairService {
         AssetInfo asset = assetMapper.selectById(repair.getAssetId());
         if (asset != null) {
             if (!approved) {
-                asset.setAssetStatus(1);
+                Integer restoreStatus = resolveRestoreStatus(repair.getOriginalStatus());
+                Integer oldStatus = asset.getAssetStatus();
+                Long fromDepartmentId = asset.getDepartmentId();
+                String fromCustodian = asset.getCustodian();
+
+                asset.setAssetStatus(restoreStatus);
                 assetMapper.updateById(asset);
-                recordLifecycle(asset.getId(), 4, "报修拒绝", null,
-                        asset.getDepartmentId(), asset.getDepartmentId(),
-                        asset.getCustodian(), asset.getCustodian());
+
+                AssetRecord record = createRecord(
+                        asset,
+                        8,
+                        fromDepartmentId, fromDepartmentId,
+                        fromCustodian, fromCustodian,
+                        oldStatus, restoreStatus,
+                        "报修拒绝");
+                recordMapper.insert(record);
+
+                recordLifecycle(asset.getId(), mapStatusToStage(restoreStatus), "报修拒绝", null,
+                        fromDepartmentId, fromDepartmentId,
+                        fromCustodian, fromCustodian);
             } else {
                 recordLifecycle(asset.getId(), 3, "报修审批通过", null,
                         asset.getDepartmentId(), asset.getDepartmentId(),
@@ -163,7 +185,8 @@ public class AssetRepairServiceImpl implements AssetRepairService {
             throw new BusinessException("只有已审批的报修才能开始维修");
         }
 
-        repair.setRepairPerson(repairPerson);
+        String operator = getCurrentUsername();
+        repair.setRepairPerson(operator);
         repair.setRepairStartTime(LocalDateTime.now());
         repair.setRepairStatus(3); // 维修中
 
@@ -204,7 +227,8 @@ public class AssetRepairServiceImpl implements AssetRepairService {
             Long fromDepartmentId = asset.getDepartmentId();
             String fromCustodian = asset.getCustodian();
 
-            asset.setAssetStatus(1);
+            Integer restoreStatus = resolveRestoreStatus(repair.getOriginalStatus());
+            asset.setAssetStatus(restoreStatus);
             assetMapper.updateById(asset);
 
             AssetRecord record = createRecord(
@@ -212,11 +236,11 @@ public class AssetRepairServiceImpl implements AssetRepairService {
                     7,
                     fromDepartmentId, fromDepartmentId,
                     fromCustodian, fromCustodian,
-                    oldStatus, 1,
+                    oldStatus, restoreStatus,
                     repairResult);
             recordMapper.insert(record);
 
-            recordLifecycle(asset.getId(), 4, "维修完成", repairResult,
+            recordLifecycle(asset.getId(), mapStatusToStage(restoreStatus), "维修完成", repairResult,
                     fromDepartmentId, fromDepartmentId,
                     fromCustodian, fromCustodian);
         }
@@ -318,6 +342,35 @@ public class AssetRepairServiceImpl implements AssetRepairService {
         lifecycle.setFromCustodian(fromCustodian);
         lifecycle.setToCustodian(toCustodian);
         lifecycleMapper.insert(lifecycle);
+    }
+
+    private Integer resolveRestoreStatus(Integer originalStatus) {
+        if (originalStatus == null) {
+            return 1;
+        }
+        return originalStatus;
+    }
+
+    private Integer mapStatusToStage(Integer status) {
+        if (status == null) {
+            return null;
+        }
+        switch (status) {
+            case 0:
+                return 1;
+            case 1:
+                return 4;
+            case 2:
+                return 2;
+            case 3:
+                return 3;
+            case 4:
+                return 5;
+            case 6:
+                return 6;
+            default:
+                return null;
+        }
     }
 
     private Integer getLatestLifecycleStage(Long assetId) {

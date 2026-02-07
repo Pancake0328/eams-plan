@@ -73,17 +73,32 @@
         <el-button type="primary" :icon="Plus" @click="handleAdd">
           资产入库
         </el-button>
+        <el-button :disabled="!canBatchAllocate" @click="handleBatchOperation('allocate')">
+          批量分配
+        </el-button>
+        <el-button :disabled="!canBatchTransfer" @click="handleBatchOperation('transfer')">
+          批量调拨
+        </el-button>
+        <el-button :disabled="!canBatchReturn" @click="handleBatchOperation('return')">
+          批量归还
+        </el-button>
+        <el-button :disabled="!canBatchScrap" @click="handleBatchOperation('scrap')">
+          批量报废
+        </el-button>
       </div>
     </el-card>
 
     <!-- 资产列表 -->
     <el-card class="table-card" shadow="never">
       <el-table
+        ref="assetTableRef"
         :data="tableData"
         v-loading="loading"
         border
         style="width: 100%"
+        @selection-change="handleAssetSelectionChange"
       >
+        <el-table-column type="selection" width="50" />
         <el-table-column prop="assetNumber" label="资产编号" width="150" fixed />
         <el-table-column prop="assetName" label="资产名称" min-width="150" show-overflow-tooltip />
         <el-table-column prop="categoryName" label="资产分类" width="120" />
@@ -138,7 +153,7 @@
                   <el-dropdown-item command="return" :disabled="row.assetStatus !== 2">
                     <el-icon><RefreshLeft /></el-icon> 归还
                   </el-dropdown-item>
-                  <el-dropdown-item command="repair" :disabled="row.assetStatus === 3 || row.assetStatus === 4">
+                  <el-dropdown-item command="repair" :disabled="row.assetStatus !== 1 && row.assetStatus !== 2">
                     <el-icon><Tools /></el-icon> 送修
                   </el-dropdown-item>
                   <el-dropdown-item command="scrap" :disabled="row.assetStatus !== 1" divided>
@@ -417,10 +432,13 @@
         :rules="operationRules"
         label-width="100px"
       >
-        <el-form-item label="资产编号">
+        <el-form-item label="已选资产" v-if="isBatchOperation">
+          <el-input :model-value="`共 ${operationTargets.length} 项`" disabled />
+        </el-form-item>
+        <el-form-item label="资产编号" v-else>
           <el-input :value="currentAsset?.assetNumber" disabled />
         </el-form-item>
-        <el-form-item label="资产名称">
+        <el-form-item label="资产名称" v-else>
           <el-input :value="currentAsset?.assetName" disabled />
         </el-form-item>
         <el-form-item label="目标责任人" prop="toCustodian" v-if="showCustodianField">
@@ -466,7 +484,7 @@
           />
         </el-form-item>
         <el-form-item label="报修人" v-if="showRepairFields" prop="reporter">
-          <el-input v-model="operationForm.reporter" placeholder="请输入报修人" />
+          <el-input v-model="operationForm.reporter" disabled />
         </el-form-item>
         <el-form-item label="备注" prop="remark">
           <el-input
@@ -625,6 +643,7 @@ const operationVisible = ref(false)
 const operationTitle = ref('')
 const operationType = ref('')
 const currentAsset = ref<Asset | null>(null)
+const operationTargets = ref<Asset[]>([])
 const operationFormRef = ref<FormInstance>()
 const operationLoading = ref(false)
 
@@ -638,6 +657,23 @@ const operationForm = reactive<RecordCreateRequest & Partial<RepairCreateRequest
   faultDescription: '',
   reporter: ''
 })
+
+const assetTableRef = ref()
+const selectedAssets = ref<Asset[]>([])
+const isBatchOperation = computed(() => operationTargets.value.length > 1)
+const hasSelection = computed(() => selectedAssets.value.length > 0)
+const canBatchAllocate = computed(() =>
+  hasSelection.value && selectedAssets.value.every(asset => asset.assetStatus === 1)
+)
+const canBatchTransfer = computed(() =>
+  hasSelection.value && selectedAssets.value.every(asset => asset.assetStatus === 2)
+)
+const canBatchReturn = computed(() =>
+  hasSelection.value && selectedAssets.value.every(asset => asset.assetStatus === 2)
+)
+const canBatchScrap = computed(() =>
+  hasSelection.value && selectedAssets.value.every(asset => asset.assetStatus === 1)
+)
 
 const selectedUserDepartmentId = computed(() => {
   const selectedUser = userList.value.find(user => user.username === operationForm.toCustodian)
@@ -665,6 +701,16 @@ const showRepairFields = computed(() => {
 // 操作表单校验规则
 const operationRules: FormRules = {
   toCustodian: [
+    {
+      validator: (_rule, value, callback) => {
+        if (showCustodianField.value && !value) {
+          callback(new Error('请选择责任人'))
+        } else {
+          callback()
+        }
+      },
+      trigger: 'change'
+    },
     { max: 50, message: '责任人长度不能超过50个字符', trigger: 'blur' }
   ],
   faultDescription: [
@@ -1066,6 +1112,7 @@ const getStatusType = (status: number): string => {
 const handleOperation = async (command: string, row: Asset) => {
   currentAsset.value = row
   operationType.value = command
+  operationTargets.value = [row]
 
   if (command === 'history') {
     // 查看流转历史
@@ -1095,6 +1142,51 @@ const handleOperation = async (command: string, row: Asset) => {
   operationVisible.value = true
 }
 
+const handleAssetSelectionChange = (selection: Asset[]) => {
+  selectedAssets.value = selection
+}
+
+const handleBatchOperation = (command: string) => {
+  if (!selectedAssets.value.length) {
+    ElMessage.warning('请先选择资产')
+    return
+  }
+
+  const allowMap: Record<string, boolean> = {
+    allocate: canBatchAllocate.value,
+    transfer: canBatchTransfer.value,
+    return: canBatchReturn.value,
+    scrap: canBatchScrap.value
+  }
+
+  if (!allowMap[command]) {
+    ElMessage.warning('所选资产状态不支持该批量操作')
+    return
+  }
+
+  currentAsset.value = null
+  operationType.value = command
+  operationTargets.value = [...selectedAssets.value]
+
+  const titleMap: Record<string, string> = {
+    allocate: '批量分配资产',
+    transfer: '批量调拨资产',
+    return: '批量归还资产',
+    scrap: '批量报废资产'
+  }
+  operationTitle.value = titleMap[command] || '批量操作'
+
+  operationForm.assetId = selectedAssets.value[0].id
+  operationForm.toCustodian = ''
+  operationForm.remark = ''
+  operationForm.faultDescription = ''
+  operationForm.repairType = 2
+  operationForm.repairPriority = 2
+  operationForm.reporter = userStore.userInfo?.username || ''
+
+  operationVisible.value = true
+}
+
 /**
  * 提交操作
  */
@@ -1111,9 +1203,19 @@ const handleOperationSubmit = async () => {
 
     operationLoading.value = true
     try {
+      const targets = operationTargets.value.length
+        ? operationTargets.value
+        : currentAsset.value ? [currentAsset.value] : []
+
+      if (targets.length === 0) {
+        ElMessage.warning('未选择资产')
+        return
+      }
+
       if (operationType.value === 'repair') {
+        const target = targets[0]
         await repairApi.createRepair({
-          assetId: operationForm.assetId,
+          assetId: target.id,
           faultDescription: operationForm.faultDescription || '',
           repairType: operationForm.repairType || 2,
           repairPriority: operationForm.repairPriority || 2,
@@ -1126,24 +1228,47 @@ const handleOperationSubmit = async () => {
         return
       }
 
-      const apiMap: Record<string, () => Promise<any>> = {
-        allocate: () => recordApi.allocateAsset({
-          ...operationForm,
+      const apiMap: Record<string, (assetId: number) => Promise<any>> = {
+        allocate: (assetId) => recordApi.allocateAsset({
+          assetId,
+          toCustodian: operationForm.toCustodian,
+          remark: operationForm.remark,
           toDepartmentId: selectedUserDepartmentId.value
         }),
-        transfer: () => recordApi.transferAsset({
-          ...operationForm,
+        transfer: (assetId) => recordApi.transferAsset({
+          assetId,
+          toCustodian: operationForm.toCustodian,
+          remark: operationForm.remark,
           toDepartmentId: selectedUserDepartmentId.value
         }),
-        return: () => recordApi.returnAsset(operationForm),
-        scrap: () => recordApi.scrapAsset(operationForm)
+        return: (assetId) => recordApi.returnAsset({
+          assetId,
+          remark: operationForm.remark
+        }),
+        scrap: (assetId) => recordApi.scrapAsset({
+          assetId,
+          remark: operationForm.remark
+        })
       }
 
       const apiCall = apiMap[operationType.value]
       if (apiCall) {
-        await apiCall()
-        ElMessage.success('操作成功')
+        const failures: string[] = []
+        for (const target of targets) {
+          try {
+            await apiCall(target.id)
+          } catch (error) {
+            failures.push(target.assetNumber || String(target.id))
+          }
+        }
+        if (failures.length > 0) {
+          ElMessage.error(`部分资产操作失败：${failures.join(', ')}`)
+        } else {
+          ElMessage.success('操作成功')
+        }
         operationVisible.value = false
+        assetTableRef.value?.clearSelection()
+        selectedAssets.value = []
         loadAssetList() // 刷新列表
       }
     } catch (error) {
@@ -1161,6 +1286,7 @@ const handleOperationClose = () => {
   operationFormRef.value?.resetFields()
   currentAsset.value = null
   operationType.value = ''
+  operationTargets.value = []
   operationForm.faultDescription = ''
   operationForm.repairType = 2
   operationForm.repairPriority = 2
@@ -1191,7 +1317,8 @@ const getRecordTypeTag = (type: number): string => {
     4: 'info',       // 归还
     5: 'danger',     // 报废
     6: 'warning',    // 送修
-    7: 'success'     // 维修完成
+    7: 'success',    // 维修完成
+    8: 'info'        // 报修拒绝
   }
   return typeMap[type] || ''
 }

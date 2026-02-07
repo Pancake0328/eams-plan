@@ -6,7 +6,7 @@ DROP TABLE IF EXISTS asset_record;
 CREATE TABLE asset_record (
     id BIGINT AUTO_INCREMENT COMMENT '记录ID',
     asset_id BIGINT NOT NULL COMMENT '资产ID',
-    record_type TINYINT NOT NULL COMMENT '记录类型：1-入库，2-分配，3-调拨，4-归还，5-报废，6-送修，7-维修完成',
+    record_type TINYINT NOT NULL COMMENT '记录类型：1-入库，2-分配，3-调拨，4-归还，5-报废，6-送修，7-维修完成，8-报修拒绝',
     from_department_id BIGINT COMMENT '原部门ID',
     from_department VARCHAR(100) COMMENT '原部门名称',
     to_department_id BIGINT COMMENT '目标部门ID',

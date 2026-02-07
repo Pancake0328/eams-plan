@@ -38,7 +38,7 @@ public class RecordPageQuery implements Serializable {
     /**
      * 记录类型
      */
-    @Schema(description = "记录类型：1-入库，2-分配，3-调拨，4-归还，5-报废，6-送修，7-维修完成")
+    @Schema(description = "记录类型：1-入库，2-分配，3-调拨，4-归还，5-报废，6-送修，7-维修完成，8-报修拒绝")
     private Integer recordType;
 
     /**

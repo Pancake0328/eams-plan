@@ -92,6 +92,7 @@ CREATE TABLE `asset_repair` (
     `reporter` VARCHAR(50) NOT NULL COMMENT '报修人',
     `report_time` DATETIME NOT NULL COMMENT '报修时间',
     `repair_status` INT NOT NULL DEFAULT 1 COMMENT '报修状态：1-待审批 2-已审批 3-维修中 4-已完成 5-已拒绝',
+    `original_status` TINYINT DEFAULT NULL COMMENT '报修前资产状态',
     `approver` VARCHAR(50) DEFAULT NULL COMMENT '审批人',
     `approval_time` DATETIME DEFAULT NULL COMMENT '审批时间',
     `repair_person` VARCHAR(50) DEFAULT NULL COMMENT '维修人',

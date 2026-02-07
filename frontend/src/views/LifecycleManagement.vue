@@ -63,19 +63,21 @@
           placement="top"
           :color="getStageColor(item.stage)"
         >
-            <el-card>
-              <h4>{{ item.stageText }}</h4>
-              <p><strong>资产：</strong>{{ item.assetName }} ({{ item.assetNumber }})</p>
-              <p v-if="item.previousStageText"><strong>前一阶段：</strong>{{ item.previousStageText }}</p>
-              <p><strong>变更前部门：</strong>{{ item.fromDepartment || '-' }}</p>
-              <p><strong>变更前责任人：</strong>{{ item.fromCustodian || '-' }}</p>
-              <p><strong>变更后部门：</strong>{{ item.toDepartment || '-' }}</p>
-              <p><strong>变更后责任人：</strong>{{ item.toCustodian || '-' }}</p>
-              <p><strong>变更原因：</strong>{{ item.reason }}</p>
-              <p><strong>操作人：</strong>{{ item.operator }}</p>
-              <p v-if="item.remark"><strong>备注：</strong>{{ item.remark }}</p>
-              <p class="time-text">{{ item.createTime }}</p>
-            </el-card>
+          <el-card class="lifecycle-card">
+            <el-descriptions :column="3" size="small" border>
+              <el-descriptions-item label="阶段">{{ item.stageText }}</el-descriptions-item>
+              <el-descriptions-item label="资产">{{ item.assetName }} ({{ item.assetNumber }})</el-descriptions-item>
+              <el-descriptions-item label="操作人">{{ item.operator }}</el-descriptions-item>
+              <el-descriptions-item label="前一阶段">{{ item.previousStageText || '-' }}</el-descriptions-item>
+              <el-descriptions-item label="变更前部门">{{ item.fromDepartment || '-' }}</el-descriptions-item>
+              <el-descriptions-item label="变更后部门">{{ item.toDepartment || '-' }}</el-descriptions-item>
+              <el-descriptions-item label="变更前责任人">{{ item.fromCustodian || '-' }}</el-descriptions-item>
+              <el-descriptions-item label="变更后责任人">{{ item.toCustodian || '-' }}</el-descriptions-item>
+              <el-descriptions-item label="变更原因" :span="3">{{ item.reason || '-' }}</el-descriptions-item>
+              <el-descriptions-item label="备注" :span="3">{{ item.remark || '-' }}</el-descriptions-item>
+            </el-descriptions>
+            <p class="time-text">{{ item.createTime }}</p>
+          </el-card>
         </el-timeline-item>
       </el-timeline>
     </el-card>
@@ -393,6 +395,10 @@ loadLifecyclePage()
   font-size: 12px;
   color: #999;
   margin-top: 10px;
+}
+
+.lifecycle-card :deep(.el-descriptions__cell) {
+  padding: 6px 10px;
 }
 
 :deep(.el-timeline-item__timestamp) {

@@ -4,7 +4,6 @@
       <template #header>
         <div class="card-header">
           <span>资产报修管理</span>
-          <el-button type="primary" @click="showCreateDialog">新建报修</el-button>
         </div>
       </template>
 
@@ -70,42 +69,6 @@
       />
     </el-card>
 
-    <!-- 新建报修对话框 -->
-    <el-dialog v-model="createDialogVisible" title="新建报修" width="600px">
-      <el-form :model="createForm" :rules="createRules" ref="createFormRef" label-width="100px">
-        <el-form-item label="资产ID" prop="assetId">
-          <el-input-number v-model="createForm.assetId" :min="1" placeholder="请输入资产ID" style="width: 100%" />
-        </el-form-item>
-        <el-form-item label="报修类型" prop="repairType">
-          <el-select v-model="createForm.repairType" placeholder="请选择" style="width: 100%">
-            <el-option label="日常维修" :value="1" />
-            <el-option label="故障维修" :value="2" />
-            <el-option label="预防性维修" :value="3" />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="优先级" prop="repairPriority">
-          <el-select v-model="createForm.repairPriority" placeholder="请选择" style="width: 100%">
-            <el-option label="紧急" :value="1" />
-            <el-option label="普通" :value="2" />
-            <el-option label="低" :value="3" />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="故障描述" prop="faultDescription">
-          <el-input v-model="createForm.faultDescription" type="textarea" :rows="4" placeholder="请详细描述故障情况" />
-        </el-form-item>
-        <el-form-item label="报修人" prop="reporter">
-          <el-input v-model="createForm.reporter" placeholder="请输入报修人" />
-        </el-form-item>
-        <el-form-item label="备注">
-          <el-input v-model="createForm.remark" type="textarea" :rows="2" placeholder="请输入备注" />
-        </el-form-item>
-      </el-form>
-      <template #footer>
-        <el-button @click="createDialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="handleCreate">提交</el-button>
-      </template>
-    </el-dialog>
-
     <!-- 详情对话框 -->
     <el-dialog v-model="detailDialogVisible" title="报修详情" width="800px">
       <el-descriptions :column="2" border v-if="currentRepair">
@@ -133,19 +96,6 @@
       </el-descriptions>
     </el-dialog>
 
-    <!-- 开始维修对话框 -->
-    <el-dialog v-model="startDialogVisible" title="开始维修" width="400px">
-      <el-form :model="startForm" ref="startFormRef" label-width="100px">
-        <el-form-item label="维修人" prop="repairPerson">
-          <el-input v-model="startForm.repairPerson" placeholder="请输入维修人" />
-        </el-form-item>
-      </el-form>
-      <template #footer>
-        <el-button @click="startDialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="handleStartRepair">确定</el-button>
-      </template>
-    </el-dialog>
-
     <!-- 完成维修对话框 -->
     <el-dialog v-model="completeDialogVisible" title="完成维修" width="500px">
       <el-form :model="completeForm" ref="completeFormRef" label-width="100px">
@@ -166,9 +116,10 @@
 
 <script setup lang="ts">
 import { ref, reactive } from 'vue'
-import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'element-plus'
+import { ElMessage, ElMessageBox, type FormInstance } from 'element-plus'
 import { repairApi } from '@/api/lifecycle'
-import type { Repair, RepairCreateRequest } from '@/types'
+import { useUserStore } from '@/stores/user'
+import type { Repair } from '@/types'
 
 // 查询表单
 const queryForm = reactive({
@@ -181,37 +132,11 @@ const queryForm = reactive({
 const repairList = ref<Repair[]>([])
 const total = ref(0)
 
-// 创建对话框
-const createDialogVisible = ref(false)
-const createFormRef = ref<FormInstance>()
-const createForm = reactive<RepairCreateRequest>({
-  assetId: 0,
-  faultDescription: '',
-  repairType: 2,
-  repairPriority: 2,
-  reporter: '',
-  remark: ''
-})
-
-const createRules: FormRules = {
-  assetId: [{ required: true, message: '请输入资产ID', trigger: 'blur' }],
-  faultDescription: [{ required: true, message: '请输入故障描述', trigger: 'blur' }],
-  repairType: [{ required: true, message: '请选择报修类型', trigger: 'change' }],
-  repairPriority: [{ required: true, message: '请选择优先级', trigger: 'change' }],
-  reporter: [{ required: true, message: '请输入报修人', trigger: 'blur' }]
-}
+const userStore = useUserStore()
 
 // 详情对话框
 const detailDialogVisible = ref(false)
 const currentRepair = ref<Repair | null>(null)
-
-// 开始维修对话框
-const startDialogVisible = ref(false)
-const startFormRef = ref<FormInstance>()
-const startForm = reactive({
-  repairId: 0,
-  repairPerson: ''
-})
 
 // 完成维修对话框
 const completeDialogVisible = ref(false)
@@ -246,29 +171,6 @@ const resetQuery = () => {
   loadRepairList()
 }
 
-// 显示创建对话框
-const showCreateDialog = () => {
-  createDialogVisible.value = true
-}
-
-// 创建报修
-const handleCreate = async () => {
-  if (!createFormRef.value) return
-
-  await createFormRef.value.validate(async (valid) => {
-    if (!valid) return
-
-    try {
-      await repairApi.createRepair(createForm)
-      ElMessage.success('报修提交成功')
-      createDialogVisible.value = false
-      loadRepairList()
-    } catch (error) {
-      console.error('提交失败:', error)
-    }
-  })
-}
-
 // 查看详情
 const viewDetail = async (id: number) => {
   try {
@@ -284,14 +186,14 @@ const viewDetail = async (id: number) => {
 const approveRepair = async (id: number, approved: boolean) => {
   const msg = approved ? '确定审批通过吗？' : '确定拒绝此报修吗？'
   await ElMessageBox.confirm(msg, '提示', { type: 'warning' })
-  
-  const approver = await ElMessageBox.prompt('请输入审批人', '审批', {
-    inputPattern: /\S+/,
-    inputErrorMessage: '审批人不能为空'
-  })
 
+  const approver = userStore.userInfo?.username
+  if (!approver) {
+    ElMessage.warning('当前用户未登录')
+    return
+  }
   try {
-    await repairApi.approveRepair(id, approved, approver.value)
+    await repairApi.approveRepair(id, approved, approver)
     ElMessage.success(approved ? '审批通过' : '已拒绝')
     loadRepairList()
   } catch (error) {
@@ -300,22 +202,16 @@ const approveRepair = async (id: number, approved: boolean) => {
 }
 
 // 开始维修
-const startRepair = (repair: Repair) => {
-  startForm.repairId = repair.id
-  startDialogVisible.value = true
-}
-
-// 处理开始维修
-const handleStartRepair = async () => {
-  if (!startForm.repairPerson) {
-    ElMessage.warning('请输入维修人')
+const startRepair = async (repair: Repair) => {
+  await ElMessageBox.confirm('确定开始维修吗？', '提示', { type: 'warning' })
+  const repairPerson = userStore.userInfo?.username
+  if (!repairPerson) {
+    ElMessage.warning('当前用户未登录')
     return
   }
-
   try {
-    await repairApi.startRepair(startForm.repairId, startForm.repairPerson)
+    await repairApi.startRepair(repair.id, repairPerson)
     ElMessage.success('已开始维修')
-    startDialogVisible.value = false
     loadRepairList()
   } catch (error) {
     console.error('操作失败:', error)

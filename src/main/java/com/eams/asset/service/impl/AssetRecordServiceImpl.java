@@ -63,6 +63,7 @@ public class AssetRecordServiceImpl implements AssetRecordService {
         RECORD_TYPE_MAP.put(5, "报废");
         RECORD_TYPE_MAP.put(6, "送修");
         RECORD_TYPE_MAP.put(7, "维修完成");
+        RECORD_TYPE_MAP.put(8, "报修拒绝");
 
         ASSET_STATUS_MAP.put(1, "闲置");
         ASSET_STATUS_MAP.put(2, "使用中");

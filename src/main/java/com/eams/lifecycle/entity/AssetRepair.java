@@ -73,6 +73,11 @@ public class AssetRepair {
     private Integer repairStatus;
 
     /**
+     * 报修前资产状态
+     */
+    private Integer originalStatus;
+
+    /**
      * 审批人
      */
     private String approver;

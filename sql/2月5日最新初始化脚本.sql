@@ -347,7 +347,7 @@ create table asset_record
     id              bigint auto_increment comment '记录ID'
         primary key,
     asset_id        bigint                             not null comment '资产ID',
-    record_type     tinyint                            not null comment '记录类型：1-入库，2-分配，3-调拨，4-归还，5-报废，6-送修，7-维修完成',
+    record_type     tinyint                            not null comment '记录类型：1-入库，2-分配，3-调拨，4-归还，5-报废，6-送修，7-维修完成，8-报修拒绝',
     from_department_id bigint                          null comment '原部门ID',
     from_department varchar(100)                       null comment '原部门名称',
     to_department_id   bigint                          null comment '目标部门ID',
@@ -388,6 +388,7 @@ create table asset_repair
     reporter          varchar(50)                              not null comment '报修人',
     report_time       datetime                                 not null comment '报修时间',
     repair_status     int            default 1                 not null comment '报修状态：1-待审批 2-已审批 3-维修中 4-已完成 5-已拒绝',
+    original_status   tinyint                                  null comment '报修前资产状态',
     approver          varchar(50)                              null comment '审批人',
     approval_time     datetime                                 null comment '审批时间',
     repair_person     varchar(50)                              null comment '维修人',
