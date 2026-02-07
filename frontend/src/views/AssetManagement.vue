@@ -141,9 +141,6 @@
                   <el-dropdown-item command="repair" :disabled="row.assetStatus === 3 || row.assetStatus === 4">
                     <el-icon><Tools /></el-icon> 送修
                   </el-dropdown-item>
-                  <el-dropdown-item command="repairComplete" :disabled="row.assetStatus !== 3">
-                    <el-icon><CircleCheck /></el-icon> 维修完成
-                  </el-dropdown-item>
                   <el-dropdown-item command="scrap" :disabled="row.assetStatus !== 1" divided>
                     <el-icon><Delete /></el-icon> 报废
                   </el-dropdown-item>
@@ -446,6 +443,31 @@
         <el-form-item label="目标部门" v-if="showCustodianField">
           <el-input :model-value="selectedUserDepartmentName" disabled />
         </el-form-item>
+        <el-form-item label="报修类型" v-if="showRepairFields" prop="repairType">
+          <el-select v-model="operationForm.repairType" placeholder="请选择报修类型" style="width: 100%">
+            <el-option label="日常维修" :value="1" />
+            <el-option label="故障维修" :value="2" />
+            <el-option label="预防性维修" :value="3" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="优先级" v-if="showRepairFields" prop="repairPriority">
+          <el-select v-model="operationForm.repairPriority" placeholder="请选择优先级" style="width: 100%">
+            <el-option label="紧急" :value="1" />
+            <el-option label="普通" :value="2" />
+            <el-option label="低" :value="3" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="故障描述" v-if="showRepairFields" prop="faultDescription">
+          <el-input
+            v-model="operationForm.faultDescription"
+            type="textarea"
+            :rows="3"
+            placeholder="请输入故障描述"
+          />
+        </el-form-item>
+        <el-form-item label="报修人" v-if="showRepairFields" prop="reporter">
+          <el-input v-model="operationForm.reporter" placeholder="请输入报修人" />
+        </el-form-item>
         <el-form-item label="备注" prop="remark">
           <el-input
             v-model="operationForm.remark"
@@ -504,17 +526,18 @@ import { ref, reactive, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox, FormInstance, FormRules } from 'element-plus'
 import { 
   Plus, Edit, Delete, Search, Refresh, View, ArrowDown,
-  UserFilled, Switch, RefreshLeft, Tools, CircleCheck, Clock
+  UserFilled, Switch, RefreshLeft, Tools, Clock
 } from '@element-plus/icons-vue'
 import { assetApi } from '@/api/asset'
 import { categoryApi } from '@/api/category'
 import { recordApi } from '@/api/record'
+import { repairApi } from '@/api/lifecycle'
 import { userApi } from '@/api/user'
 import { departmentApi } from '@/api/department'
 import { purchaseApi } from '@/api/purchase'
 import { useUserStore } from '@/stores/user'
 import type { PurchaseDetail } from '@/api/purchase'
-import type { Asset, AssetCreateRequest, AssetUpdateRequest, CategoryTreeNode, RecordCreateRequest, AssetRecord, User, Department } from '@/types'
+import type { Asset, AssetCreateRequest, AssetUpdateRequest, CategoryTreeNode, RecordCreateRequest, RepairCreateRequest, AssetRecord, User, Department } from '@/types'
 
 
 // 待入库明细列表
@@ -606,10 +629,14 @@ const operationFormRef = ref<FormInstance>()
 const operationLoading = ref(false)
 
 // 操作表单
-const operationForm = reactive<RecordCreateRequest>({
+const operationForm = reactive<RecordCreateRequest & Partial<RepairCreateRequest>>({
   assetId: 0,
   toCustodian: '',
-  remark: ''
+  remark: '',
+  repairType: 2,
+  repairPriority: 2,
+  faultDescription: '',
+  reporter: ''
 })
 
 const selectedUserDepartmentId = computed(() => {
@@ -622,13 +649,6 @@ const selectedUserDepartmentName = computed(() => {
   return selectedUser?.departmentName || ''
 })
 
-// 操作表单校验规则
-const operationRules: FormRules = {
-  toCustodian: [
-    { max: 50, message: '责任人长度不能超过50个字符', trigger: 'blur' }
-  ]
-}
-
 // 流转历史对话框
 const historyVisible = ref(false)
 const historyData = ref<AssetRecord[]>([])
@@ -637,6 +657,41 @@ const historyData = ref<AssetRecord[]>([])
 const showCustodianField = computed(() => {
   return ['allocate', 'transfer'].includes(operationType.value)
 })
+
+const showRepairFields = computed(() => {
+  return operationType.value === 'repair'
+})
+
+// 操作表单校验规则
+const operationRules: FormRules = {
+  toCustodian: [
+    { max: 50, message: '责任人长度不能超过50个字符', trigger: 'blur' }
+  ],
+  faultDescription: [
+    {
+      validator: (_rule, value, callback) => {
+        if (showRepairFields.value && !value) {
+          callback(new Error('请输入故障描述'))
+        } else {
+          callback()
+        }
+      },
+      trigger: 'blur'
+    }
+  ],
+  reporter: [
+    {
+      validator: (_rule, value, callback) => {
+        if (showRepairFields.value && !value) {
+          callback(new Error('请输入报修人'))
+        } else {
+          callback()
+        }
+      },
+      trigger: 'blur'
+    }
+  ]
+}
 
 /**
  * 加载资产列表
@@ -1024,8 +1079,7 @@ const handleOperation = async (command: string, row: Asset) => {
     transfer: '调拨资产',
     return: '归还资产',
     scrap: '报废资产',
-    repair: '送修资产',
-    repairComplete: '维修完成'
+    repair: '送修资产'
   }
   operationTitle.value = titleMap[command] || '操作资产'
 
@@ -1033,6 +1087,10 @@ const handleOperation = async (command: string, row: Asset) => {
   operationForm.assetId = row.id
   operationForm.toCustodian = ''
   operationForm.remark = ''
+  operationForm.faultDescription = ''
+  operationForm.repairType = 2
+  operationForm.repairPriority = 2
+  operationForm.reporter = userStore.userInfo?.username || ''
 
   operationVisible.value = true
 }
@@ -1053,6 +1111,21 @@ const handleOperationSubmit = async () => {
 
     operationLoading.value = true
     try {
+      if (operationType.value === 'repair') {
+        await repairApi.createRepair({
+          assetId: operationForm.assetId,
+          faultDescription: operationForm.faultDescription || '',
+          repairType: operationForm.repairType || 2,
+          repairPriority: operationForm.repairPriority || 2,
+          reporter: operationForm.reporter || '',
+          remark: operationForm.remark
+        })
+        ElMessage.success('送修成功，已生成报修记录')
+        operationVisible.value = false
+        loadAssetList()
+        return
+      }
+
       const apiMap: Record<string, () => Promise<any>> = {
         allocate: () => recordApi.allocateAsset({
           ...operationForm,
@@ -1063,9 +1136,7 @@ const handleOperationSubmit = async () => {
           toDepartmentId: selectedUserDepartmentId.value
         }),
         return: () => recordApi.returnAsset(operationForm),
-        scrap: () => recordApi.scrapAsset(operationForm),
-        repair: () => recordApi.sendForRepair(operationForm),
-        repairComplete: () => recordApi.repairComplete(operationForm)
+        scrap: () => recordApi.scrapAsset(operationForm)
       }
 
       const apiCall = apiMap[operationType.value]
@@ -1090,6 +1161,10 @@ const handleOperationClose = () => {
   operationFormRef.value?.resetFields()
   currentAsset.value = null
   operationType.value = ''
+  operationForm.faultDescription = ''
+  operationForm.repairType = 2
+  operationForm.repairPriority = 2
+  operationForm.reporter = ''
 }
 
 /**

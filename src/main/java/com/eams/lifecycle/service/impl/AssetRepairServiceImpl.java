@@ -3,15 +3,20 @@ package com.eams.lifecycle.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.eams.asset.entity.AssetInfo;
+import com.eams.asset.entity.AssetRecord;
 import com.eams.asset.mapper.AssetInfoMapper;
+import com.eams.asset.mapper.AssetRecordMapper;
 import com.eams.common.exception.BusinessException;
 import com.eams.lifecycle.dto.RepairCreateRequest;
+import com.eams.lifecycle.entity.AssetLifecycle;
 import com.eams.lifecycle.entity.AssetRepair;
+import com.eams.lifecycle.mapper.AssetLifecycleMapper;
 import com.eams.lifecycle.mapper.AssetRepairMapper;
 import com.eams.lifecycle.service.AssetRepairService;
 import com.eams.lifecycle.vo.RepairVO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -35,6 +40,9 @@ public class AssetRepairServiceImpl implements AssetRepairService {
 
     private final AssetRepairMapper repairMapper;
     private final AssetInfoMapper assetMapper;
+    private final AssetRecordMapper recordMapper;
+    private final AssetLifecycleMapper lifecycleMapper;
+    private final com.eams.system.mapper.DepartmentMapper departmentMapper;
 
     private static final Map<Integer, String> TYPE_MAP = new HashMap<>();
     private static final Map<Integer, String> PRIORITY_MAP = new HashMap<>();
@@ -64,6 +72,12 @@ public class AssetRepairServiceImpl implements AssetRepairService {
         if (asset == null) {
             throw new BusinessException("资产不存在");
         }
+        if (asset.getAssetStatus() == 4) {
+            throw new BusinessException("报废的资产不能报修");
+        }
+        if (asset.getAssetStatus() == 3) {
+            throw new BusinessException("资产已处于维修中");
+        }
 
         // 生成报修编号
         String repairNumber = generateRepairNumber();
@@ -79,6 +93,26 @@ public class AssetRepairServiceImpl implements AssetRepairService {
         repair.setRepairCost(BigDecimal.ZERO);
 
         repairMapper.insert(repair);
+
+        Integer oldStatus = asset.getAssetStatus();
+        Long fromDepartmentId = asset.getDepartmentId();
+        String fromCustodian = asset.getCustodian();
+
+        asset.setAssetStatus(3); // 维修中
+        assetMapper.updateById(asset);
+
+        AssetRecord record = createRecord(
+                asset,
+                6,
+                fromDepartmentId, fromDepartmentId,
+                fromCustodian, fromCustodian,
+                oldStatus, 3,
+                request.getRemark());
+        recordMapper.insert(record);
+
+        recordLifecycle(asset.getId(), 3, "资产送修", request.getRemark(),
+                fromDepartmentId, fromDepartmentId,
+                fromCustodian, fromCustodian);
 
         return repair.getId();
     }
@@ -100,6 +134,21 @@ public class AssetRepairServiceImpl implements AssetRepairService {
         repair.setRepairStatus(approved ? 2 : 5); // 2-已审批 5-已拒绝
 
         repairMapper.updateById(repair);
+
+        AssetInfo asset = assetMapper.selectById(repair.getAssetId());
+        if (asset != null) {
+            if (!approved) {
+                asset.setAssetStatus(1);
+                assetMapper.updateById(asset);
+                recordLifecycle(asset.getId(), 4, "报修拒绝", null,
+                        asset.getDepartmentId(), asset.getDepartmentId(),
+                        asset.getCustodian(), asset.getCustodian());
+            } else {
+                recordLifecycle(asset.getId(), 3, "报修审批通过", null,
+                        asset.getDepartmentId(), asset.getDepartmentId(),
+                        asset.getCustodian(), asset.getCustodian());
+            }
+        }
     }
 
     @Override
@@ -119,6 +168,15 @@ public class AssetRepairServiceImpl implements AssetRepairService {
         repair.setRepairStatus(3); // 维修中
 
         repairMapper.updateById(repair);
+
+        AssetInfo asset = assetMapper.selectById(repair.getAssetId());
+        if (asset != null) {
+            asset.setAssetStatus(3);
+            assetMapper.updateById(asset);
+            recordLifecycle(asset.getId(), 3, "开始维修", null,
+                    asset.getDepartmentId(), asset.getDepartmentId(),
+                    asset.getCustodian(), asset.getCustodian());
+        }
     }
 
     @Override
@@ -139,6 +197,29 @@ public class AssetRepairServiceImpl implements AssetRepairService {
         repair.setRepairStatus(4); // 已完成
 
         repairMapper.updateById(repair);
+
+        AssetInfo asset = assetMapper.selectById(repair.getAssetId());
+        if (asset != null) {
+            Integer oldStatus = asset.getAssetStatus();
+            Long fromDepartmentId = asset.getDepartmentId();
+            String fromCustodian = asset.getCustodian();
+
+            asset.setAssetStatus(1);
+            assetMapper.updateById(asset);
+
+            AssetRecord record = createRecord(
+                    asset,
+                    7,
+                    fromDepartmentId, fromDepartmentId,
+                    fromCustodian, fromCustodian,
+                    oldStatus, 1,
+                    repairResult);
+            recordMapper.insert(record);
+
+            recordLifecycle(asset.getId(), 4, "维修完成", repairResult,
+                    fromDepartmentId, fromDepartmentId,
+                    fromCustodian, fromCustodian);
+        }
     }
 
     @Override
@@ -195,5 +276,72 @@ public class AssetRepairServiceImpl implements AssetRepairService {
         vo.setRepairStatusText(STATUS_MAP.getOrDefault(repair.getRepairStatus(), "未知"));
 
         return vo;
+    }
+
+    private AssetRecord createRecord(AssetInfo asset, Integer recordType,
+                                     Long fromDepartmentId, Long toDepartmentId,
+                                     String fromCustodian, String toCustodian,
+                                     Integer oldStatus, Integer newStatus,
+                                     String remark) {
+        AssetRecord record = new AssetRecord();
+        record.setAssetId(asset.getId());
+        record.setRecordType(recordType);
+        record.setFromDepartmentId(fromDepartmentId);
+        record.setToDepartmentId(toDepartmentId);
+        record.setFromDepartment(getDepartmentName(fromDepartmentId));
+        record.setToDepartment(getDepartmentName(toDepartmentId));
+        record.setFromCustodian(fromCustodian);
+        record.setToCustodian(toCustodian);
+        record.setOldStatus(oldStatus);
+        record.setNewStatus(newStatus);
+        record.setRemark(remark);
+        record.setOperator(getCurrentUsername());
+        record.setOperateTime(LocalDateTime.now());
+        return record;
+    }
+
+    private void recordLifecycle(Long assetId, Integer stage, String reason, String remark,
+                                 Long fromDepartmentId, Long toDepartmentId,
+                                 String fromCustodian, String toCustodian) {
+        AssetLifecycle lifecycle = new AssetLifecycle();
+        lifecycle.setAssetId(assetId);
+        lifecycle.setStage(stage);
+        lifecycle.setStageDate(LocalDate.now());
+        lifecycle.setReason(reason);
+        lifecycle.setOperator(getCurrentUsername());
+        lifecycle.setRemark(remark);
+        lifecycle.setPreviousStage(getLatestLifecycleStage(assetId));
+        lifecycle.setFromDepartmentId(fromDepartmentId);
+        lifecycle.setFromDepartment(getDepartmentName(fromDepartmentId));
+        lifecycle.setToDepartmentId(toDepartmentId);
+        lifecycle.setToDepartment(getDepartmentName(toDepartmentId));
+        lifecycle.setFromCustodian(fromCustodian);
+        lifecycle.setToCustodian(toCustodian);
+        lifecycleMapper.insert(lifecycle);
+    }
+
+    private Integer getLatestLifecycleStage(Long assetId) {
+        AssetLifecycle current = lifecycleMapper.selectOne(new LambdaQueryWrapper<AssetLifecycle>()
+                .eq(AssetLifecycle::getAssetId, assetId)
+                .orderByDesc(AssetLifecycle::getCreateTime)
+                .orderByDesc(AssetLifecycle::getId)
+                .last("LIMIT 1"));
+        return current != null ? current.getStage() : null;
+    }
+
+    private String getDepartmentName(Long departmentId) {
+        if (departmentId == null) {
+            return null;
+        }
+        com.eams.system.entity.Department department = departmentMapper.selectById(departmentId);
+        return department != null ? department.getDeptName() : null;
+    }
+
+    private String getCurrentUsername() {
+        try {
+            return SecurityContextHolder.getContext().getAuthentication().getName();
+        } catch (Exception e) {
+            return "系统";
+        }
     }
 }
