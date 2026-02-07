@@ -168,15 +168,6 @@
                 </el-dropdown-menu>
               </template>
             </el-dropdown>
-            <el-button
-              type="danger"
-              size="small"
-              link
-              :icon="Delete"
-              @click="handleDelete(row)"
-            >
-              删除
-            </el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -297,7 +288,7 @@
         <el-row :gutter="16">
           <el-col :span="12">
             <el-form-item label="资产名称" prop="assetName">
-              <el-input v-model="assetForm.assetName" placeholder="请输入资产名称" />
+              <el-input v-model="assetForm.assetName" placeholder="请输入资产名称" :disabled="isEdit" />
             </el-form-item>
           </el-col>
           <el-col :span="12">
@@ -308,6 +299,7 @@
                   :props="{ label: 'categoryName', value: 'id' }"
                   placeholder="请选择分类"
                   check-strictly
+                  :disabled="isEdit"
                   style="width: 100%"
               />
             </el-form-item>
@@ -323,6 +315,7 @@
                   :min="0"
                   :max="9999999999.99"
                   controls-position="right"
+                  :disabled="isEdit"
                   style="width: 100%"
               />
             </el-form-item>
@@ -334,6 +327,7 @@
                   type="date"
                   placeholder="请选择日期"
                   value-format="YYYY-MM-DD"
+                  :disabled="isEdit"
                   style="width: 100%"
               />
             </el-form-item>
@@ -344,7 +338,7 @@
         <el-row :gutter="16">
           <el-col :span="12">
             <el-form-item label="资产状态" prop="assetStatus">
-              <el-select v-model="assetForm.assetStatus" placeholder="请选择状态" style="width: 100%">
+              <el-select v-model="assetForm.assetStatus" placeholder="请选择状态" style="width: 100%" :disabled="isEdit">
                 <el-option label="闲置" :value="1" />
                 <el-option label="使用中" :value="2" />
                 <el-option label="维修中" :value="3" />
@@ -354,7 +348,7 @@
           </el-col>
           <el-col :span="12">
             <el-form-item label="规格型号" prop="specifications">
-              <el-input v-model="assetForm.specifications" placeholder="请输入规格型号" />
+              <el-input v-model="assetForm.specifications" placeholder="请输入规格型号" :disabled="isEdit" />
             </el-form-item>
           </el-col>
         </el-row>
@@ -362,7 +356,7 @@
         <el-row :gutter="16">
           <el-col :span="12">
             <el-form-item label="生产厂商" prop="manufacturer">
-              <el-input v-model="assetForm.manufacturer" placeholder="请输入生产厂商" />
+              <el-input v-model="assetForm.manufacturer" placeholder="请输入生产厂商" :disabled="isEdit" />
             </el-form-item>
           </el-col>
           <el-col :span="12">
@@ -533,10 +527,10 @@
               <strong>部门：</strong>{{ record.fromDepartment || '-' }} → {{ record.toDepartment || '-' }}
             </p>
             <p v-if="record.fromCustodian || record.toCustodian">
-              <strong>责任人：</strong>{{ record.fromCustodian || '-' }} → {{ record.toCustodian || '-' }}
+              <strong>责任人：</strong>{{ record.fromCustodianName || record.fromCustodian || '-' }} → {{ record.toCustodianName || record.toCustodian || '-' }}
             </p>
             <p v-if="record.remark"><strong>备注：</strong>{{ record.remark }}</p>
-            <p><strong>操作人：</strong>{{ record.operator }}</p>
+            <p><strong>操作人：</strong>{{ record.operatorName || record.operator }}</p>
           </el-card>
         </el-timeline-item>
       </el-timeline>
@@ -1029,19 +1023,12 @@ const handleSubmit = async () => {
     submitLoading.value = true
     try {
       if (isEdit.value) {
-        const currentDepartmentId = userStore.userInfo?.departmentId
-        if (!currentDepartmentId) {
-          ElMessage.warning('当前用户未绑定部门，无法执行操作')
-          return
-        }
-
         // 编辑资产
         const updateData: AssetUpdateRequest = {
           assetName: assetForm.assetName,
           categoryId: assetForm.categoryId,
           purchaseAmount: assetForm.purchaseAmount,
           purchaseDate: assetForm.purchaseDate,
-          departmentId: currentDepartmentId,
           assetStatus: assetForm.assetStatus,
           specifications: assetForm.specifications,
           manufacturer: assetForm.manufacturer,
@@ -1061,31 +1048,6 @@ const handleSubmit = async () => {
     } finally {
       submitLoading.value = false
     }
-  })
-}
-
-/**
- * 删除资产
- */
-const handleDelete = (row: Asset) => {
-  ElMessageBox.confirm(
-    `确定要删除资产"${row.assetName}"吗？`,
-    '警告',
-    {
-      confirmButtonText: '确定',
-      cancelButtonText: '取消',
-      type: 'warning'
-    }
-  ).then(async () => {
-    try {
-      await assetApi.deleteAsset(row.id)
-      ElMessage.success('删除资产成功')
-      loadAssetList()
-    } catch (error) {
-      console.error('删除资产失败:', error)
-    }
-  }).catch(() => {
-    // 取消删除
   })
 }
 

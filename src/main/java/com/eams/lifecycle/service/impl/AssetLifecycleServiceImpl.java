@@ -10,6 +10,8 @@ import com.eams.lifecycle.entity.AssetLifecycle;
 import com.eams.lifecycle.mapper.AssetLifecycleMapper;
 import com.eams.lifecycle.service.AssetLifecycleService;
 import com.eams.lifecycle.vo.LifecycleVO;
+import com.eams.system.entity.User;
+import com.eams.system.mapper.UserMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
@@ -34,6 +36,7 @@ public class AssetLifecycleServiceImpl implements AssetLifecycleService {
     private final AssetLifecycleMapper lifecycleMapper;
     private final AssetInfoMapper assetMapper;
     private final com.eams.system.mapper.DepartmentMapper departmentMapper;
+    private final UserMapper userMapper;
 
     private static final Map<Integer, String> STAGE_MAP = new HashMap<>();
 
@@ -49,29 +52,7 @@ public class AssetLifecycleServiceImpl implements AssetLifecycleService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Long createLifecycle(LifecycleCreateRequest request) {
-        // 验证资产存在
-        AssetInfo asset = assetMapper.selectById(request.getAssetId());
-        if (asset == null) {
-            throw new BusinessException("资产不存在");
-        }
-
-        // 获取当前阶段
-        AssetLifecycle current = getCurrentLifecycleEntity(request.getAssetId());
-
-        // 创建生命周期记录
-        AssetLifecycle lifecycle = new AssetLifecycle();
-        BeanUtils.copyProperties(request, lifecycle);
-        lifecycle.setPreviousStage(current != null ? current.getStage() : null);
-        lifecycle.setFromDepartmentId(asset.getDepartmentId());
-        lifecycle.setToDepartmentId(asset.getDepartmentId());
-        lifecycle.setFromDepartment(getDepartmentName(asset.getDepartmentId()));
-        lifecycle.setToDepartment(getDepartmentName(asset.getDepartmentId()));
-        lifecycle.setFromCustodian(asset.getCustodian());
-        lifecycle.setToCustodian(asset.getCustodian());
-
-        lifecycleMapper.insert(lifecycle);
-
-        return lifecycle.getId();
+        throw new BusinessException("不允许手动变更生命周期阶段");
     }
 
     @Override
@@ -127,13 +108,7 @@ public class AssetLifecycleServiceImpl implements AssetLifecycleService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Long changeStage(LifecycleCreateRequest request) {
-        // 验证状态变更合法性
-        AssetLifecycle current = getCurrentLifecycleEntity(request.getAssetId());
-        if (current != null && !isValidStageChange(current.getStage(), request.getStage())) {
-            throw new BusinessException("不允许的状态变更");
-        }
-
-        return createLifecycle(request);
+        throw new BusinessException("不允许手动变更生命周期阶段");
     }
 
     /**
@@ -189,6 +164,9 @@ public class AssetLifecycleServiceImpl implements AssetLifecycleService {
         if (!StringUtils.hasText(vo.getToDepartment()) && vo.getToDepartmentId() != null) {
             vo.setToDepartment(getDepartmentName(vo.getToDepartmentId()));
         }
+        vo.setFromCustodianName(getUserDisplayName(vo.getFromCustodian()));
+        vo.setToCustodianName(getUserDisplayName(vo.getToCustodian()));
+        vo.setOperatorName(getUserDisplayName(vo.getOperator()));
 
         return vo;
     }
@@ -199,5 +177,18 @@ public class AssetLifecycleServiceImpl implements AssetLifecycleService {
         }
         com.eams.system.entity.Department department = departmentMapper.selectById(departmentId);
         return department != null ? department.getDeptName() : null;
+    }
+
+    private String getUserDisplayName(String username) {
+        if (!StringUtils.hasText(username)) {
+            return null;
+        }
+        User user = userMapper.selectOne(
+                new LambdaQueryWrapper<User>()
+                        .eq(User::getUsername, username));
+        if (user == null) {
+            return username;
+        }
+        return StringUtils.hasText(user.getNickname()) ? user.getNickname() : user.getUsername();
     }
 }

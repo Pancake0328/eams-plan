@@ -14,11 +14,14 @@ import com.eams.lifecycle.mapper.AssetLifecycleMapper;
 import com.eams.lifecycle.mapper.AssetRepairMapper;
 import com.eams.lifecycle.service.AssetRepairService;
 import com.eams.lifecycle.vo.RepairVO;
+import com.eams.system.entity.User;
+import com.eams.system.mapper.UserMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -43,6 +46,7 @@ public class AssetRepairServiceImpl implements AssetRepairService {
     private final AssetRecordMapper recordMapper;
     private final AssetLifecycleMapper lifecycleMapper;
     private final com.eams.system.mapper.DepartmentMapper departmentMapper;
+    private final UserMapper userMapper;
 
     private static final Map<Integer, String> TYPE_MAP = new HashMap<>();
     private static final Map<Integer, String> PRIORITY_MAP = new HashMap<>();
@@ -298,6 +302,9 @@ public class AssetRepairServiceImpl implements AssetRepairService {
         vo.setRepairTypeText(TYPE_MAP.getOrDefault(repair.getRepairType(), "未知"));
         vo.setRepairPriorityText(PRIORITY_MAP.getOrDefault(repair.getRepairPriority(), "未知"));
         vo.setRepairStatusText(STATUS_MAP.getOrDefault(repair.getRepairStatus(), "未知"));
+        vo.setReporterName(getUserDisplayName(repair.getReporter()));
+        vo.setApproverName(getUserDisplayName(repair.getApprover()));
+        vo.setRepairPersonName(getUserDisplayName(repair.getRepairPerson()));
 
         return vo;
     }
@@ -342,6 +349,19 @@ public class AssetRepairServiceImpl implements AssetRepairService {
         lifecycle.setFromCustodian(fromCustodian);
         lifecycle.setToCustodian(toCustodian);
         lifecycleMapper.insert(lifecycle);
+    }
+
+    private String getUserDisplayName(String username) {
+        if (!StringUtils.hasText(username)) {
+            return null;
+        }
+        User user = userMapper.selectOne(
+                new LambdaQueryWrapper<User>()
+                        .eq(User::getUsername, username));
+        if (user == null) {
+            return username;
+        }
+        return StringUtils.hasText(user.getNickname()) ? user.getNickname() : user.getUsername();
     }
 
     private Integer resolveRestoreStatus(Integer originalStatus) {

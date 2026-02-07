@@ -44,7 +44,11 @@
           </template>
         </el-table-column>
         <el-table-column prop="faultDescription" label="故障描述" min-width="200" show-overflow-tooltip />
-        <el-table-column prop="reporter" label="报修人" width="100" />
+        <el-table-column label="报修人" width="100">
+          <template #default="{ row }">
+            {{ row.reporterName || row.reporter || '-' }}
+          </template>
+        </el-table-column>
         <el-table-column prop="reportTime" label="报修时间" width="180" />
         <el-table-column label="操作" width="280" fixed="right">
           <template #default="{ row }">
@@ -82,12 +86,12 @@
         <el-descriptions-item label="优先级">
           <el-tag :type="getPriorityType(currentRepair.repairPriority)">{{ currentRepair.repairPriorityText }}</el-tag>
         </el-descriptions-item>
-        <el-descriptions-item label="报修人">{{ currentRepair.reporter }}</el-descriptions-item>
+        <el-descriptions-item label="报修人">{{ currentRepair.reporterName || currentRepair.reporter }}</el-descriptions-item>
         <el-descriptions-item label="报修时间">{{ currentRepair.reportTime }}</el-descriptions-item>
         <el-descriptions-item label="故障描述" :span="2">{{ currentRepair.faultDescription }}</el-descriptions-item>
-        <el-descriptions-item label="审批人" v-if="currentRepair.approver">{{ currentRepair.approver }}</el-descriptions-item>
+        <el-descriptions-item label="审批人" v-if="currentRepair.approver">{{ currentRepair.approverName || currentRepair.approver }}</el-descriptions-item>
         <el-descriptions-item label="审批时间" v-if="currentRepair.approvalTime">{{ currentRepair.approvalTime }}</el-descriptions-item>
-        <el-descriptions-item label="维修人" v-if="currentRepair.repairPerson">{{ currentRepair.repairPerson }}</el-descriptions-item>
+        <el-descriptions-item label="维修人" v-if="currentRepair.repairPerson">{{ currentRepair.repairPersonName || currentRepair.repairPerson }}</el-descriptions-item>
         <el-descriptions-item label="维修开始时间" v-if="currentRepair.repairStartTime">{{ currentRepair.repairStartTime }}</el-descriptions-item>
         <el-descriptions-item label="维修完成时间" v-if="currentRepair.repairEndTime">{{ currentRepair.repairEndTime }}</el-descriptions-item>
         <el-descriptions-item label="维修费用" v-if="currentRepair.repairCost">¥{{ currentRepair.repairCost }}</el-descriptions-item>

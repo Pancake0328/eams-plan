@@ -238,13 +238,16 @@ export interface AssetRecord {
   toDepartmentId?: number
   toDepartment?: string
   fromCustodian?: string
+  fromCustodianName?: string
   toCustodian?: string
+  toCustodianName?: string
   oldStatus?: number
   oldStatusText?: string
   newStatus?: number
   newStatusText?: string
   remark?: string
   operator: string
+  operatorName?: string
   operateTime: string
   createTime: string
 }
@@ -579,7 +582,9 @@ export interface Lifecycle {
   toDepartmentId?: number
   toDepartment?: string
   fromCustodian?: string
+  fromCustodianName?: string
   toCustodian?: string
+  toCustodianName?: string
   stage: number
   stageText?: string
   previousStage?: number
@@ -587,6 +592,7 @@ export interface Lifecycle {
   stageDate: string
   reason?: string
   operator: string
+  operatorName?: string
   remark?: string
   createTime: string
 }
@@ -667,12 +673,15 @@ export interface Repair {
   repairPriority: number
   repairPriorityText?: string
   reporter: string
+  reporterName?: string
   reportTime: string
   repairStatus: number
   repairStatusText?: string
   approver?: string
+  approverName?: string
   approvalTime?: string
   repairPerson?: string
+  repairPersonName?: string
   repairStartTime?: string
   repairEndTime?: string
   repairCost?: number

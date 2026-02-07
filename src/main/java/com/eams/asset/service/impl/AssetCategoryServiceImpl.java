@@ -4,7 +4,9 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.eams.asset.dto.CategoryCreateRequest;
 import com.eams.asset.dto.CategoryUpdateRequest;
 import com.eams.asset.entity.AssetCategory;
+import com.eams.asset.entity.AssetInfo;
 import com.eams.asset.mapper.AssetCategoryMapper;
+import com.eams.asset.mapper.AssetInfoMapper;
 import com.eams.asset.service.AssetCategoryService;
 import com.eams.asset.vo.CategoryTreeVO;
 import com.eams.asset.vo.CategoryVO;
@@ -31,6 +33,7 @@ import java.util.stream.Collectors;
 public class AssetCategoryServiceImpl implements AssetCategoryService {
 
     private final AssetCategoryMapper categoryMapper;
+    private final AssetInfoMapper assetInfoMapper;
 
     /**
      * 创建资产分类
@@ -128,15 +131,12 @@ public class AssetCategoryServiceImpl implements AssetCategoryService {
             throw new BusinessException("该分类下存在子分类，无法删除");
         }
 
-        // TODO: 检查是否存在关联资产（需要资产表实现后添加）
-        // 暂时注释，等资产模块开发后再取消注释
-        // Long assetCount = assetMapper.selectCount(
-        // new LambdaQueryWrapper<Asset>()
-        // .eq(Asset::getCategoryId, id)
-        // );
-        // if (assetCount > 0) {
-        // throw new BusinessException("该分类下存在资产，无法删除");
-        // }
+        Long assetCount = assetInfoMapper.selectCount(
+                new LambdaQueryWrapper<AssetInfo>()
+                        .eq(AssetInfo::getCategoryId, id));
+        if (assetCount > 0) {
+            throw new BusinessException("该分类下存在资产，无法删除");
+        }
 
         // 逻辑删除
         categoryMapper.deleteById(id);

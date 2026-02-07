@@ -75,9 +75,21 @@
         </el-table-column>
         <el-table-column prop="fromDepartment" label="原部门" width="120" />
         <el-table-column prop="toDepartment" label="目标部门" width="120" />
-        <el-table-column prop="fromCustodian" label="原责任人" width="100" />
-        <el-table-column prop="toCustodian" label="目标责任人" width="100" />
-        <el-table-column prop="operator" label="操作人" width="100" />
+        <el-table-column label="原责任人" width="100">
+          <template #default="{ row }">
+            {{ row.fromCustodianName || row.fromCustodian || '-' }}
+          </template>
+        </el-table-column>
+        <el-table-column label="目标责任人" width="100">
+          <template #default="{ row }">
+            {{ row.toCustodianName || row.toCustodian || '-' }}
+          </template>
+        </el-table-column>
+        <el-table-column label="操作人" width="100">
+          <template #default="{ row }">
+            {{ row.operatorName || row.operator || '-' }}
+          </template>
+        </el-table-column>
         <el-table-column prop="operateTime" label="操作时间" width="180" />
         <el-table-column prop="remark" label="备注" min-width="150" show-overflow-tooltip />
       </el-table>

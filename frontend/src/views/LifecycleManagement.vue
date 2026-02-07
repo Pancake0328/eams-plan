@@ -4,7 +4,6 @@
       <template #header>
         <div class="card-header">
           <span>资产生命周期管理</span>
-          <el-button type="primary" @click="showChangeDialog">变更阶段</el-button>
         </div>
       </template>
 
@@ -44,11 +43,11 @@
             </el-tag>
           </el-descriptions-item>
           <el-descriptions-item label="变更前部门">{{ currentLifecycle.fromDepartment || '-' }}</el-descriptions-item>
-          <el-descriptions-item label="变更前责任人">{{ currentLifecycle.fromCustodian || '-' }}</el-descriptions-item>
+          <el-descriptions-item label="变更前责任人">{{ currentLifecycle.fromCustodianName || currentLifecycle.fromCustodian || '-' }}</el-descriptions-item>
           <el-descriptions-item label="变更后部门">{{ currentLifecycle.toDepartment || '-' }}</el-descriptions-item>
-          <el-descriptions-item label="变更后责任人">{{ currentLifecycle.toCustodian || '-' }}</el-descriptions-item>
+          <el-descriptions-item label="变更后责任人">{{ currentLifecycle.toCustodianName || currentLifecycle.toCustodian || '-' }}</el-descriptions-item>
           <el-descriptions-item label="变更日期">{{ currentLifecycle.stageDate }}</el-descriptions-item>
-          <el-descriptions-item label="操作人">{{ currentLifecycle.operator }}</el-descriptions-item>
+          <el-descriptions-item label="操作人">{{ currentLifecycle.operatorName || currentLifecycle.operator }}</el-descriptions-item>
           <el-descriptions-item label="变更原因">{{ currentLifecycle.reason }}</el-descriptions-item>
         </el-descriptions>
 
@@ -67,12 +66,12 @@
             <el-descriptions :column="3" size="small" border>
               <el-descriptions-item label="阶段">{{ item.stageText }}</el-descriptions-item>
               <el-descriptions-item label="资产">{{ item.assetName }} ({{ item.assetNumber }})</el-descriptions-item>
-              <el-descriptions-item label="操作人">{{ item.operator }}</el-descriptions-item>
+              <el-descriptions-item label="操作人">{{ item.operatorName || item.operator }}</el-descriptions-item>
               <el-descriptions-item label="前一阶段">{{ item.previousStageText || '-' }}</el-descriptions-item>
               <el-descriptions-item label="变更前部门">{{ item.fromDepartment || '-' }}</el-descriptions-item>
               <el-descriptions-item label="变更后部门">{{ item.toDepartment || '-' }}</el-descriptions-item>
-              <el-descriptions-item label="变更前责任人">{{ item.fromCustodian || '-' }}</el-descriptions-item>
-              <el-descriptions-item label="变更后责任人">{{ item.toCustodian || '-' }}</el-descriptions-item>
+              <el-descriptions-item label="变更前责任人">{{ item.fromCustodianName || item.fromCustodian || '-' }}</el-descriptions-item>
+              <el-descriptions-item label="变更后责任人">{{ item.toCustodianName || item.toCustodian || '-' }}</el-descriptions-item>
               <el-descriptions-item label="变更原因" :span="3">{{ item.reason || '-' }}</el-descriptions-item>
               <el-descriptions-item label="备注" :span="3">{{ item.remark || '-' }}</el-descriptions-item>
             </el-descriptions>
@@ -114,12 +113,24 @@
           </el-table-column>
           <el-table-column prop="previousStageText" label="前一阶段" width="100" />
           <el-table-column prop="fromDepartment" label="变更前部门" width="120" show-overflow-tooltip />
-          <el-table-column prop="fromCustodian" label="变更前责任人" width="120" />
+          <el-table-column label="变更前责任人" width="120">
+            <template #default="{ row }">
+              {{ row.fromCustodianName || row.fromCustodian || '-' }}
+            </template>
+          </el-table-column>
           <el-table-column prop="toDepartment" label="变更后部门" width="120" show-overflow-tooltip />
-          <el-table-column prop="toCustodian" label="变更后责任人" width="120" />
+          <el-table-column label="变更后责任人" width="120">
+            <template #default="{ row }">
+              {{ row.toCustodianName || row.toCustodian || '-' }}
+            </template>
+          </el-table-column>
           <el-table-column prop="stageDate" label="变更日期" width="120" />
           <el-table-column prop="reason" label="变更原因" min-width="200" show-overflow-tooltip />
-          <el-table-column prop="operator" label="操作人" width="100" />
+          <el-table-column label="操作人" width="100">
+            <template #default="{ row }">
+              {{ row.operatorName || row.operator || '-' }}
+            </template>
+          </el-table-column>
           <el-table-column prop="createTime" label="创建时间" width="180" />
         </el-table>
 
@@ -135,55 +146,15 @@
       />
     </el-card>
 
-    <!-- 变更阶段对话框 -->
-    <el-dialog v-model="changeDialogVisible" title="变更生命周期阶段" width="600px">
-      <el-form :model="changeForm" :rules="changeRules" ref="changeFormRef" label-width="100px">
-        <el-form-item label="资产ID" prop="assetId">
-          <el-input-number v-model="changeForm.assetId" :min="1" placeholder="请输入资产ID" style="width: 100%" />
-        </el-form-item>
-        <el-form-item label="新阶段" prop="stage">
-          <el-select v-model="changeForm.stage" placeholder="请选择阶段" style="width: 100%">
-            <el-option label="购入" :value="1" />
-            <el-option label="使用中" :value="2" />
-            <el-option label="维修中" :value="3" />
-            <el-option label="闲置" :value="4" />
-            <el-option label="报废" :value="5" />
-            <el-option label="取消采购" :value="6" />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="变更日期" prop="stageDate">
-          <el-date-picker
-            v-model="changeForm.stageDate"
-            type="date"
-            placeholder="选择日期"
-            style="width: 100%"
-            value-format="YYYY-MM-DD"
-          />
-        </el-form-item>
-        <el-form-item label="变更原因" prop="reason">
-          <el-input v-model="changeForm.reason" type="textarea" :rows="3" placeholder="请输入变更原因" />
-        </el-form-item>
-        <el-form-item label="操作人" prop="operator">
-          <el-input v-model="changeForm.operator" placeholder="请输入操作人" />
-        </el-form-item>
-        <el-form-item label="备注">
-          <el-input v-model="changeForm.remark" type="textarea" :rows="2" placeholder="请输入备注" />
-        </el-form-item>
-      </el-form>
-      <template #footer>
-        <el-button @click="changeDialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="handleChangeStage">确定</el-button>
-      </template>
-    </el-dialog>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, reactive } from 'vue'
-import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'element-plus'
+import { ElMessage } from 'element-plus'
 import { lifecycleApi } from '@/api/lifecycle'
 import { assetApi } from '@/api/asset'
-import type { Asset, Lifecycle, LifecycleCreateRequest } from '@/types'
+import type { Asset, Lifecycle } from '@/types'
 
 // 查询表单
 const queryForm = reactive({
@@ -206,26 +177,6 @@ const pageQuery = reactive({
 })
 const lifecycleList = ref<Lifecycle[]>([])
 const total = ref(0)
-
-// 变更对话框
-const changeDialogVisible = ref(false)
-const changeFormRef = ref<FormInstance>()
-const changeForm = reactive<LifecycleCreateRequest>({
-  assetId: 0,
-  stage: 0,
-  stageDate: '',
-  reason: '',
-  operator: '',
-  remark: ''
-})
-
-const changeRules: FormRules = {
-  assetId: [{ required: true, message: '请输入资产ID', trigger: 'blur' }],
-  stage: [{ required: true, message: '请选择阶段', trigger: 'change' }],
-  stageDate: [{ required: true, message: '请选择变更日期', trigger: 'change' }],
-  reason: [{ required: true, message: '请输入变更原因', trigger: 'blur' }],
-  operator: [{ required: true, message: '请输入操作人', trigger: 'blur' }]
-}
 
 // 加载生命周期历史
 const resolveAssetId = async (): Promise<number | null> => {
@@ -317,37 +268,6 @@ const loadLifecyclePage = async () => {
   } catch (error) {
     console.error('加载失败:', error)
   }
-}
-
-// 显示变更对话框
-const showChangeDialog = () => {
-  changeDialogVisible.value = true
-  if (queryForm.assetId) {
-    changeForm.assetId = queryForm.assetId
-  }
-}
-
-// 处理阶段变更
-const handleChangeStage = async () => {
-  if (!changeFormRef.value) return
-
-  await changeFormRef.value.validate(async (valid) => {
-    if (!valid) return
-
-    try {
-      await lifecycleApi.changeStage(changeForm)
-      ElMessage.success('阶段变更成功')
-      changeDialogVisible.value = false
-      
-      // 刷新数据
-      if (queryForm.assetId) {
-        loadLifecycleHistory()
-      }
-      loadLifecyclePage()
-    } catch (error) {
-      console.error('变更失败:', error)
-    }
-  })
 }
 
 // 获取阶段颜色

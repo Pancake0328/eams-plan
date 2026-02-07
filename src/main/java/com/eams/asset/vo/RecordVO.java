@@ -92,10 +92,22 @@ public class RecordVO implements Serializable {
     private String fromCustodian;
 
     /**
+     * 原责任人姓名
+     */
+    @Schema(description = "原责任人姓名")
+    private String fromCustodianName;
+
+    /**
      * 目标责任人
      */
     @Schema(description = "目标责任人")
     private String toCustodian;
+
+    /**
+     * 目标责任人姓名
+     */
+    @Schema(description = "目标责任人姓名")
+    private String toCustodianName;
 
     /**
      * 原状态
@@ -132,6 +144,12 @@ public class RecordVO implements Serializable {
      */
     @Schema(description = "操作人")
     private String operator;
+
+    /**
+     * 操作人姓名
+     */
+    @Schema(description = "操作人姓名")
+    private String operatorName;
 
     /**
      * 操作时间

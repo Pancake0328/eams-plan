@@ -107,26 +107,11 @@ public class AssetInfoServiceImpl implements AssetInfoService {
         // 检查资产是否存在
         AssetInfo asset = getAssetEntityById(id);
 
-        // 检查资产分类是否存在
-        AssetCategory category = categoryMapper.selectById(request.getCategoryId());
-        if (category == null) {
-            throw new BusinessException("资产分类不存在");
-        }
-
-        // 更新资产信息
-        asset.setAssetName(request.getAssetName());
-        asset.setCategoryId(request.getCategoryId());
-        asset.setPurchaseAmount(request.getPurchaseAmount());
-        asset.setPurchaseDate(request.getPurchaseDate());
-        asset.setDepartmentId(getCurrentUserDepartmentId());
-        asset.setCustodian(getCurrentUsername());
-        asset.setAssetStatus(request.getAssetStatus());
-        asset.setSpecifications(request.getSpecifications());
-        asset.setManufacturer(request.getManufacturer());
+        // 仅允许修改备注
         asset.setRemark(request.getRemark());
 
         assetInfoMapper.updateById(asset);
-        log.info("更新资产成功，资产ID: {}", id);
+        log.info("更新资产备注成功，资产ID: {}", id);
     }
 
     /**
@@ -140,9 +125,7 @@ public class AssetInfoServiceImpl implements AssetInfoService {
         // 检查资产是否存在
         getAssetEntityById(id);
 
-        // 逻辑删除
-        assetInfoMapper.deleteById(id);
-        log.info("删除资产成功，资产ID: {}", id);
+        throw new BusinessException("不允许删除资产");
     }
 
     /**

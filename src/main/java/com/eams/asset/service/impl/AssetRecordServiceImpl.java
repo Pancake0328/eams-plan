@@ -535,13 +535,16 @@ public class AssetRecordServiceImpl implements AssetRecordService {
                 .toDepartmentId(record.getToDepartmentId())
                 .toDepartment(record.getToDepartment())
                 .fromCustodian(record.getFromCustodian())
+                .fromCustodianName(getUserDisplayName(record.getFromCustodian()))
                 .toCustodian(record.getToCustodian())
+                .toCustodianName(getUserDisplayName(record.getToCustodian()))
                 .oldStatus(record.getOldStatus())
                 .oldStatusText(ASSET_STATUS_MAP.get(record.getOldStatus()))
                 .newStatus(record.getNewStatus())
                 .newStatusText(ASSET_STATUS_MAP.get(record.getNewStatus()))
                 .remark(record.getRemark())
                 .operator(record.getOperator())
+                .operatorName(getUserDisplayName(record.getOperator()))
                 .operateTime(record.getOperateTime())
                 .createTime(record.getCreateTime())
                 .build();
@@ -572,5 +575,18 @@ public class AssetRecordServiceImpl implements AssetRecordService {
             throw new BusinessException("目标责任人未绑定部门");
         }
         return user.getDepartmentId();
+    }
+
+    private String getUserDisplayName(String username) {
+        if (!StringUtils.hasText(username)) {
+            return null;
+        }
+        com.eams.system.entity.User user = userMapper.selectOne(
+                new LambdaQueryWrapper<com.eams.system.entity.User>()
+                        .eq(com.eams.system.entity.User::getUsername, username));
+        if (user == null) {
+            return username;
+        }
+        return StringUtils.hasText(user.getNickname()) ? user.getNickname() : user.getUsername();
     }
 }

@@ -1,11 +1,13 @@
 package com.eams.system.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.eams.common.exception.BusinessException;
+import com.eams.exception.BusinessException;
 import com.eams.system.dto.DepartmentCreateRequest;
 import com.eams.system.dto.DepartmentUpdateRequest;
 import com.eams.system.entity.Department;
+import com.eams.system.entity.User;
 import com.eams.system.mapper.DepartmentMapper;
+import com.eams.system.mapper.UserMapper;
 import com.eams.system.service.DepartmentService;
 import com.eams.system.vo.DepartmentTreeNode;
 import lombok.RequiredArgsConstructor;
@@ -28,6 +30,7 @@ import java.util.stream.Collectors;
 public class DepartmentServiceImpl implements DepartmentService {
 
     private final DepartmentMapper departmentMapper;
+    private final UserMapper userMapper;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -93,6 +96,13 @@ public class DepartmentServiceImpl implements DepartmentService {
         wrapper.eq(Department::getParentId, id);
         if (departmentMapper.selectCount(wrapper) > 0) {
             throw new BusinessException("存在子部门，无法删除");
+        }
+
+        Long userCount = userMapper.selectCount(
+                new LambdaQueryWrapper<User>()
+                        .eq(User::getDepartmentId, id));
+        if (userCount > 0) {
+            throw new BusinessException("当前部门有用户，无法删除");
         }
 
         departmentMapper.deleteById(id);

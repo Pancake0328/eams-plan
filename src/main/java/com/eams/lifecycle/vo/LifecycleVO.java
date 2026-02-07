@@ -60,9 +60,19 @@ public class LifecycleVO {
     private String fromCustodian;
 
     /**
+     * 变更前责任人姓名
+     */
+    private String fromCustodianName;
+
+    /**
      * 变更后责任人
      */
     private String toCustodian;
+
+    /**
+     * 变更后责任人姓名
+     */
+    private String toCustodianName;
 
     /**
      * 生命周期阶段
@@ -98,6 +108,11 @@ public class LifecycleVO {
      * 操作人
      */
     private String operator;
+
+    /**
+     * 操作人姓名
+     */
+    private String operatorName;
 
     /**
      * 备注

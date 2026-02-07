@@ -70,6 +70,11 @@ public class RepairVO {
     private String reporter;
 
     /**
+     * 报修人姓名
+     */
+    private String reporterName;
+
+    /**
      * 报修时间
      */
     private LocalDateTime reportTime;
@@ -90,6 +95,11 @@ public class RepairVO {
     private String approver;
 
     /**
+     * 审批人姓名
+     */
+    private String approverName;
+
+    /**
      * 审批时间
      */
     private LocalDateTime approvalTime;
@@ -98,6 +108,11 @@ public class RepairVO {
      * 维修人
      */
     private String repairPerson;
+
+    /**
+     * 维修人姓名
+     */
+    private String repairPersonName;
 
     /**
      * 维修开始时间
