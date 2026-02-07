@@ -201,6 +201,29 @@ const checkedMenuIds = ref<number[]>([])
 const treeRef = ref()
 const treeLoading = ref(false)
 
+const normalizeCheckedMenuIds = (nodes: any[], checkedIds: Set<number>) => {
+  const dfs = (node: any) => {
+    if (!node.children || node.children.length === 0) {
+      const selected = checkedIds.has(node.id)
+      return { hasSelected: selected, allSelected: selected }
+    }
+    let anySelected = false
+    let allSelected = true
+    node.children.forEach((child: any) => {
+      const result = dfs(child)
+      anySelected = anySelected || result.hasSelected
+      allSelected = allSelected && result.allSelected
+    })
+    if (anySelected && !allSelected) {
+      checkedIds.delete(node.id)
+      return { hasSelected: true, allSelected: false }
+    }
+    const selfSelected = checkedIds.has(node.id)
+    return { hasSelected: selfSelected || anySelected, allSelected: selfSelected && allSelected }
+  }
+  nodes.forEach(node => dfs(node))
+}
+
 /**
  * 加载角色列表
  */
@@ -336,7 +359,9 @@ const handleAssignPermission = async (row: Role) => {
 
     // 加载角色已有的菜单ID
     const roleMenuRes = await roleApi.getRoleMenuIds(row.id)
-    checkedMenuIds.value = roleMenuRes.data
+    const checkedSet = new Set(roleMenuRes.data)
+    normalizeCheckedMenuIds(menuTree.value, checkedSet)
+    checkedMenuIds.value = Array.from(checkedSet)
   } catch (error) {
     ElMessage.error('加载权限数据失败')
   } finally {

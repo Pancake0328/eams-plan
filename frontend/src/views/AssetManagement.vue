@@ -25,7 +25,7 @@
             style="width: 180px"
           />
         </el-form-item>
-        <el-form-item label="资产分类">
+        <el-form-item label="资产分类" v-permission="'asset:category:list'">
           <el-tree-select
             v-model="queryForm.categoryId"
             :data="categoryTree"
@@ -36,7 +36,7 @@
             style="width: 180px"
           />
         </el-form-item>
-        <el-form-item label="使用部门">
+        <el-form-item label="使用部门" v-permission="'system:department:list'">
           <el-tree-select
             v-model="queryForm.departmentId"
             :data="deptTree"
@@ -143,7 +143,7 @@
             >
               编辑
             </el-button>
-            <el-dropdown @command="(cmd: string) => handleOperation(cmd, row)" style="margin-left: 8px">
+            <el-dropdown v-if="canShowMoreActions" @command="(cmd: string) => handleOperation(cmd, row)" style="margin-left: 8px">
               <el-button type="primary" size="small" link>
                 更多操作<el-icon style="margin-left: 4px"><ArrowDown /></el-icon>
               </el-button>
@@ -557,12 +557,14 @@ import { userApi } from '@/api/user'
 import { departmentApi } from '@/api/department'
 import { purchaseApi } from '@/api/purchase'
 import { useUserStore } from '@/stores/user'
+import { usePermissionStore } from '@/stores/permission'
 import type { PurchaseDetail } from '@/api/purchase'
 import type { Asset, AssetCreateRequest, AssetUpdateRequest, CategoryTreeNode, RecordCreateRequest, RepairCreateRequest, AssetRecord, User, Department } from '@/types'
 
 
 // 待入库明细列表
 const userStore = useUserStore()
+const permissionStore = usePermissionStore()
 
 const pendingDetails = ref<PurchaseDetail[]>([])
 const selectedDetailIds = ref<number[]>([]) // 改为数组支持多选
@@ -677,6 +679,15 @@ const canBatchReturn = computed(() =>
 const canBatchScrap = computed(() =>
   hasSelection.value && selectedAssets.value.every(asset => asset.assetStatus === 1)
 )
+
+const canShowMoreActions = computed(() => permissionStore.hasAnyPermission(
+  'asset:record:allocate',
+  'asset:record:transfer',
+  'asset:record:return',
+  'asset:record:repair',
+  'asset:record:scrap',
+  'asset:record:history'
+))
 
 const selectedUserDepartmentId = computed(() => {
   const selectedUser = userList.value.find(user => user.username === operationForm.toCustodian)
@@ -1296,9 +1307,15 @@ const getRecordTypeTag = (type: number): string => {
 
 // 初始化
 onMounted(() => {
-  loadCategoryTree()
-  loadUserList()
-  loadDeptTree()
+  if (permissionStore.hasPermission('asset:category:list')) {
+    loadCategoryTree()
+  }
+  if (permissionStore.hasPermission('system:user:list')) {
+    loadUserList()
+  }
+  if (permissionStore.hasPermission('system:department:list')) {
+    loadDeptTree()
+  }
   loadAssetList()
 })
 </script>

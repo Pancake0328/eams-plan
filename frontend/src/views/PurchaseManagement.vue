@@ -1,78 +1,194 @@
 <template>
   <div class="purchase-management">
-    <el-card>
-      <!-- 搜索栏 -->
-      <el-form :inline="true" :model="searchForm">
-        <el-form-item label="采购单号">
-          <el-input v-model="searchForm.purchaseNumber" placeholder="请输入采购单号" clearable />
-        </el-form-item>
-        <el-form-item label="状态">
-          <el-select v-model="searchForm.status" placeholder="请选择状态" clearable>
-            <el-option label="全部" :value="undefined" />
-            <el-option label="待入库" :value="1" />
-            <el-option label="部分入库" :value="2" />
-            <el-option label="已入库" :value="3" />
-            <el-option label="已取消" :value="4" />
-          </el-select>
-        </el-form-item>
-        <el-form-item>
-          <el-button type="primary" :icon="Search" @click="loadPurchaseList">查询</el-button>
-          <el-button :icon="Refresh" @click="handleReset">重置</el-button>
-        </el-form-item>
-      </el-form>
+    <el-tabs v-model="activeTab" type="border-card">
+      <el-tab-pane label="采购管理" name="purchase">
+        <el-card>
+          <!-- 搜索栏 -->
+          <el-form :inline="true" :model="searchForm">
+            <el-form-item label="采购单号">
+              <el-input v-model="searchForm.purchaseNumber" placeholder="请输入采购单号" clearable />
+            </el-form-item>
+            <el-form-item label="状态">
+              <el-select v-model="searchForm.status" placeholder="请选择状态" clearable>
+                <el-option label="全部" :value="undefined" />
+                <el-option label="待入库" :value="1" />
+                <el-option label="部分入库" :value="2" />
+                <el-option label="已入库" :value="3" />
+                <el-option label="已取消" :value="4" />
+              </el-select>
+            </el-form-item>
+            <el-form-item>
+              <el-button type="primary" :icon="Search" @click="loadPurchaseList">查询</el-button>
+              <el-button :icon="Refresh" @click="handleReset">重置</el-button>
+            </el-form-item>
+          </el-form>
 
-      <!-- 操作按钮 -->
-      <div class="action-bar">
-        <el-button type="primary" :icon="Plus" v-permission="'purchase:create'" @click="handleAdd">新建采购</el-button>
-      </div>
+          <!-- 操作按钮 -->
+          <div class="action-bar">
+            <el-button type="primary" :icon="Plus" v-permission="'purchase:create'" @click="handleAdd">新建采购</el-button>
+          </div>
 
-      <!-- 采购单列表 -->
-      <el-table :data="purchaseList" v-loading="loading" border>
-        <el-table-column prop="purchaseNumber" label="采购单号" width="160" />
-        <el-table-column prop="purchaseDate" label="采购日期" width="120" />
-        <el-table-column prop="supplier" label="供应商" />
-        <el-table-column prop="totalAmount" label="总金额" width="120">
-          <template #default="{ row }">
-            ¥{{ row.totalAmount.toFixed(2) }}
-          </template>
-        </el-table-column>
-        <el-table-column prop="purchaseStatus" label="状态" width="100">
-          <template #default="{ row }">
-            <el-tag :type="getStatusType(row.purchaseStatus)">
-              {{ row.purchaseStatusText }}
-            </el-tag>
-          </template>
-        </el-table-column>
-        <el-table-column prop="applicantName" label="申请人" width="100" />
-        <el-table-column prop="createTime" label="创建时间" width="180" />
-        <el-table-column label="操作" width="180" fixed="right">
-          <template #default="{ row }">
-            <el-button link type="primary" :icon="View" v-permission="'purchase:view'" @click="handleView(row)">查看</el-button>
-            <el-button 
-              link 
-              type="danger" 
-              :icon="Close"
-              v-if="row.purchaseStatus === 1"
-              v-permission="'purchase:cancel'"
-              @click="handleCancel(row)"
-            >
-              取消
-            </el-button>
-          </template>
-        </el-table-column>
-      </el-table>
+          <!-- 采购单列表 -->
+          <el-table :data="purchaseList" v-loading="loading" border>
+            <el-table-column prop="purchaseNumber" label="采购单号" width="160" />
+            <el-table-column prop="purchaseDate" label="采购日期" width="120" />
+            <el-table-column prop="supplier" label="供应商" />
+            <el-table-column prop="totalAmount" label="总金额" width="120">
+              <template #default="{ row }">
+                ¥{{ row.totalAmount.toFixed(2) }}
+              </template>
+            </el-table-column>
+            <el-table-column prop="purchaseStatus" label="状态" width="100">
+              <template #default="{ row }">
+                <el-tag :type="getStatusType(row.purchaseStatus)">
+                  {{ row.purchaseStatusText }}
+                </el-tag>
+              </template>
+            </el-table-column>
+            <el-table-column prop="applicantName" label="申请人" width="100" />
+            <el-table-column prop="createTime" label="创建时间" width="180" />
+            <el-table-column label="操作" width="180" fixed="right">
+              <template #default="{ row }">
+                <el-button link type="primary" :icon="View" v-permission="'purchase:view'" @click="handleView(row)">查看</el-button>
+                <el-button 
+                  link 
+                  type="danger" 
+                  :icon="Close"
+                  v-if="row.purchaseStatus === 1"
+                  v-permission="'purchase:cancel'"
+                  @click="handleCancel(row)"
+                >
+                  取消
+                </el-button>
+              </template>
+            </el-table-column>
+          </el-table>
 
-      <!-- 分页 -->
-      <el-pagination
-        v-model:current-page="pagination.current"
-        v-model:page-size="pagination.size"
-        :total="pagination.total"
-        :page-sizes="[10, 20, 50, 100]"
-        layout="total, sizes, prev, pager, next, jumper"
-        @size-change="loadPurchaseList"
-        @current-change="loadPurchaseList"
-      />
-    </el-card>
+          <!-- 分页 -->
+          <el-pagination
+            v-model:current-page="pagination.current"
+            v-model:page-size="pagination.size"
+            :total="pagination.total"
+            :page-sizes="[10, 20, 50, 100]"
+            layout="total, sizes, prev, pager, next, jumper"
+            @size-change="loadPurchaseList"
+            @current-change="loadPurchaseList"
+          />
+        </el-card>
+      </el-tab-pane>
+
+      <el-tab-pane label="账单统计" name="bill" v-permission="'finance:bill:list'">
+        <el-card shadow="never">
+          <div style="margin-bottom: 16px">
+            <el-date-picker
+              v-model="selectedMonth"
+              type="month"
+              placeholder="选择月份"
+              style="margin-right: 8px"
+            />
+            <el-button type="primary" v-permission="'finance:bill:generate'" @click="handleGenerateMonthlyBill">生成月度账单</el-button>
+            <el-date-picker
+              v-model="selectedYear"
+              type="year"
+              placeholder="选择年份"
+              style="margin-left: 16px; margin-right: 8px"
+            />
+            <el-button type="primary" v-permission="'finance:bill:generate'" @click="handleGenerateAnnualBill">生成年度账单</el-button>
+          </div>
+
+          <el-table :data="billList" v-loading="billLoading" border>
+            <el-table-column prop="billNumber" label="账单编号" width="180" />
+            <el-table-column prop="billTypeText" label="类型" width="100" align="center" />
+            <el-table-column label="账单期间" width="150">
+              <template #default="{ row }">
+                {{ row.billYear }}年{{ row.billMonth ? row.billMonth + '月' : '' }}
+              </template>
+            </el-table-column>
+            <el-table-column prop="totalPurchaseAmount" label="采购总额" width="130" align="right">
+              <template #default="{ row }">¥{{ row.totalPurchaseAmount.toFixed(2) }}</template>
+            </el-table-column>
+            <el-table-column prop="totalDepreciationAmount" label="折旧总额" width="130" align="right">
+              <template #default="{ row }">¥{{ row.totalDepreciationAmount.toFixed(2) }}</template>
+            </el-table-column>
+            <el-table-column prop="totalNetValue" label="净值总额" width="130" align="right">
+              <template #default="{ row }">¥{{ row.totalNetValue.toFixed(2) }}</template>
+            </el-table-column>
+            <el-table-column prop="billStatusText" label="状态" width="100" align="center">
+              <template #default="{ row }">
+                <el-tag :type="row.billStatus === 2 ? 'success' : 'info'">
+                  {{ row.billStatusText }}
+                </el-tag>
+              </template>
+            </el-table-column>
+            <el-table-column prop="generateTime" label="生成时间" width="180" />
+            <el-table-column label="操作" width="150" fixed="right">
+              <template #default="{ row }">
+                <el-button v-if="row.billStatus !== 2" link type="primary" v-permission="'finance:bill:confirm'" @click="handleConfirmBill(row)">
+                  确认
+                </el-button>
+                <el-button link type="danger" v-permission="'finance:bill:delete'" @click="handleDeleteBill(row)">删除</el-button>
+              </template>
+            </el-table-column>
+          </el-table>
+        </el-card>
+      </el-tab-pane>
+
+      <el-tab-pane label="资金统计" name="statistics" v-permission="'finance:statistics:view'">
+        <el-row :gutter="16">
+          <el-col :span="24">
+            <el-card shadow="never" style="marginbottom: 16px">
+              <template #header>
+                <span>财务概览</span>
+              </template>
+              <el-row :gutter="16">
+                <el-col :span="6">
+                  <div class="stat-item">
+                    <div class="stat-label">资产数量</div>
+                    <div class="stat-value">{{ overview.assetCount }}</div>
+                  </div>
+                </el-col>
+                <el-col :span="6">
+                  <div class="stat-item">
+                    <div class="stat-label">采购总额</div>
+                    <div class="stat-value">¥{{ overview.totalPurchaseAmount?.toFixed(2) || '0.00' }}</div>
+                  </div>
+                </el-col>
+                <el-col :span="6">
+                  <div class="stat-item">
+                    <div class="stat-label">累计折旧</div>
+                    <div class="stat-value">¥{{ overview.totalDepreciation?.toFixed(2) || '0.00' }}</div>
+                  </div>
+                </el-col>
+                <el-col :span="6">
+                  <div class="stat-item">
+                    <div class="stat-label">资产净值</div>
+                    <div class="stat-value">¥{{ overview.totalNetValue?.toFixed(2) || '0.00' }}</div>
+                  </div>
+                </el-col>
+              </el-row>
+            </el-card>
+          </el-col>
+
+          <el-col :span="12">
+            <el-card shadow="never">
+              <template #header>
+                <span>按部门统计</span>
+              </template>
+              <div ref="deptChartRef" style="width: 100%; height: 300px"></div>
+            </el-card>
+          </el-col>
+
+          <el-col :span="12">
+            <el-card shadow="never">
+              <template #header>
+                <span>按时间统计</span>
+              </template>
+              <div ref="timeChartRef" style="width: 100%; height: 300px"></div>
+            </el-card>
+          </el-col>
+        </el-row>
+      </el-tab-pane>
+    </el-tabs>
 
     <!-- 新建采购对话框 -->
     <el-dialog
@@ -215,18 +331,27 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, onMounted, computed, nextTick } from 'vue'
 import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'element-plus'
 import { Search, Refresh, Plus, View, Close } from '@element-plus/icons-vue'
 import { purchaseApi } from '@/api/purchase'
 import { categoryApi } from '@/api/category'
+import { financeApi } from '@/api/finance'
+import { usePermissionStore } from '@/stores/permission'
 import type { Purchase, PurchaseCreateRequest } from '@/api/purchase'
+import type { Bill, FinanceStatistics } from '@/types'
+import * as echarts from 'echarts'
 
 // 搜索表单
 const searchForm = reactive({
   purchaseNumber: '',
   status: undefined as number | undefined
 })
+
+const activeTab = ref('purchase')
+const permissionStore = usePermissionStore()
+const canViewBill = computed(() => permissionStore.hasPermission('finance:bill:list'))
+const canViewStatistics = computed(() => permissionStore.hasPermission('finance:statistics:view'))
 
 // 采购单列表
 const purchaseList = ref<Purchase[]>([])
@@ -246,6 +371,19 @@ const pagination = reactive({
 const dialogVisible = ref(false)
 const detailDialogVisible = ref(false)
 const currentPurchase = ref<Purchase>()
+
+// 账单
+const billList = ref<Bill[]>([])
+const billLoading = ref(false)
+const selectedMonth = ref<Date>()
+const selectedYear = ref<Date>()
+
+// 统计
+const overview = ref<FinanceStatistics>({} as FinanceStatistics)
+const deptStats = ref<FinanceStatistics[]>([])
+const timeStats = ref<FinanceStatistics[]>([])
+const deptChartRef = ref<HTMLElement>()
+const timeChartRef = ref<HTMLElement>()
 
 // 表单
 const formRef = ref<FormInstance>()
@@ -324,6 +462,9 @@ const handleReset = () => {
  * 新建采购单
  */
 const handleAdd = () => {
+  if (!categories.value.length) {
+    loadCategories()
+  }
   dialogVisible.value = true
 }
 
@@ -432,10 +573,159 @@ const getStatusType = (status: number) => {
   return types[status] || 'info'
 }
 
+const loadBillList = async () => {
+  billLoading.value = true
+  try {
+    const res = await financeApi.getBillPage({ current: 1, size: 100 })
+    billList.value = res.data.records
+  } catch (error) {
+    console.error('加载账单失败:', error)
+  } finally {
+    billLoading.value = false
+  }
+}
+
+const handleGenerateMonthlyBill = async () => {
+  if (!selectedMonth.value) {
+    ElMessage.warning('请选择月份')
+    return
+  }
+  const year = selectedMonth.value.getFullYear()
+  const month = selectedMonth.value.getMonth() + 1
+  try {
+    await financeApi.generateMonthlyBill(year, month)
+    ElMessage.success('账单生成成功')
+    loadBillList()
+  } catch (error) {
+    console.error('生成账单失败:', error)
+  }
+}
+
+const handleGenerateAnnualBill = async () => {
+  if (!selectedYear.value) {
+    ElMessage.warning('请选择年份')
+    return
+  }
+  const year = selectedYear.value.getFullYear()
+  try {
+    await financeApi.generateAnnualBill(year)
+    ElMessage.success('账单生成成功')
+    loadBillList()
+  } catch (error) {
+    console.error('生成账单失败:', error)
+  }
+}
+
+const handleConfirmBill = async (row: Bill) => {
+  await ElMessageBox.confirm('确定确认该账单吗？', '提示', { type: 'warning' })
+  try {
+    await financeApi.confirmBill(row.id)
+    ElMessage.success('确认成功')
+    loadBillList()
+  } catch (error) {
+    console.error('确认失败:', error)
+  }
+}
+
+const handleDeleteBill = async (row: Bill) => {
+  await ElMessageBox.confirm('确定删除该账单吗？删除后将同时删除账单明细。', '提示', { type: 'warning' })
+  try {
+    await financeApi.deleteBill(row.id)
+    ElMessage.success('删除成功')
+    loadBillList()
+  } catch (error) {
+    console.error('删除失败:', error)
+  }
+}
+
+const loadStatistics = async () => {
+  try {
+    const [overviewRes, deptRes, timeRes] = await Promise.all([
+      financeApi.getFinanceOverview(),
+      financeApi.statisticsByDepartment(),
+      financeApi.statisticsByTime('2024-01-01', '2026-12-31')
+    ])
+    overview.value = overviewRes.data
+    deptStats.value = deptRes.data
+    timeStats.value = timeRes.data
+
+    nextTick(() => {
+      renderDeptChart()
+      renderTimeChart()
+    })
+  } catch (error) {
+    console.error('加载统计数据失败:', error)
+  }
+}
+
+const renderDeptChart = () => {
+  if (!deptChartRef.value) return
+  const chart = echarts.init(deptChartRef.value)
+  chart.setOption({
+    tooltip: { trigger: 'axis' },
+    xAxis: {
+      type: 'category',
+      data: deptStats.value.map(s => s.dimension)
+    },
+    yAxis: { type: 'value' },
+    series: [{
+      name: '资产净值',
+      type: 'bar',
+      data: deptStats.value.map(s => s.totalNetValue),
+      itemStyle: { color: '#409EFF' }
+    }]
+  })
+}
+
+const renderTimeChart = () => {
+  if (!timeChartRef.value) return
+  const chart = echarts.init(timeChartRef.value)
+  chart.setOption({
+    tooltip: { trigger: 'axis' },
+    xAxis: {
+      type: 'category',
+      data: timeStats.value.map(s => s.dimension)
+    },
+    yAxis: { type: 'value' },
+    series: [{
+      name: '采购总额',
+      type: 'line',
+      data: timeStats.value.map(s => s.totalPurchaseAmount),
+      smooth: true,
+      itemStyle: { color: '#67C23A' }
+    }]
+  })
+}
+
+const setDefaultTab = () => {
+  if (permissionStore.hasPermission('purchase:list')) {
+    activeTab.value = 'purchase'
+    return
+  }
+  if (canViewBill.value) {
+    activeTab.value = 'bill'
+    return
+  }
+  if (canViewStatistics.value) {
+    activeTab.value = 'statistics'
+  }
+}
+
 // 初始化
 onMounted(() => {
-  loadPurchaseList()
-  loadCategories()
+  setDefaultTab()
+  if (permissionStore.hasPermission('purchase:list')) {
+    loadPurchaseList()
+  }
+  if (permissionStore.hasPermission('purchase:create')) {
+    loadCategories()
+  }
+  if (canViewBill.value) {
+    loadBillList()
+  }
+  if (canViewStatistics.value) {
+    loadStatistics()
+  }
 })
 </script>
 

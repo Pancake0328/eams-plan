@@ -1,5 +1,4 @@
 import { createRouter, createWebHistory, RouteRecordRaw } from 'vue-router'
-import { ElMessage } from 'element-plus'
 import { useUserStore } from '@/stores/user'
 import { usePermissionStore } from '@/stores/permission'
 import Login from '@/views/Login.vue'
@@ -89,36 +88,6 @@ const routes: RouteRecordRaw[] = [
                 }
             },
             {
-                path: '/employees',
-                name: 'EmployeeManagement',
-                component: () => import('@/views/EmployeeManagement.vue'),
-                meta: {
-                    title: '员工管理',
-                    requiresAuth: true,
-                    permission: 'system:employee:list'
-                }
-            },
-            {
-                path: '/asset-assigns',
-                name: 'AssetAssignManagement',
-                component: () => import('@/views/AssetAssignManagement.vue'),
-                meta: {
-                    title: '资产分配管理',
-                    requiresAuth: true,
-                    permission: 'system:asset-assign:list'
-                }
-            },
-            {
-                path: '/finance',
-                name: 'FinanceManagement',
-                component: () => import('@/views/FinanceManagement.vue'),
-                meta: {
-                    title: '账单与资金管理',
-                    requiresAuth: true,
-                    permission: 'finance:list'
-                }
-            },
-            {
                 path: '/lifecycle',
                 name: 'LifecycleManagement',
                 component: () => import('@/views/LifecycleManagement.vue'),
@@ -142,6 +111,12 @@ const routes: RouteRecordRaw[] = [
                 component: () => import('@/views/RoleManagement.vue'),
                 meta: { requiresAuth: true, title: '角色管理', permission: 'system:role:list' }
             },
+            {
+                path: '/no-access',
+                name: 'NoAccess',
+                component: () => import('@/views/NoAccess.vue'),
+                meta: { requiresAuth: true, title: '无权限访问' }
+            },
             
         ]
     }
@@ -154,6 +129,33 @@ const router = createRouter({
     history: createWebHistory(),
     routes
 })
+
+const homeRouteOrder = [
+    '/dashboard',
+    '/assets',
+    '/purchase',
+    '/categories',
+    '/records',
+    '/departments',
+    '/lifecycle',
+    '/inventory',
+    '/repair',
+    '/role'
+]
+
+const resolveFirstAccessiblePath = (permissionStore: ReturnType<typeof usePermissionStore>) => {
+    for (const path of homeRouteOrder) {
+        const resolved = router.resolve(path)
+        if (!resolved.matched.length) {
+            continue
+        }
+        const permission = resolved.meta.permission as string | undefined
+        if (!permission || permissionStore.hasPermission(permission)) {
+            return path
+        }
+    }
+    return '/no-access'
+}
 
 /**
  * 路由守卫 - 权限验证
@@ -171,14 +173,21 @@ router.beforeEach(async (to, _from, next) => {
         next('/login')
     } else if (to.path === '/login' && userStore.isLoggedIn()) {
         // 已登录，访问登录页时跳转到首页
-        next('/')
+        if (userStore.userInfo?.id && !permissionStore.loaded) {
+            await permissionStore.initializePermissions(userStore.userInfo.id)
+        }
+        next(resolveFirstAccessiblePath(permissionStore))
     } else {
         if (userStore.isLoggedIn() && userStore.userInfo?.id && !permissionStore.loaded) {
             await permissionStore.initializePermissions(userStore.userInfo.id)
         }
         if (to.meta.permission && !permissionStore.hasPermission(to.meta.permission as string)) {
-            ElMessage.warning('暂无权限访问该页面')
-            next('/dashboard')
+            const redirectPath = resolveFirstAccessiblePath(permissionStore)
+            if (redirectPath === to.path) {
+                next()
+            } else {
+                next(redirectPath)
+            }
             return
         }
         next()

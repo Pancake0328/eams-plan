@@ -83,7 +83,6 @@ INSERT INTO sys_menu (id, parent_id, menu_name, menu_type, permission_code, path
 (4, 0, '采购管理', 'MENU', 'purchase:list', '/purchase', 'PurchaseManagement', 'ShoppingCart', 4),
 (5, 0, '人员管理', 'DIR', NULL, '/personnel', NULL, 'User', 5),
 (6, 0, '生命周期与盘点', 'DIR', NULL, '/lifecycle', NULL, 'Refresh', 6),
-(7, 0, '财务管理', 'MENU', 'finance:list', '/finance', 'FinanceManagement', 'Money', 7),
 
 -- 系统管理子菜单
 (8, 2, '角色管理', 'MENU', 'system:role:list', '/role', 'RoleManagement', 'UserFilled', 1),
@@ -91,8 +90,6 @@ INSERT INTO sys_menu (id, parent_id, menu_name, menu_type, permission_code, path
 -- 人员管理子菜单
 (9, 5, '用户管理', 'MENU', 'system:user:list', '/', 'UserManagement', 'User', 1),
 (10, 5, '部门管理', 'MENU', 'system:department:list', '/departments', 'DepartmentManagement', 'OfficeBuilding', 2),
-(11, 5, '员工管理', 'MENU', 'system:employee:list', '/employees', 'EmployeeManagement', 'User', 3),
-(12, 5, '资产分配管理', 'MENU', 'system:asset-assign:list', '/asset-assigns', 'AssetAssignManagement', 'User', 4),
 
 -- 资产管理子菜单
 (13, 3, '资产信息管理', 'MENU', 'asset:info:list', '/assets', 'AssetManagement', 'List', 1),
@@ -129,19 +126,6 @@ INSERT INTO sys_menu (id, parent_id, menu_name, menu_type, permission_code, path
 (34, 10, '编辑部门', 'BUTTON', 'system:department:edit', NULL, NULL, NULL, 2),
 (35, 10, '删除部门', 'BUTTON', 'system:department:delete', NULL, NULL, NULL, 3),
 (36, 10, '查看部门', 'BUTTON', 'system:department:view', NULL, NULL, NULL, 4),
-
--- 员工管理按钮权限
-(37, 11, '新增员工', 'BUTTON', 'system:employee:add', NULL, NULL, NULL, 1),
-(38, 11, '编辑员工', 'BUTTON', 'system:employee:edit', NULL, NULL, NULL, 2),
-(39, 11, '删除员工', 'BUTTON', 'system:employee:delete', NULL, NULL, NULL, 3),
-(40, 11, '查看员工', 'BUTTON', 'system:employee:view', NULL, NULL, NULL, 4),
-(41, 11, '更新状态', 'BUTTON', 'system:employee:status', NULL, NULL, NULL, 5),
-
--- 资产分配按钮权限
-(42, 12, '分配资产', 'BUTTON', 'system:asset-assign:assign', NULL, NULL, NULL, 1),
-(43, 12, '归还资产', 'BUTTON', 'system:asset-assign:return', NULL, NULL, NULL, 2),
-(44, 12, '调拨资产', 'BUTTON', 'system:asset-assign:transfer', NULL, NULL, NULL, 3),
-(45, 12, '查看分配记录', 'BUTTON', 'system:asset-assign:view', NULL, NULL, NULL, 4),
 
 -- 资产信息按钮权限
 (46, 13, '新增资产', 'BUTTON', 'asset:info:add', NULL, NULL, NULL, 1),
@@ -193,19 +177,13 @@ INSERT INTO sys_menu (id, parent_id, menu_name, menu_type, permission_code, path
 (82, 4, '采购入库', 'BUTTON', 'purchase:inbound', NULL, NULL, NULL, 5),
 (83, 4, '批量入库', 'BUTTON', 'purchase:batch-inbound', NULL, NULL, NULL, 6),
 
--- 财务管理按钮权限
-(84, 7, '采购记录列表', 'BUTTON', 'finance:purchase:list', NULL, NULL, NULL, 1),
-(85, 7, '创建采购记录', 'BUTTON', 'finance:purchase:create', NULL, NULL, NULL, 2),
-(86, 7, '审批采购记录', 'BUTTON', 'finance:purchase:approve', NULL, NULL, NULL, 3),
-(87, 7, '删除采购记录', 'BUTTON', 'finance:purchase:delete', NULL, NULL, NULL, 4),
-(88, 7, '查看采购记录', 'BUTTON', 'finance:purchase:view', NULL, NULL, NULL, 5),
-(89, 7, '账单列表', 'BUTTON', 'finance:bill:list', NULL, NULL, NULL, 6),
-(90, 7, '生成账单', 'BUTTON', 'finance:bill:generate', NULL, NULL, NULL, 7),
-(91, 7, '确认账单', 'BUTTON', 'finance:bill:confirm', NULL, NULL, NULL, 8),
-(92, 7, '删除账单', 'BUTTON', 'finance:bill:delete', NULL, NULL, NULL, 9),
-(93, 7, '查看账单', 'BUTTON', 'finance:bill:view', NULL, NULL, NULL, 10),
-(94, 7, '资金统计', 'BUTTON', 'finance:statistics:view', NULL, NULL, NULL, 11),
-(95, 7, '折旧计算', 'BUTTON', 'finance:depreciation:view', NULL, NULL, NULL, 12);
+-- 账单与资金统计权限（挂载在采购管理下）
+(89, 4, '账单列表', 'BUTTON', 'finance:bill:list', NULL, NULL, NULL, 6),
+(90, 4, '生成账单', 'BUTTON', 'finance:bill:generate', NULL, NULL, NULL, 7),
+(91, 4, '确认账单', 'BUTTON', 'finance:bill:confirm', NULL, NULL, NULL, 8),
+(92, 4, '删除账单', 'BUTTON', 'finance:bill:delete', NULL, NULL, NULL, 9),
+(93, 4, '查看账单', 'BUTTON', 'finance:bill:view', NULL, NULL, NULL, 10),
+(94, 4, '资金统计', 'BUTTON', 'finance:statistics:view', NULL, NULL, NULL, 11);
 
 -- 为管理员角色分配所有权限
 INSERT INTO sys_role_menu (role_id, menu_id)
