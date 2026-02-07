@@ -1,163 +1,136 @@
 # EAMS - 企业资产管理系统
 
 ## 项目简介
+EAMS (Enterprise Asset Management System) 是一个覆盖采购、入库、资产流转、生命周期、盘点、报修与统计分析的企业资产管理系统，包含后端 Spring Boot 服务与前端 Vue 3 管理端。
 
-EAMS (Enterprise Asset Management System) 是一个企业级资产管理系统，提供资产全生命周期管理能力。
+## 功能概览
+- 仪表盘统计：资产概览、部门/分类/状态分布、时间趋势
+- 系统管理与 RBAC：用户、角色、部门、权限、菜单/按钮级别鉴权
+- 资产台账：资产信息、分类树、状态维护
+- 资产流转：入库、分配、调拨、归还、报废、送修、维修完成
+- 生命周期管理：阶段流转、历史追踪
+- 盘点管理：计划创建、执行、结果处理、明细分页
+- 报修管理：申请、审批、维修、完成
+- 采购管理：采购单、入库/批量入库、采购资金与账单统计
+- 折旧与账单：月度/年度折旧与账单统计（详见 docs）
 
 ## 技术栈
+### 后端
+- Java 17, Spring Boot 3.1.5
+- MyBatis Plus 3.5.7
+- Spring Security + JWT
+- MySQL 8.x, Redis
+- SpringDoc OpenAPI (Swagger)
+- MapStruct, Lombok, Hutool
+- WebSocket, Apache POI
 
-### 后端技术
-- **Java**: 17
-- **Spring Boot**: 3.1.5
-- **MyBatis Plus**: 3.5.7
-- **MySQL**: 8.x
-- **Redis**: 缓存和会话管理
-- **Spring Security + JWT**: 认证和授权
-- **Swagger 3**: API 文档
-- **Lombok**: 简化代码
-- **Hutool**: 工具类库
-- **MapStruct**: 对象映射
-
-### 前端技术（后续）
+### 前端
 - Vue 3 + TypeScript
-- Vite
-- Element Plus
-- Pinia
-- Vue Router
-- Axios
-- ECharts
+- Vite, Element Plus, Pinia, Vue Router
+- Axios, ECharts
 
 ## 项目结构
-
 ```
-eams-backend/
-├── src/
-│   ├── main/
-│   │   ├── java/
-│   │   │   └── com/eams/
-│   │   │       ├── EamsApplication.java          # 主启动类
-│   │   │       ├── common/                        # 通用层
-│   │   │       │   ├── constant/                  # 常量定义
-│   │   │       │   └── result/                    # 统一返回结果
-│   │   │       ├── config/                        # 配置类
-│   │   │       │   ├── CorsConfig.java           # 跨域配置
-│   │   │       │   ├── MyBatisPlusConfig.java    # MyBatis配置
-│   │   │       │   ├── RedisConfig.java          # Redis配置
-│   │   │       │   └── SwaggerConfig.java        # Swagger配置
-│   │   │       ├── exception/                     # 异常处理
-│   │   │       │   ├── BusinessException.java    # 业务异常
-│   │   │       │   └── GlobalExceptionHandler.java # 全局异常处理器
-│   │   │       ├── security/                      # 安全框架
-│   │   │       │   ├── JwtProperties.java        # JWT配置属性
-│   │   │       │   ├── JwtUtil.java              # JWT工具类
-│   │   │       │   └── SecurityContextHolder.java # 安全上下文
-│   │   │       ├── aop/                          # AOP切面
-│   │   │       │   ├── OperationLog.java         # 操作日志注解
-│   │   │       │   └── OperationLogAspect.java   # 操作日志切面
-│   │   │       └── system/                       # 系统模块（占位）
-│   │   └── resources/
-│   │       └── application.yml                   # 应用配置
-│   └── test/                                     # 测试代码
-├── pom.xml                                       # Maven配置
-└── README.md                                     # 项目说明
+EAMS-plan/
+├── docs/               # 设计与变更说明
+├── frontend/           # Vue 3 管理端
+├── sql/                # 初始化与迁移脚本
+├── sql_pro/            # 生产环境脚本
+├── src/                # 后端源码
+├── pom.xml
+└── README.md
 ```
 
-## 核心功能
-
-### 已实现（基础工程）
-- ✅ Maven 工程配置
-- ✅ 统一返回结果封装
-- ✅ 全局异常处理
-- ✅ MyBatis Plus 分页插件
-- ✅ Redis 序列化配置
-- ✅ Swagger 3 API 文档
-- ✅ CORS 跨域配置
-- ✅ JWT 认证工具
-- ✅ AOP 操作日志
-
-### 待开发
-- ⏳ 用户管理
-- ⏳ 角色管理
-- ⏳ 权限管理
-- ⏳ 资产管理
-- ⏳ 资产分类
-- ⏳ 资产盘点
-- ⏳ 资产维护
-- ⏳ 报表统计
-
-## 环境要求
-
-- JDK 17+
-- Maven 3.6+
-- MySQL 8.0+
-- Redis 6.0+
+```
+src/main/java/com/eams/
+├── asset       # 资产信息/分类/流转
+├── lifecycle   # 生命周期/盘点/报修
+├── purchase    # 采购与资金统计
+├── system      # 用户/角色/权限/部门
+├── dashboard   # 仪表盘统计
+└── common/config/security/aop/...
+```
 
 ## 快速开始
+### 1. 数据库初始化
+执行基础脚本（默认库名为 `eams`，如需其他库名请同步修改脚本与配置）：
+```
+sql/init.sql
+```
 
-### 1. 数据库配置
+初始化 RBAC 权限与菜单：
+```
+sql/rbac_system.sql
+```
 
-修改 `application.yml` 中的数据库连接信息：
+首次初始化管理员全量权限（可选）：
+```
+sql_pro/admin_full_permission.sql
+```
 
+其它迁移脚本按需执行（例如 `purchase_optimization.sql`、`user_department_binding.sql`、`asset_department_id_migration.sql`）。
+
+### 2. 后端配置
+编辑 `src/main/resources/application.yml`：
 ```yaml
 spring:
   datasource:
-    url: jdbc:mysql://localhost:3306/eams?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai
+    url: jdbc:mysql://localhost:3306/eams_plan?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai
     username: root
     password: your_password
-```
-
-### 2. Redis 配置
-
-修改 `application.yml` 中的 Redis 连接信息：
-
-```yaml
-spring:
   data:
     redis:
       host: localhost
       port: 6379
-      password: your_password
 ```
 
-### 3. 编译运行
-
+### 3. 启动后端
 ```bash
-# 编译项目
 mvn clean package
-
-# 运行项目
 mvn spring-boot:run
 ```
 
-### 4. 访问 Swagger 文档
+### 4. 启动前端
+```bash
+cd frontend
+npm install
+npm run dev
+```
 
-启动成功后，访问：http://localhost:8080/api/swagger-ui.html
+构建：
+```bash
+npm run build
+```
 
-## 开发规范
+### 5. 访问入口
+- API 基础路径：`http://localhost:8080/api`
+- Swagger UI：`http://localhost:8080/api/swagger-ui.html`
+- 登录接口：`POST /api/auth/login`
+- Token 使用说明：`docs/token-usage-guide.md`
+- 初始化账号：`admin/123456`（见 `sql/init.sql`）
 
-### 代码规范
-- 三层架构：Controller → Service → Mapper
-- DTO / VO 严格分离
-- 所有方法、字段必须有中文注释
-- 统一使用 Result<T> 返回
+## 相关文档
+- `docs/权限管理说明.md`
+- `docs/RBAC权限加载与校验流程.md`
+- `docs/用户部门绑定功能.md`
+- `docs/user-management-api.md`
+- `docs/生命周期状态说明.md`
+- `docs/盘点管理更新说明.md`
+- `docs/采购管理优化.md`
+- `docs/账单管理优化说明.md`
+- `docs/折旧计算逻辑说明.md`
+- `docs/统计SQL说明.md`
+- `docs/token-usage-guide.md`
+
+## 开发约定
+- Controller → Service → Mapper 分层
+- DTO / VO 分离
+- 统一 Result<T> 返回
 - RESTful API 设计
 
-### 命名规范
-- 类名：大驼峰（PascalCase）
-- 方法名/变量名：小驼峰（camelCase）
-- 常量：全大写下划线分隔（UPPER_SNAKE_CASE）
-- 包名：全小写
-
-### 数据库规范
-- 表名：小写下划线分隔
-- 字段名：小写下划线分隔
-- 必须字段：id, create_time, update_time, deleted
-
 ## 许可证
-
 Apache License 2.0
 
 ## 联系方式
-
 - 项目组：EAMS Team
 - 邮箱：eams@enterprise.com
