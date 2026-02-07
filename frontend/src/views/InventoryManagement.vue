@@ -87,6 +87,9 @@
             <el-option label="专项盘点" :value="3" />
           </el-select>
         </el-form-item>
+        <el-form-item label="抽样数量" prop="sampleCount" v-if="createForm.inventoryType === 2">
+          <el-input-number v-model="createForm.sampleCount" :min="1" :max="99999" style="width: 100%" />
+        </el-form-item>
         <el-form-item label="盘点分类" prop="categoryId" v-if="createForm.inventoryType === 3">
           <el-tree-select
             v-model="createForm.categoryId"
@@ -133,6 +136,9 @@
         <el-descriptions-item label="盘点编号">{{ currentInventory.inventoryNumber }}</el-descriptions-item>
         <el-descriptions-item label="盘点名称">{{ currentInventory.inventoryName }}</el-descriptions-item>
         <el-descriptions-item label="类型">{{ currentInventory.inventoryTypeText }}</el-descriptions-item>
+        <el-descriptions-item v-if="currentInventory.inventoryType === 2" label="抽样数量">
+          {{ currentInventory.sampleCount || '-' }}
+        </el-descriptions-item>
         <el-descriptions-item v-if="currentInventory.inventoryType === 3" label="盘点分类">
           {{ currentInventory.categoryName || '-' }}
         </el-descriptions-item>
@@ -243,9 +249,18 @@ const createForm = reactive<InventoryCreateRequest>({
   planStartDate: '',
   planEndDate: '',
   creator: '',
+  sampleCount: undefined,
   categoryId: undefined,
   remark: ''
 })
+
+const validateSampleCount = (_rule: any, value: number | undefined, callback: (error?: Error) => void) => {
+  if (createForm.inventoryType === 2 && (!value || value <= 0)) {
+    callback(new Error('请输入抽样数量'))
+    return
+  }
+  callback()
+}
 
 const validateCategory = (_rule: any, value: number | undefined, callback: (error?: Error) => void) => {
   if (createForm.inventoryType === 3 && !value) {
@@ -260,6 +275,7 @@ const createRules: FormRules = {
   inventoryType: [{ required: true, message: '请选择盘点类型', trigger: 'change' }],
   planStartDate: [{ required: true, message: '请选择开始日期', trigger: 'change' }],
   planEndDate: [{ required: true, message: '请选择结束日期', trigger: 'change' }],
+  sampleCount: [{ validator: validateSampleCount, trigger: 'change' }],
   categoryId: [{ validator: validateCategory, trigger: 'change' }]
 }
 
@@ -324,6 +340,7 @@ const showCreateDialog = () => {
   createForm.planStartDate = ''
   createForm.planEndDate = ''
   createForm.creator = getCurrentUsername()
+  createForm.sampleCount = undefined
   createForm.categoryId = undefined
   createForm.remark = ''
   createDialogVisible.value = true
@@ -333,6 +350,9 @@ const handleInventoryTypeChange = (value: number) => {
   if (value !== 3) {
     createForm.categoryId = undefined
   }
+  if (value !== 2) {
+    createForm.sampleCount = undefined
+  }
 }
 
 // 创建盘点计划
@@ -340,6 +360,9 @@ const handleCreate = async () => {
   if (!createFormRef.value) return
 
   createForm.creator = getCurrentUsername()
+  if (createForm.inventoryType !== 2) {
+    createForm.sampleCount = undefined
+  }
 
   await createFormRef.value.validate(async (valid) => {
     if (!valid) return

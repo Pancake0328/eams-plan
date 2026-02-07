@@ -28,6 +28,11 @@ public class InventoryCreateRequest {
     private Integer inventoryType;
 
     /**
+     * 抽样数量（抽样盘点使用）
+     */
+    private Integer sampleCount;
+
+    /**
      * 计划开始日期
      */
     @NotNull(message = "计划开始日期不能为空")

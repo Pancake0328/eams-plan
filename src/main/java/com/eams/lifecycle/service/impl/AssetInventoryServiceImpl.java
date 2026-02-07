@@ -18,10 +18,6 @@ import com.eams.lifecycle.vo.InventoryDetailVO;
 import com.eams.lifecycle.vo.InventoryVO;
 import com.eams.security.SecurityContextHolder;
 import lombok.RequiredArgsConstructor;
-import org.apache.ibatis.session.ExecutorType;
-import org.apache.ibatis.session.SqlSession;
-import org.apache.ibatis.session.SqlSessionFactory;
-import org.mybatis.spring.SqlSessionUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -53,7 +49,6 @@ public class AssetInventoryServiceImpl implements AssetInventoryService {
     private final AssetInfoMapper assetMapper;
     private final AssetCategoryMapper categoryMapper;
     private final com.eams.system.mapper.DepartmentMapper departmentMapper;
-    private final SqlSessionFactory sqlSessionFactory;
 
     private static final Map<Integer, String> TYPE_MAP = new HashMap<>();
     private static final Map<Integer, String> STATUS_MAP = new HashMap<>();
@@ -82,6 +77,12 @@ public class AssetInventoryServiceImpl implements AssetInventoryService {
         // 生成盘点编号
         String inventoryNumber = generateInventoryNumber();
 
+        if (request.getInventoryType() != null && request.getInventoryType() == 2) {
+            if (request.getSampleCount() == null || request.getSampleCount() <= 0) {
+                throw new BusinessException("抽样盘点必须填写抽样数量");
+            }
+        }
+
         if (request.getInventoryType() != null && request.getInventoryType() == 3) {
             if (request.getCategoryId() == null) {
                 throw new BusinessException("专项盘点必须选择分类");
@@ -92,7 +93,7 @@ public class AssetInventoryServiceImpl implements AssetInventoryService {
             }
         }
 
-        List<AssetInfo> assets = getAssetsByInventoryType(request.getInventoryType(), request.getCategoryId());
+        List<AssetInfo> assets = getAssetsByInventoryType(request.getInventoryType(), request.getCategoryId(), request.getSampleCount());
 
         // 创建盘点计划
         AssetInventory inventory = new AssetInventory();
@@ -102,6 +103,9 @@ public class AssetInventoryServiceImpl implements AssetInventoryService {
         inventory.setCreator(getCurrentUsername());
         if (request.getInventoryType() == null || request.getInventoryType() != 3) {
             inventory.setCategoryId(null);
+        }
+        if (request.getInventoryType() == null || request.getInventoryType() != 2) {
+            inventory.setSampleCount(null);
         }
         inventory.setTotalCount(assets.size());
 
@@ -253,7 +257,7 @@ public class AssetInventoryServiceImpl implements AssetInventoryService {
     /**
      * 根据盘点类型获取资产列表
      */
-    private List<AssetInfo> getAssetsByInventoryType(Integer inventoryType, Long categoryId) {
+    private List<AssetInfo> getAssetsByInventoryType(Integer inventoryType, Long categoryId, Integer sampleCount) {
         LambdaQueryWrapper<AssetInfo> wrapper = new LambdaQueryWrapper<>();
         wrapper.select(AssetInfo::getId, AssetInfo::getAssetNumber, AssetInfo::getAssetName, AssetInfo::getDepartmentId);
 
@@ -263,8 +267,9 @@ public class AssetInventoryServiceImpl implements AssetInventoryService {
         }
 
         if (inventoryType != null && inventoryType == 2) {
-            // 抽样盘点：随机抽取部分资产
-            wrapper.last("ORDER BY RAND() LIMIT 50");
+            // 抽样盘点：随机抽取指定数量资产
+            int limit = sampleCount != null && sampleCount > 0 ? sampleCount : 50;
+            wrapper.last("ORDER BY RAND() LIMIT " + limit);
         }
         // 全面盘点：查询所有资产
 
@@ -336,19 +341,10 @@ public class AssetInventoryServiceImpl implements AssetInventoryService {
             details.add(detail);
         }
 
-        SqlSession sqlSession = SqlSessionUtils.getSqlSession(sqlSessionFactory, ExecutorType.BATCH, null);
-        try {
-            AssetInventoryDetailMapper mapper = sqlSession.getMapper(AssetInventoryDetailMapper.class);
-            int batchSize = 500;
-            for (int i = 0; i < details.size(); i++) {
-                mapper.insert(details.get(i));
-                if (i % batchSize == batchSize - 1) {
-                    sqlSession.flushStatements();
-                }
-            }
-            sqlSession.flushStatements();
-        } finally {
-            SqlSessionUtils.closeSqlSession(sqlSession, sqlSessionFactory);
+        int batchSize = 500;
+        for (int i = 0; i < details.size(); i += batchSize) {
+            int end = Math.min(i + batchSize, details.size());
+            detailMapper.insertBatch(details.subList(i, end));
         }
     }
 

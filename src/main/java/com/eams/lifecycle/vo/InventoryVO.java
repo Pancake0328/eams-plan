@@ -36,6 +36,11 @@ public class InventoryVO {
     private Integer inventoryType;
 
     /**
+     * 抽样数量
+     */
+    private Integer sampleCount;
+
+    /**
      * 专项盘点分类ID
      */
     private Long categoryId;

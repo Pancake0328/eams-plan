@@ -35,6 +35,7 @@ CREATE TABLE `asset_inventory` (
     `inventory_number` VARCHAR(50) NOT NULL COMMENT '盘点编号',
     `inventory_name` VARCHAR(100) NOT NULL COMMENT '盘点名称',
     `inventory_type` INT NOT NULL COMMENT '盘点类型：1-全面盘点 2-抽样盘点 3-专项盘点',
+    `sample_count` INT DEFAULT NULL COMMENT '抽样数量',
     `category_id` BIGINT DEFAULT NULL COMMENT '专项盘点分类ID',
     `plan_start_date` DATE NOT NULL COMMENT '计划开始日期',
     `plan_end_date` DATE NOT NULL COMMENT '计划结束日期',
@@ -125,10 +126,10 @@ VALUES
 (2, 2, 1, '2025-02-05', '投入使用', 'admin', '分配给行政部使用');
 
 -- 盘点计划示例
-INSERT INTO `asset_inventory` (`inventory_number`, `inventory_name`, `inventory_type`, `plan_start_date`, `plan_end_date`, `inventory_status`, `creator`)
+INSERT INTO `asset_inventory` (`inventory_number`, `inventory_name`, `inventory_type`, `sample_count`, `category_id`, `plan_start_date`, `plan_end_date`, `inventory_status`, `creator`)
 VALUES 
-('INV-202601-001', '2026年第一季度资产盘点', 1, '2026-01-01', '2026-01-07', 3, 'admin'),
-('INV-202601-002', '办公设备专项盘点', 3, '2026-01-15', '2026-01-20', 1, 'admin');
+('INV-202601-001', '2026年第一季度资产盘点', 1, NULL, NULL, '2026-01-01', '2026-01-07', 3, 'admin'),
+('INV-202601-002', '办公设备专项盘点', 3, NULL, NULL, '2026-01-15', '2026-01-20', 1, 'admin');
 
 -- 盘点明细示例
 INSERT INTO `asset_inventory_detail` (`inventory_id`, `asset_id`, `asset_number`, `asset_name`, `expected_location`, `actual_location`, `inventory_result`, `inventory_person`, `inventory_time`)
