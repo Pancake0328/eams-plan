@@ -12,6 +12,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -26,6 +27,7 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/assets")
 @RequiredArgsConstructor
 @Tag(name = "资产信息管理", description = "资产信息管理相关接口")
+@Slf4j
 public class AssetInfoController {
 
     private final AssetInfoService assetInfoService;
@@ -41,7 +43,9 @@ public class AssetInfoController {
     @OperationLog(value = "创建资产", type = "CREATE")
     @PreAuthorize("hasAuthority('asset:info:add')")
     public Result<Long> createAsset(@Validated @RequestBody AssetCreateRequest request) {
+        log.info("创建资产，入参：{}", request);
         Long assetId = assetInfoService.createAsset(request);
+        log.info("创建资产完成，id={}", assetId);
         return Result.success("创建资产成功", assetId);
     }
 
@@ -59,7 +63,9 @@ public class AssetInfoController {
     public Result<Void> updateAsset(
             @Parameter(description = "资产ID") @PathVariable Long id,
             @Validated @RequestBody AssetUpdateRequest request) {
+        log.info("更新资产，id={}，入参：{}", id, request);
         assetInfoService.updateAsset(id, request);
+        log.info("更新资产完成，id={}", id);
         return Result.success();
     }
 
@@ -74,7 +80,9 @@ public class AssetInfoController {
     @OperationLog(value = "删除资产", type = "DELETE")
     @PreAuthorize("hasAuthority('asset:info:delete')")
     public Result<Void> deleteAsset(@Parameter(description = "资产ID") @PathVariable Long id) {
+        log.info("删除资产，id={}", id);
         assetInfoService.deleteAsset(id);
+        log.info("删除资产完成，id={}", id);
         return Result.success();
     }
 
@@ -88,6 +96,7 @@ public class AssetInfoController {
     @Operation(summary = "获取资产详情", description = "根据ID获取资产详细信息")
     @PreAuthorize("hasAuthority('asset:info:view')")
     public Result<AssetVO> getAssetById(@Parameter(description = "资产ID") @PathVariable Long id) {
+        log.info("获取资产详情，id={}", id);
         AssetVO assetVO = assetInfoService.getAssetById(id);
         return Result.success(assetVO);
     }
@@ -102,6 +111,7 @@ public class AssetInfoController {
     @Operation(summary = "分页查询资产", description = "根据条件分页查询资产列表")
     @PreAuthorize("hasAuthority('asset:info:list')")
     public Result<Page<AssetVO>> getAssetPage(AssetPageQuery query) {
+        log.info("分页查询资产，query={}", query);
         Page<AssetVO> page = assetInfoService.getAssetPage(query);
         return Result.success(page);
     }
@@ -120,7 +130,9 @@ public class AssetInfoController {
     public Result<Void> updateAssetStatus(
             @Parameter(description = "资产ID") @PathVariable Long id,
             @Parameter(description = "资产状态：1-闲置，2-使用中，3-维修中，4-报废") @RequestParam Integer status) {
+        log.info("更新资产状态，id={}，status={}", id, status);
         assetInfoService.updateAssetStatus(id, status);
+        log.info("更新资产状态完成，id={}，status={}", id, status);
         return Result.success();
     }
 }

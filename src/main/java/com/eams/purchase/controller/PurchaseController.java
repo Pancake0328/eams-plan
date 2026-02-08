@@ -14,6 +14,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.*;
@@ -25,6 +26,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/purchase")
 @RequiredArgsConstructor
+@Slf4j
 public class PurchaseController {
 
     private final PurchaseService purchaseService;
@@ -33,7 +35,9 @@ public class PurchaseController {
     @PostMapping
     @PreAuthorize("hasAuthority('purchase:create')")
     public Result<Long> createPurchase(@Valid @RequestBody PurchaseCreateRequest request) {
+        log.info("创建采购单，入参：{}", request);
         Long id = purchaseService.createPurchase(request);
+        log.info("创建采购单完成，id={}", id);
         return Result.success(id);
     }
 
@@ -41,6 +45,7 @@ public class PurchaseController {
     @GetMapping("/{id}")
     @PreAuthorize("hasAuthority('purchase:view')")
     public Result<PurchaseVO> getPurchaseById(@PathVariable Long id) {
+        log.info("获取采购单详情，id={}", id);
         PurchaseVO purchase = purchaseService.getPurchaseById(id);
         return Result.success(purchase);
     }
@@ -53,6 +58,7 @@ public class PurchaseController {
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(required = false) String purchaseNumber,
             @RequestParam(required = false) Integer status) {
+        log.info("分页查询采购单，current={}，size={}，purchaseNumber={}，status={}", current, size, purchaseNumber, status);
         Page<PurchaseVO> page = purchaseService.getPurchasePage(current, size, purchaseNumber, status);
         return Result.success(page);
     }
@@ -61,7 +67,9 @@ public class PurchaseController {
     @PutMapping("/{id}/cancel")
     @PreAuthorize("hasAuthority('purchase:cancel')")
     public Result<Void> cancelPurchase(@PathVariable Long id) {
+        log.info("取消采购单，id={}", id);
         purchaseService.cancelPurchase(id);
+        log.info("取消采购单完成，id={}", id);
         return Result.success();
     }
 
@@ -71,6 +79,7 @@ public class PurchaseController {
     public Result<Page<PurchaseVO.PurchaseDetailVO>> getPendingInboundDetails(
             @RequestParam(defaultValue = "1") int current,
             @RequestParam(defaultValue = "10") int size) {
+        log.info("获取待入库明细列表，current={}，size={}", current, size);
         Page<PurchaseVO.PurchaseDetailVO> page = purchaseService.getPendingInboundDetails(current, size);
         return Result.success(page);
     }
@@ -79,7 +88,9 @@ public class PurchaseController {
     @PostMapping("/inbound")
     @PreAuthorize("hasAuthority('asset:record:in') or hasAuthority('purchase:inbound') or hasAuthority('purchase:batch-inbound')")
     public Result<List<Long>> inboundAsset(@Valid @RequestBody AssetInboundRequest request) {
+        log.info("采购入库，入参：{}", request);
         List<Long> assetIds = purchaseService.inboundAsset(request);
+        log.info("采购入库完成，assetIds={}", assetIds);
         return Result.success(assetIds);
     }
 
@@ -87,7 +98,9 @@ public class PurchaseController {
     @PostMapping("/batch-inbound")
     @PreAuthorize("hasAuthority('asset:record:in') or hasAuthority('purchase:batch-inbound')")
     public Result<List<Long>> batchInbound(@Valid @RequestBody BatchInboundRequest request) {
+        log.info("批量入库，入参：{}", request);
         List<Long> assetIds = purchaseService.batchInbound(request);
+        log.info("批量入库完成，assetIds={}", assetIds);
         return Result.success(assetIds);
     }
 
@@ -97,6 +110,7 @@ public class PurchaseController {
     public Result<PurchaseBillStatisticVO> getMonthlyBillStatistic(
             @RequestParam Integer year,
             @RequestParam Integer month) {
+        log.info("月度账单统计，year={}，month={}", year, month);
         PurchaseBillStatisticVO stat = purchaseService.getMonthlyBillStatistic(year, month);
         return Result.success(stat);
     }
@@ -105,6 +119,7 @@ public class PurchaseController {
     @GetMapping("/statistics/bill/annual")
     @PreAuthorize("hasAuthority('finance:bill:list')")
     public Result<PurchaseBillStatisticVO> getAnnualBillStatistic(@RequestParam Integer year) {
+        log.info("年度账单统计，year={}", year);
         PurchaseBillStatisticVO stat = purchaseService.getAnnualBillStatistic(year);
         return Result.success(stat);
     }
@@ -113,6 +128,7 @@ public class PurchaseController {
     @GetMapping("/statistics/overview")
     @PreAuthorize("hasAuthority('finance:statistics:view')")
     public Result<PurchaseFundOverviewVO> getFundOverview() {
+        log.info("采购资金概览");
         PurchaseFundOverviewVO overview = purchaseService.getFundOverview();
         return Result.success(overview);
     }
@@ -121,6 +137,7 @@ public class PurchaseController {
     @GetMapping("/statistics/by-supplier")
     @PreAuthorize("hasAuthority('finance:statistics:view')")
     public Result<List<PurchaseFundStatisticVO>> getFundStatisticsBySupplier() {
+        log.info("按供应商统计");
         List<PurchaseFundStatisticVO> stats = purchaseService.getFundStatisticsBySupplier();
         return Result.success(stats);
     }
@@ -131,6 +148,7 @@ public class PurchaseController {
     public Result<List<PurchaseFundStatisticVO>> getFundStatisticsByTime(
             @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate startDate,
             @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate endDate) {
+        log.info("按时间统计，startDate={}，endDate={}", startDate, endDate);
         List<PurchaseFundStatisticVO> stats = purchaseService.getFundStatisticsByTime(startDate, endDate);
         return Result.success(stats);
     }

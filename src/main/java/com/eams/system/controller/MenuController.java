@@ -10,6 +10,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
@@ -25,6 +26,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/menus")
 @RequiredArgsConstructor
+@Slf4j
 public class MenuController {
 
     private final MenuService menuService;
@@ -34,6 +36,7 @@ public class MenuController {
     @GetMapping("/tree")
     @PreAuthorize("hasAuthority('system:permission:list')")
     public Result<List<MenuTreeVO>> getMenuTree() {
+        log.info("获取菜单树");
         List<MenuTreeVO> tree = permissionService.getAllMenuTree();
         return Result.success(tree);
     }
@@ -42,7 +45,9 @@ public class MenuController {
     @PostMapping
     @PreAuthorize("hasAuthority('system:permission:add')")
     public Result<Long> createMenu(@Valid @RequestBody MenuCreateRequest request) {
+        log.info("创建菜单权限，入参：{}", request);
         Long id = menuService.createMenu(request);
+        log.info("创建菜单权限完成，id={}", id);
         return Result.success(id);
     }
 
@@ -50,7 +55,9 @@ public class MenuController {
     @PutMapping("/{id}")
     @PreAuthorize("hasAuthority('system:permission:edit')")
     public Result<Void> updateMenu(@PathVariable Long id, @Valid @RequestBody MenuUpdateRequest request) {
+        log.info("更新菜单权限，id={}，入参：{}", id, request);
         menuService.updateMenu(id, request);
+        log.info("更新菜单权限完成，id={}", id);
         return Result.success();
     }
 
@@ -58,7 +65,9 @@ public class MenuController {
     @DeleteMapping("/{id}")
     @PreAuthorize("hasAuthority('system:permission:delete')")
     public Result<Void> deleteMenu(@PathVariable Long id) {
+        log.info("删除菜单权限，id={}", id);
         menuService.deleteMenu(id);
+        log.info("删除菜单权限完成，id={}", id);
         return Result.success();
     }
 }

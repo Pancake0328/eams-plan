@@ -8,6 +8,7 @@ import com.eams.dashboard.vo.TimeTrendStatistics;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -25,6 +26,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/dashboard")
 @RequiredArgsConstructor
+@Slf4j
 public class DashboardController {
 
     private final DashboardService dashboardService;
@@ -33,6 +35,7 @@ public class DashboardController {
     @GetMapping("/statistics")
     @PreAuthorize("hasAuthority('dashboard:view')")
     public Result<DashboardStatistics> getDashboardStatistics() {
+        log.info("获取仪表盘概览数据");
         DashboardStatistics statistics = dashboardService.getDashboardStatistics();
         return Result.success(statistics);
     }
@@ -41,6 +44,7 @@ public class DashboardController {
     @GetMapping("/distribution/department")
     @PreAuthorize("hasAuthority('dashboard:view')")
     public Result<List<AssetDistribution>> getDepartmentDistribution() {
+        log.info("获取部门资产分布");
         List<AssetDistribution> distributions = dashboardService.getDepartmentDistribution();
         return Result.success(distributions);
     }
@@ -49,6 +53,7 @@ public class DashboardController {
     @GetMapping("/distribution/category")
     @PreAuthorize("hasAuthority('dashboard:view')")
     public Result<List<AssetDistribution>> getCategoryDistribution() {
+        log.info("获取资产分类分布");
         List<AssetDistribution> distributions = dashboardService.getCategoryDistribution();
         return Result.success(distributions);
     }
@@ -57,6 +62,7 @@ public class DashboardController {
     @GetMapping("/distribution/status")
     @PreAuthorize("hasAuthority('dashboard:view')")
     public Result<List<AssetDistribution>> getStatusDistribution() {
+        log.info("获取资产状态分布");
         List<AssetDistribution> distributions = dashboardService.getStatusDistribution();
         return Result.success(distributions);
     }
@@ -67,6 +73,7 @@ public class DashboardController {
     public Result<List<TimeTrendStatistics>> getTimeTrendStatistics(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
+        log.info("获取时间趋势统计，startDate={}，endDate={}", startDate, endDate);
         List<TimeTrendStatistics> trends = dashboardService.getTimeTrendStatistics(startDate, endDate);
         return Result.success(trends);
     }

@@ -10,6 +10,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
@@ -26,6 +27,7 @@ import java.util.Set;
 @RestController
 @RequestMapping("/role")
 @RequiredArgsConstructor
+@Slf4j
 public class RoleController {
 
     private final RoleService roleService;
@@ -34,7 +36,9 @@ public class RoleController {
     @PostMapping
     @PreAuthorize("hasAuthority('system:role:add')")
     public Result<Long> createRole(@Valid @RequestBody RoleCreateRequest request) {
+        log.info("创建角色，入参：{}", request);
         Long id = roleService.createRole(request);
+        log.info("创建角色完成，id={}", id);
         return Result.success(id);
     }
 
@@ -42,7 +46,9 @@ public class RoleController {
     @PutMapping("/{id}")
     @PreAuthorize("hasAuthority('system:role:edit')")
     public Result<Void> updateRole(@PathVariable Long id, @Valid @RequestBody RoleCreateRequest request) {
+        log.info("更新角色，id={}，入参：{}", id, request);
         roleService.updateRole(id, request);
+        log.info("更新角色完成，id={}", id);
         return Result.success();
     }
 
@@ -50,7 +56,9 @@ public class RoleController {
     @DeleteMapping("/{id}")
     @PreAuthorize("hasAuthority('system:role:delete')")
     public Result<Void> deleteRole(@PathVariable Long id) {
+        log.info("删除角色，id={}", id);
         roleService.deleteRole(id);
+        log.info("删除角色完成，id={}", id);
         return Result.success();
     }
 
@@ -58,6 +66,7 @@ public class RoleController {
     @GetMapping("/{id}")
     @PreAuthorize("hasAuthority('system:role:list')")
     public Result<RoleVO> getRoleById(@PathVariable Long id) {
+        log.info("获取角色详情，id={}", id);
         RoleVO role = roleService.getRoleById(id);
         return Result.success(role);
     }
@@ -70,6 +79,7 @@ public class RoleController {
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(required = false) String roleName,
             @RequestParam(required = false) Integer status) {
+        log.info("分页查询角色，current={}，size={}，roleName={}，status={}", current, size, roleName, status);
         Page<RoleVO> page = roleService.getRolePage(current, size, roleName, status);
         return Result.success(page);
     }
@@ -78,7 +88,9 @@ public class RoleController {
     @PutMapping("/{id}/status")
     @PreAuthorize("hasAuthority('system:role:status')")
     public Result<Void> updateRoleStatus(@PathVariable Long id, @RequestParam Integer status) {
+        log.info("更新角色状态，id={}，status={}", id, status);
         roleService.updateRoleStatus(id, status);
+        log.info("更新角色状态完成，id={}，status={}", id, status);
         return Result.success();
     }
 
@@ -86,7 +98,9 @@ public class RoleController {
     @PostMapping("/assign-permissions")
     @PreAuthorize("hasAuthority('system:role:permission')")
     public Result<Void> assignPermissions(@Valid @RequestBody AssignPermissionRequest request) {
+        log.info("为角色分配权限，roleId={}，menuIds={}", request.getRoleId(), request.getMenuIds());
         roleService.assignPermissions(request);
+        log.info("角色权限分配完成，roleId={}", request.getRoleId());
         return Result.success();
     }
 
@@ -94,6 +108,7 @@ public class RoleController {
     @GetMapping("/{roleId}/menu-ids")
     @PreAuthorize("hasAuthority('system:role:permission')")
     public Result<List<Long>> getRoleMenuIds(@PathVariable Long roleId) {
+        log.info("获取角色菜单ID列表，roleId={}", roleId);
         List<Long> menuIds = roleService.getRoleMenuIds(roleId);
         return Result.success(menuIds);
     }
@@ -102,6 +117,7 @@ public class RoleController {
     @GetMapping("/{roleId}/permissions")
     @PreAuthorize("hasAuthority('system:role:permission')")
     public Result<Set<String>> getRolePermissions(@PathVariable Long roleId) {
+        log.info("获取角色权限标识集合，roleId={}", roleId);
         Set<String> permissions = roleService.getRolePermissions(roleId);
         return Result.success(permissions);
     }
@@ -110,6 +126,7 @@ public class RoleController {
     @GetMapping("/all")
     @PreAuthorize("hasAnyAuthority('system:role:list', 'system:role:view')")
     public Result<List<RoleVO>> getAllRoles() {
+        log.info("获取所有角色列表");
         List<RoleVO> roles = roleService.getAllRoles();
         return Result.success(roles);
     }

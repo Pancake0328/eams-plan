@@ -11,6 +11,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -27,6 +28,7 @@ import java.util.List;
 @RequestMapping("/asset-records")
 @RequiredArgsConstructor
 @Tag(name = "资产流转管理", description = "资产出入库与流转管理相关接口")
+@Slf4j
 public class AssetRecordController {
 
     private final AssetRecordService recordService;
@@ -42,7 +44,9 @@ public class AssetRecordController {
     @OperationLog(value = "资产入库", type = "CREATE")
     @PreAuthorize("hasAuthority('asset:record:in')")
     public Result<Long> assetIn(@Validated @RequestBody RecordCreateRequest request) {
+        log.info("资产入库，入参：{}", request);
         Long recordId = recordService.assetIn(request);
+        log.info("资产入库完成，recordId={}", recordId);
         return Result.success("资产入库成功", recordId);
     }
 
@@ -57,7 +61,9 @@ public class AssetRecordController {
     @OperationLog(value = "资产分配", type = "UPDATE")
     @PreAuthorize("hasAuthority('asset:record:allocate')")
     public Result<Long> allocateAsset(@Validated @RequestBody RecordCreateRequest request) {
+        log.info("资产分配，入参：{}", request);
         Long recordId = recordService.allocateAsset(request);
+        log.info("资产分配完成，recordId={}", recordId);
         return Result.success("资产分配成功", recordId);
     }
 
@@ -72,7 +78,9 @@ public class AssetRecordController {
     @OperationLog(value = "资产调拨", type = "UPDATE")
     @PreAuthorize("hasAuthority('asset:record:transfer')")
     public Result<Long> transferAsset(@Validated @RequestBody RecordCreateRequest request) {
+        log.info("资产调拨，入参：{}", request);
         Long recordId = recordService.transferAsset(request);
+        log.info("资产调拨完成，recordId={}", recordId);
         return Result.success("资产调拨成功", recordId);
     }
 
@@ -87,7 +95,9 @@ public class AssetRecordController {
     @OperationLog(value = "资产归还", type = "UPDATE")
     @PreAuthorize("hasAuthority('asset:record:return')")
     public Result<Long> returnAsset(@Validated @RequestBody RecordCreateRequest request) {
+        log.info("资产归还，入参：{}", request);
         Long recordId = recordService.returnAsset(request);
+        log.info("资产归还完成，recordId={}", recordId);
         return Result.success("资产归还成功", recordId);
     }
 
@@ -102,7 +112,9 @@ public class AssetRecordController {
     @OperationLog(value = "资产报废", type = "UPDATE")
     @PreAuthorize("hasAuthority('asset:record:scrap')")
     public Result<Long> scrapAsset(@Validated @RequestBody RecordCreateRequest request) {
+        log.info("资产报废，入参：{}", request);
         Long recordId = recordService.scrapAsset(request);
+        log.info("资产报废完成，recordId={}", recordId);
         return Result.success("资产报废成功", recordId);
     }
 
@@ -117,7 +129,9 @@ public class AssetRecordController {
     @OperationLog(value = "资产送修", type = "UPDATE")
     @PreAuthorize("hasAuthority('asset:record:repair')")
     public Result<Long> sendForRepair(@Validated @RequestBody RecordCreateRequest request) {
+        log.info("资产送修，入参：{}", request);
         Long recordId = recordService.sendForRepair(request);
+        log.info("资产送修完成，recordId={}", recordId);
         return Result.success("资产送修成功", recordId);
     }
 
@@ -132,7 +146,9 @@ public class AssetRecordController {
     @OperationLog(value = "维修完成", type = "UPDATE")
     @PreAuthorize("hasAuthority('asset:record:repair-complete')")
     public Result<Long> repairComplete(@Validated @RequestBody RecordCreateRequest request) {
+        log.info("维修完成，入参：{}", request);
         Long recordId = recordService.repairComplete(request);
+        log.info("维修完成记录，recordId={}", recordId);
         return Result.success("维修完成", recordId);
     }
 
@@ -146,6 +162,7 @@ public class AssetRecordController {
     @Operation(summary = "分页查询流转记录", description = "根据条件分页查询资产流转记录")
     @PreAuthorize("hasAuthority('asset:record:list')")
     public Result<Page<RecordVO>> getRecordPage(RecordPageQuery query) {
+        log.info("分页查询流转记录，query={}", query);
         Page<RecordVO> page = recordService.getRecordPage(query);
         return Result.success(page);
     }
@@ -161,6 +178,7 @@ public class AssetRecordController {
     @PreAuthorize("hasAuthority('asset:record:history')")
     public Result<List<RecordVO>> getAssetRecordHistory(
             @Parameter(description = "资产ID") @PathVariable Long assetId) {
+        log.info("查询资产流转历史，assetId={}", assetId);
         List<RecordVO> records = recordService.getAssetRecordHistory(assetId);
         return Result.success(records);
     }

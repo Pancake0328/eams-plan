@@ -11,6 +11,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
@@ -26,6 +27,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/lifecycle")
 @RequiredArgsConstructor
+@Slf4j
 public class AssetLifecycleController {
 
     private final AssetLifecycleService lifecycleService;
@@ -35,7 +37,9 @@ public class AssetLifecycleController {
     @OperationLog(module = "生命周期管理", action = "创建记录")
     @PreAuthorize("hasAuthority('lifecycle:create')")
     public Result<Long> createLifecycle(@Valid @RequestBody LifecycleCreateRequest request) {
+        log.info("创建生命周期记录，入参：{}", request);
         Long id = lifecycleService.createLifecycle(request);
+        log.info("创建生命周期记录完成，id={}", id);
         return Result.success(id);
     }
 
@@ -43,6 +47,7 @@ public class AssetLifecycleController {
     @GetMapping("/asset/{assetId}")
     @PreAuthorize("hasAuthority('lifecycle:history')")
     public Result<List<LifecycleVO>> getAssetLifecycleHistory(@PathVariable Long assetId) {
+        log.info("获取资产生命周期历史，assetId={}", assetId);
         List<LifecycleVO> history = lifecycleService.getAssetLifecycleHistory(assetId);
         return Result.success(history);
     }
@@ -51,6 +56,7 @@ public class AssetLifecycleController {
     @GetMapping("/asset/{assetId}/current")
     @PreAuthorize("hasAuthority('lifecycle:current')")
     public Result<LifecycleVO> getCurrentLifecycle(@PathVariable Long assetId) {
+        log.info("获取资产当前生命周期，assetId={}", assetId);
         LifecycleVO lifecycle = lifecycleService.getCurrentLifecycle(assetId);
         return Result.success(lifecycle);
     }
@@ -62,6 +68,7 @@ public class AssetLifecycleController {
             @RequestParam(defaultValue = "1") Integer current,
             @RequestParam(defaultValue = "10") Integer size,
             @RequestParam(required = false) Integer stage) {
+        log.info("分页查询生命周期记录，current={}，size={}，stage={}", current, size, stage);
         Page<LifecycleVO> page = lifecycleService.getLifecyclePage(current, size, stage);
         PageResult<LifecycleVO> result = PageResult.of(page.getRecords(), page.getTotal());
         return Result.success(result);
@@ -72,7 +79,9 @@ public class AssetLifecycleController {
     @OperationLog(module = "生命周期管理", action = "变更阶段")
     @PreAuthorize("hasAuthority('lifecycle:change')")
     public Result<Long> changeStage(@Valid @RequestBody LifecycleCreateRequest request) {
+        log.info("变更资产生命周期阶段，入参：{}", request);
         Long id = lifecycleService.changeStage(request);
+        log.info("变更资产生命周期阶段完成，id={}", id);
         return Result.success(id);
     }
 }

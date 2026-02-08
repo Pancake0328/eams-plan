@@ -13,6 +13,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -27,6 +28,7 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/users")
 @RequiredArgsConstructor
 @Tag(name = "用户管理", description = "用户管理相关接口")
+@Slf4j
 public class UserController {
 
     private final UserService userService;
@@ -42,7 +44,9 @@ public class UserController {
     @OperationLog(value = "创建用户", type = "CREATE")
     @PreAuthorize("hasAuthority('system:user:add')")
     public Result<Long> createUser(@Validated @RequestBody UserCreateRequest request) {
+        log.info("创建用户，username={}，departmentId={}", request.getUsername(), request.getDepartmentId());
         Long userId = userService.createUser(request);
+        log.info("创建用户完成，userId={}", userId);
         return Result.success("创建用户成功", userId);
     }
 
@@ -60,7 +64,9 @@ public class UserController {
     public Result<Void> updateUser(
             @Parameter(description = "用户ID") @PathVariable Long id,
             @Validated @RequestBody UserUpdateRequest request) {
+        log.info("更新用户，id={}，入参：{}", id, request);
         userService.updateUser(id, request);
+        log.info("更新用户完成，id={}", id);
         return Result.success();
     }
 
@@ -75,7 +81,9 @@ public class UserController {
     @OperationLog(value = "删除用户", type = "DELETE")
     @PreAuthorize("hasAuthority('system:user:delete')")
     public Result<Void> deleteUser(@Parameter(description = "用户ID") @PathVariable Long id) {
+        log.info("删除用户，id={}", id);
         userService.deleteUser(id);
+        log.info("删除用户完成，id={}", id);
         return Result.success();
     }
 
@@ -89,6 +97,7 @@ public class UserController {
     @Operation(summary = "获取用户详情", description = "根据ID获取用户详细信息")
     @PreAuthorize("hasAuthority('system:user:view')")
     public Result<UserVO> getUserById(@Parameter(description = "用户ID") @PathVariable Long id) {
+        log.info("获取用户详情，id={}", id);
         UserVO userVO = userService.getUserById(id);
         return Result.success(userVO);
     }
@@ -103,6 +112,7 @@ public class UserController {
     @Operation(summary = "分页查询用户", description = "根据条件分页查询用户列表")
     @PreAuthorize("hasAuthority('system:user:list')")
     public Result<Page<UserVO>> getUserPage(UserPageQuery query) {
+        log.info("分页查询用户，query={}", query);
         Page<UserVO> page = userService.getUserPage(query);
         return Result.success(page);
     }
@@ -121,7 +131,9 @@ public class UserController {
     public Result<Void> updateUserStatus(
             @Parameter(description = "用户ID") @PathVariable Long id,
             @Parameter(description = "状态：0-禁用，1-正常") @RequestParam Integer status) {
+        log.info("更新用户状态，id={}，status={}", id, status);
         userService.updateUserStatus(id, status);
+        log.info("更新用户状态完成，id={}，status={}", id, status);
         return Result.success();
     }
 
@@ -139,7 +151,9 @@ public class UserController {
     public Result<Void> resetPassword(
             @Parameter(description = "用户ID") @PathVariable Long id,
             @Validated @RequestBody ResetPasswordRequest request) {
+        log.info("重置用户密码，id={}", id);
         userService.resetPassword(id, request);
+        log.info("重置用户密码完成，id={}", id);
         return Result.success();
     }
 }
