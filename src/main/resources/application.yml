@@ -1,6 +1,6 @@
 # 服务器配置
 server:
-  port: 8080
+  port: 9998
   servlet:
     context-path: /api
 
@@ -80,7 +80,7 @@ jwt:
   # 密钥（生产环境应使用更强的密钥并存储在安全位置）
   secret: eams-jwt-secret-key-for-token-signature-2026-enterprise-asset-management-system
   # Token 有效期（单位：秒，默认7天）
-  expiration: 604800
+  expiration: 1800
   # Token 前缀
   token-prefix: Bearer 
   # Token 请求头名称

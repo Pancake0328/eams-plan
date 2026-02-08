@@ -11,7 +11,7 @@ npm install
 
 ## 2. 配置后端地址
 
-确保后端服务已启动（默认 http://localhost:8080）
+确保后端服务已启动（默认 http://localhost:9998）
 
 如需修改后端地址，编辑 `vite.config.ts`：
 
@@ -19,7 +19,7 @@ npm install
 server: {
   proxy: {
     '/api': {
-      target: 'http://localhost:8080',  // 修改此处
+      target: 'http://localhost:9998',  // 修改此处
       changeOrigin: true
     }
   }
@@ -44,7 +44,7 @@ npm run dev
    - 测试用户：test / 123456
 3. 登录成功后自动跳转到用户管理页面
 
-1. 访问后端 Swagger：http://localhost:8080/api/swagger-ui.html
+1. 访问后端 Swagger：http://localhost:9998/api/swagger-ui.html
 2. 使用 `/api/auth/login` 接口登录
 3. 复制返回的 `token` 值
 4. 在浏览器控制台（F12）执行：
@@ -56,7 +56,7 @@ npm run dev
 ### 方法二：使用 Postman/cURL 获取
 
 ```bash
-curl -X POST http://localhost:8080/api/auth/login \
+curl -X POST http://localhost:9998/api/auth/login \
   -H "Content-Type: application/json" \
   -d '{
     "username": "admin",

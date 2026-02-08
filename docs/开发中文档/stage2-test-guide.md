@@ -39,7 +39,7 @@ mvn spring-boot:run
 ## 测试步骤
 
 ### 1. 访问 Swagger 文档
-启动成功后访问：http://localhost:8080/api/swagger-ui.html
+启动成功后访问：http://localhost:9998/api/swagger-ui.html
 
 ### 2. 测试登录接口
 

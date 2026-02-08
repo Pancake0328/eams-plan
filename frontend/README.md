@@ -80,7 +80,7 @@ server: {
   port: 3000,
   proxy: {
     '/api': {
-      target: 'http://localhost:8080', // 后端地址
+      target: 'http://localhost:9998', // 后端地址
       changeOrigin: true
     }
   }
@@ -99,7 +99,7 @@ Authorization: Bearer <token>
 
 ## 注意事项
 
-1. 确保后端服务已启动（默认端口 8080）
+1. 确保后端服务已启动（默认端口 9998）
 2. 首次使用需要先登录获取 token
 3. 所有敏感操作都有确认提示
 4. 管理员账号受保护，不能删除或禁用

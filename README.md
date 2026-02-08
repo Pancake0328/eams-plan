@@ -103,8 +103,8 @@ npm run build
 ```
 
 ### 5. 访问入口
-- API 基础路径：`http://localhost:8080/api`
-- Swagger UI：`http://localhost:8080/api/swagger-ui.html`
+- API 基础路径：`http://localhost:9998/api`
+- Swagger UI：`http://localhost:9998/api/swagger-ui.html`
 - 登录接口：`POST /api/auth/login`
 - Token 使用说明：`docs/token-usage-guide.md`
 - 初始化账号：`admin/123456`（见 `sql/init.sql`）
