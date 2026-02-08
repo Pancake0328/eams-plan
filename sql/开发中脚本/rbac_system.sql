@@ -106,6 +106,7 @@ INSERT INTO sys_menu (id, parent_id, menu_name, menu_type, permission_code, path
 (21, 8, '编辑角色', 'BUTTON', 'system:role:edit', NULL, NULL, NULL, 2),
 (22, 8, '删除角色', 'BUTTON', 'system:role:delete', NULL, NULL, NULL, 3),
 (23, 8, '分配权限', 'BUTTON', 'system:role:permission', NULL, NULL, NULL, 4),
+(24, 8, '查看角色', 'BUTTON', 'system:role:view', NULL, NULL, NULL, 5),
 (25, 8, '更新状态', 'BUTTON', 'system:role:status', NULL, NULL, NULL, 6),
 
 -- 用户管理按钮权限

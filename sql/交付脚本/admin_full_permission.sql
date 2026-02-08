@@ -41,6 +41,7 @@ VALUES
   (21, 8, '编辑角色', 'BUTTON', 'system:role:edit', NULL, NULL, NULL, 2, 1, 1, NULL, 0),
   (22, 8, '删除角色', 'BUTTON', 'system:role:delete', NULL, NULL, NULL, 3, 1, 1, NULL, 0),
   (23, 8, '分配权限', 'BUTTON', 'system:role:permission', NULL, NULL, NULL, 4, 1, 1, NULL, 0),
+  (24, 8, '查看角色', 'BUTTON', 'system:role:view', NULL, NULL, NULL, 5, 1, 1, NULL, 0),
   (25, 8, '更新状态', 'BUTTON', 'system:role:status', NULL, NULL, NULL, 6, 1, 1, NULL, 0),
 
   (26, 9, '新增用户', 'BUTTON', 'system:user:add', NULL, NULL, NULL, 1, 1, 1, NULL, 0),

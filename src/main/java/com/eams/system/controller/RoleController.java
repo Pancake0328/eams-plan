@@ -108,7 +108,7 @@ public class RoleController {
 
     @Operation(summary = "获取所有角色列表")
     @GetMapping("/all")
-    @PreAuthorize("hasAuthority('system:role:list')")
+    @PreAuthorize("hasAnyAuthority('system:role:list', 'system:role:view')")
     public Result<List<RoleVO>> getAllRoles() {
         List<RoleVO> roles = roleService.getAllRoles();
         return Result.success(roles);

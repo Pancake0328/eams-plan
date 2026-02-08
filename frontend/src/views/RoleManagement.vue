@@ -40,7 +40,7 @@
         </el-table-column>
         <el-table-column prop="remark" label="备注" show-overflow-tooltip />
         <el-table-column prop="createTime" label="创建时间" width="180" />
-        <el-table-column label="操作" width="300" fixed="right">
+        <el-table-column label="操作" width="360" fixed="right">
           <template #default="{ row }">
             <el-button
               link
@@ -59,6 +59,15 @@
               @click="handleAssignPermission(row)"
             >
               分配权限
+            </el-button>
+            <el-button
+              link
+              type="primary"
+              :icon="View"
+              v-permission="'system:role:permission'"
+              @click="handleViewPermission(row)"
+            >
+              查看权限
             </el-button>
             <el-button
               link
@@ -137,7 +146,6 @@
           :props="{ children: 'children', label: 'menuName' }"
           node-key="id"
           show-checkbox
-          check-strictly
           default-expand-all
           :default-checked-keys="checkedMenuIds"
         />
@@ -147,13 +155,36 @@
         <el-button type="primary" @click="handleSavePermissions">确定</el-button>
       </template>
     </el-dialog>
+
+    <!-- 查看权限对话框 -->
+    <el-dialog
+      title="查看权限"
+      v-model="permissionViewDialogVisible"
+      width="600px"
+      @close="handlePermissionViewDialogClose"
+    >
+      <div v-loading="viewTreeLoading">
+        <el-tree
+          ref="viewTreeRef"
+          :data="viewMenuTree"
+          :props="{ children: 'children', label: 'menuName', disabled: 'disabled' }"
+          node-key="id"
+          show-checkbox
+          default-expand-all
+          :default-checked-keys="viewCheckedMenuIds"
+        />
+      </div>
+      <template #footer>
+        <el-button @click="permissionViewDialogVisible = false">关闭</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, reactive, computed, nextTick } from 'vue'
 import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'element-plus'
-import { Search, Refresh, Plus, Edit, Delete, Key } from '@element-plus/icons-vue'
+import { Search, Refresh, Plus, Edit, Delete, Key, View } from '@element-plus/icons-vue'
 import { roleApi, permissionApi } from '@/api/permission'
 import type { Role, RoleCreateRequest } from '@/api/permission'
 
@@ -201,6 +232,11 @@ const menuTree = ref<any[]>([])
 const checkedMenuIds = ref<number[]>([])
 const treeRef = ref()
 const treeLoading = ref(false)
+const permissionViewDialogVisible = ref(false)
+const viewMenuTree = ref<any[]>([])
+const viewCheckedMenuIds = ref<number[]>([])
+const viewTreeRef = ref()
+const viewTreeLoading = ref(false)
 
 const normalizeCheckedMenuIds = (nodes: any[], checkedIds: Set<number>) => {
   const dfs = (node: any) => {
@@ -224,6 +260,22 @@ const normalizeCheckedMenuIds = (nodes: any[], checkedIds: Set<number>) => {
   }
   nodes.forEach(node => dfs(node))
 }
+
+const loadRoleMenuData = async (roleId: number) => {
+  const [menuRes, roleMenuRes] = await Promise.all([
+    permissionApi.getAllMenuTree(),
+    roleApi.getRoleMenuIds(roleId)
+  ])
+  const checkedSet = new Set(roleMenuRes.data)
+  normalizeCheckedMenuIds(menuRes.data, checkedSet)
+  return { menuTree: menuRes.data, checkedMenuIds: Array.from(checkedSet) }
+}
+
+const buildDisabledMenuTree = (nodes: any[]) => nodes.map((node: any) => ({
+  ...node,
+  disabled: true,
+  children: node.children ? buildDisabledMenuTree(node.children) : []
+}))
 
 /**
  * 加载角色列表
@@ -354,21 +406,35 @@ const handleAssignPermission = async (row: Role) => {
   permissionDialogVisible.value = true
 
   try {
-    // 加载所有菜单树
-    const menuRes = await permissionApi.getAllMenuTree()
-    menuTree.value = menuRes.data
-
-    // 加载角色已有的菜单ID
-    const roleMenuRes = await roleApi.getRoleMenuIds(row.id)
-    const checkedSet = new Set(roleMenuRes.data)
-    normalizeCheckedMenuIds(menuTree.value, checkedSet)
-    checkedMenuIds.value = Array.from(checkedSet)
+    const data = await loadRoleMenuData(row.id)
+    menuTree.value = data.menuTree
+    checkedMenuIds.value = data.checkedMenuIds
     await nextTick()
     treeRef.value?.setCheckedKeys(checkedMenuIds.value, false)
   } catch (error) {
     ElMessage.error('加载权限数据失败')
   } finally {
     treeLoading.value = false
+  }
+}
+
+/**
+ * 查看权限
+ */
+const handleViewPermission = async (row: Role) => {
+  viewTreeLoading.value = true
+  permissionViewDialogVisible.value = true
+
+  try {
+    const data = await loadRoleMenuData(row.id)
+    viewMenuTree.value = buildDisabledMenuTree(data.menuTree)
+    viewCheckedMenuIds.value = data.checkedMenuIds
+    await nextTick()
+    viewTreeRef.value?.setCheckedKeys(viewCheckedMenuIds.value, false)
+  } catch (error) {
+    ElMessage.error('加载权限数据失败')
+  } finally {
+    viewTreeLoading.value = false
   }
 }
 
@@ -402,6 +468,15 @@ const handlePermissionDialogClose = () => {
   checkedMenuIds.value = []
   menuTree.value = []
   treeRef.value?.setCheckedKeys([], false)
+}
+
+/**
+ * 关闭查看权限对话框
+ */
+const handlePermissionViewDialogClose = () => {
+  viewCheckedMenuIds.value = []
+  viewMenuTree.value = []
+  viewTreeRef.value?.setCheckedKeys([], false)
 }
 
 // 初始化加载
