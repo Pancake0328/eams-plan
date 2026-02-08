@@ -6,7 +6,7 @@ import com.eams.system.dto.MenuUpdateRequest;
 /**
  * 菜单权限服务接口
  *
- * @author EAMS Team
+ * @author Pancake
  * @since 2026-02-08
  */
 public interface MenuService {

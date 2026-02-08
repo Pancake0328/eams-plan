@@ -19,7 +19,7 @@ import java.util.List;
 /**
  * 资产生命周期管理Controller
  *
- * @author EAMS Team
+ * @author Pancake
  * @since 2026-01-03
  */
 @Tag(name = "资产生命周期管理")

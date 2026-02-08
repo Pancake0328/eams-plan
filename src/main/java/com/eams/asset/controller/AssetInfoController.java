@@ -19,7 +19,7 @@ import org.springframework.web.bind.annotation.*;
 /**
  * 资产信息管理控制器
  *
- * @author EAMS Team
+ * @author Pancake
  * @since 2026-01-03
  */
 @RestController

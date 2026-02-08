@@ -12,7 +12,7 @@ import java.util.List;
 /**
  * 资产分类树节点 VO
  *
- * @author EAMS Team
+ * @author Pancake
  * @since 2026-01-03
  */
 @Data

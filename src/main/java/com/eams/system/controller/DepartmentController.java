@@ -19,7 +19,7 @@ import java.util.List;
 /**
  * 部门管理控制器
  *
- * @author EAMS Team
+ * @author Pancake
  * @since 2026-01-03
  */
 @Tag(name = "部门管理")

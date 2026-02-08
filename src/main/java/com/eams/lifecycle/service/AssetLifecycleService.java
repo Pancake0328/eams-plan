@@ -9,7 +9,7 @@ import java.util.List;
 /**
  * 资产生命周期服务
  *
- * @author EAMS Team
+ * @author Pancake
  * @since 2026-01-03
  */
 public interface AssetLifecycleService {

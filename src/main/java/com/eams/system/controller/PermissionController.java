@@ -15,7 +15,7 @@ import java.util.Set;
 /**
  * 权限管理控制器
  *
- * @author EAMS Team
+ * @author Pancake
  * @since 2026-01-03
  */
 @Tag(name = "权限管理")

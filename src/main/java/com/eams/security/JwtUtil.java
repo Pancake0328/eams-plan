@@ -15,7 +15,7 @@ import java.util.Map;
 /**
  * JWT 工具类
  *
- * @author EAMS Team
+ * @author Pancake
  * @since 2026-01-03
  */
 @Slf4j

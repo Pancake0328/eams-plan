@@ -7,7 +7,7 @@ import lombok.Data;
 /**
  * 更新菜单权限请求DTO
  *
- * @author EAMS Team
+ * @author Pancake
  * @since 2026-02-08
  */
 @Data

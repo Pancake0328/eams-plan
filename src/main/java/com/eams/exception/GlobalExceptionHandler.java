@@ -20,7 +20,7 @@ import java.util.stream.Collectors;
 /**
  * 全局异常处理器
  *
- * @author EAMS Team
+ * @author Pancake
  * @since 2026-01-03
  */
 @Slf4j

@@ -9,7 +9,7 @@ import java.math.BigDecimal;
 /**
  * 资产报修服务
  *
- * @author EAMS Team
+ * @author Pancake
  * @since 2026-01-03
  */
 public interface AssetRepairService {

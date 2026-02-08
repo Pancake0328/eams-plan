@@ -132,5 +132,5 @@ npm run build
 Apache License 2.0
 
 ## 联系方式
-- 项目组：EAMS Team
+- 项目组：Pancake Team
 - 邮箱：eams@enterprise.com

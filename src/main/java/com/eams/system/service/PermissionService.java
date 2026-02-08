@@ -8,7 +8,7 @@ import java.util.Set;
 /**
  * 权限服务接口
  *
- * @author EAMS Team
+ * @author Pancake
  * @since 2026-01-03
  */
 public interface PermissionService {

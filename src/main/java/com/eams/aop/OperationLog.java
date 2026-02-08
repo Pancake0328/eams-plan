@@ -6,7 +6,7 @@ import java.lang.annotation.*;
  * 操作日志注解
  * 用于标记需要记录操作日志的方法
  *
- * @author EAMS Team
+ * @author Pancake
  * @since 2026-01-03
  */
 @Target(ElementType.METHOD)

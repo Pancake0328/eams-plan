@@ -10,7 +10,7 @@ import java.io.Serializable;
 /**
  * 创建流转记录请求 DTO
  *
- * @author EAMS Team
+ * @author Pancake
  * @since 2026-01-03
  */
 @Data

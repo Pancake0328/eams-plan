@@ -19,7 +19,7 @@ import java.util.Set;
 /**
  * 角色管理控制器
  *
- * @author EAMS Team
+ * @author Pancake
  * @since 2026-01-03
  */
 @Tag(name = "角色管理")

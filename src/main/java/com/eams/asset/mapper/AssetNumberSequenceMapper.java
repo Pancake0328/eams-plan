@@ -11,7 +11,7 @@ import org.apache.ibatis.annotations.Update;
 /**
  * 资产编号序列 Mapper 接口
  *
- * @author EAMS Team
+ * @author Pancake
  * @since 2026-01-03
  */
 @Mapper

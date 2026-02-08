@@ -26,7 +26,7 @@ import java.util.stream.Collectors;
 /**
  * 仪表盘数据服务实现
  *
- * @author EAMS Team
+ * @author Pancake
  * @since 2026-01-03
  */
 @Service

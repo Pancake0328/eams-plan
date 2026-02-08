@@ -17,7 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 /**
  * 认证控制器
  *
- * @author EAMS Team
+ * @author Pancake
  * @since 2026-01-03
  */
 @RestController

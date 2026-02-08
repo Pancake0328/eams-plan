@@ -29,7 +29,7 @@ import java.util.stream.Collectors;
 /**
  * 资产信息服务实现类
  *
- * @author EAMS Team
+ * @author Pancake
  * @since 2026-01-03
  */
 @Slf4j

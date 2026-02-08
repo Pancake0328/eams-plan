@@ -14,7 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 /**
  * 菜单权限服务实现
  *
- * @author EAMS Team
+ * @author Pancake
  * @since 2026-02-08
  */
 @Service

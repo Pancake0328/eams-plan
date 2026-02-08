@@ -10,7 +10,7 @@ import java.util.List;
 /**
  * 资产流转记录服务接口
  *
- * @author EAMS Team
+ * @author Pancake
  * @since 2026-01-03
  */
 public interface AssetRecordService {

@@ -3,7 +3,7 @@ package com.eams.common.exception;
 /**
  * 业务异常类
  *
- * @author EAMS Team
+ * @author Pancake
  * @since 2026-01-03
  */
 public class BusinessException extends RuntimeException {

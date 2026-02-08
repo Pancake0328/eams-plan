@@ -9,7 +9,7 @@ import java.io.Serializable;
  * 统一返回结果封装类
  *
  * @param <T> 数据类型
- * @author EAMS Team
+ * @author Pancake
  * @since 2026-01-03
  */
 @Data

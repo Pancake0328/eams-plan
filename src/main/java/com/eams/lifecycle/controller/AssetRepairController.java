@@ -19,7 +19,7 @@ import java.math.BigDecimal;
 /**
  * 资产报修管理Controller
  *
- * @author EAMS Team
+ * @author Pancake
  * @since 2026-01-03
  */
 @Tag(name = "资产报修管理")

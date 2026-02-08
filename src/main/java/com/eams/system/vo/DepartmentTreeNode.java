@@ -8,7 +8,7 @@ import java.util.List;
 /**
  * 部门树节点VO
  *
- * @author EAMS Team
+ * @author Pancake
  * @since 2026-01-03
  */
 @Data

@@ -4,7 +4,7 @@ package com.eams.security;
  * 安全上下文持有者
  * 用于在当前线程中存储和获取用户信息
  *
- * @author EAMS Team
+ * @author Pancake
  * @since 2026-01-03
  */
 public class SecurityContextHolder {

@@ -7,7 +7,7 @@ import lombok.Data;
 /**
  * 创建部门请求DTO
  *
- * @author EAMS Team
+ * @author Pancake
  * @since 2026-01-03
  */
 @Data

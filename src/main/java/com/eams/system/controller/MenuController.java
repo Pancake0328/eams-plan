@@ -18,7 +18,7 @@ import java.util.List;
 /**
  * 菜单权限管理控制器
  *
- * @author EAMS Team
+ * @author Pancake
  * @since 2026-02-08
  */
 @Tag(name = "菜单权限管理")

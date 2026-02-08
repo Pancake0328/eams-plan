@@ -22,7 +22,7 @@ import java.util.stream.Collectors;
 /**
  * 部门服务实现
  *
- * @author EAMS Team
+ * @author Pancake
  * @since 2026-01-03
  */
 @Service

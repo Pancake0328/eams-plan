@@ -9,7 +9,7 @@ import org.apache.ibatis.annotations.Select;
 /**
  * 资产信息 Mapper 接口
  *
- * @author EAMS Team
+ * @author Pancake
  * @since 2026-01-03
  */
 @Mapper

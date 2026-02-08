@@ -21,7 +21,7 @@ import org.springframework.stereotype.Service;
 /**
  * 认证服务实现类
  *
- * @author EAMS Team
+ * @author Pancake
  * @since 2026-01-03
  */
 @Slf4j

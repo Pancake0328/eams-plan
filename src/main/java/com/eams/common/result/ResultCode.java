@@ -5,7 +5,7 @@ import lombok.Getter;
 /**
  * 响应状态码枚举
  *
- * @author EAMS Team
+ * @author Pancake
  * @since 2026-01-03
  */
 @Getter

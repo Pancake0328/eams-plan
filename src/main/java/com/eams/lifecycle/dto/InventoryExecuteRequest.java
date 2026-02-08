@@ -6,7 +6,7 @@ import lombok.Data;
 /**
  * 盘点执行请求
  *
- * @author EAMS Team
+ * @author Pancake
  * @since 2026-01-03
  */
 @Data

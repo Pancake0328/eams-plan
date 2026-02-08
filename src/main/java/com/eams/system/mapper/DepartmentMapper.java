@@ -8,7 +8,7 @@ import org.apache.ibatis.annotations.Mapper;
 /**
  * 部门Mapper
  *
- * @author EAMS Team
+ * @author Pancake
  * @since 2026-01-03
  */
 @Mapper

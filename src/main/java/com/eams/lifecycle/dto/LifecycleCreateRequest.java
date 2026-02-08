@@ -9,7 +9,7 @@ import java.time.LocalDate;
 /**
  * 生命周期记录创建请求
  *
- * @author EAMS Team
+ * @author Pancake
  * @since 2026-01-03
  */
 @Data

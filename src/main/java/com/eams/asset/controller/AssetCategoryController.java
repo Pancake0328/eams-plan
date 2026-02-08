@@ -20,7 +20,7 @@ import java.util.List;
 /**
  * 资产分类管理控制器
  *
- * @author EAMS Team
+ * @author Pancake
  * @since 2026-01-03
  */
 @RestController

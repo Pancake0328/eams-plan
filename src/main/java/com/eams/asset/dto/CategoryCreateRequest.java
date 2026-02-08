@@ -11,7 +11,7 @@ import java.io.Serializable;
 /**
  * 创建资产分类请求 DTO
  *
- * @author EAMS Team
+ * @author Pancake
  * @since 2026-01-03
  */
 @Data

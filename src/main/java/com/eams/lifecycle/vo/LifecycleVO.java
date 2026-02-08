@@ -8,7 +8,7 @@ import java.time.LocalDateTime;
 /**
  * 生命周期记录VO
  *
- * @author EAMS Team
+ * @author Pancake
  * @since 2026-01-03
  */
 @Data

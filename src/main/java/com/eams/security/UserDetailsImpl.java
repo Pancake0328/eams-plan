@@ -10,7 +10,7 @@ import java.util.Collection;
 /**
  * Spring Security 用户详情实现
  *
- * @author EAMS Team
+ * @author Pancake
  * @since 2026-01-03
  */
 @Getter

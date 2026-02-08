@@ -19,7 +19,7 @@ import org.springframework.web.bind.annotation.*;
 /**
  * 资产盘点管理Controller
  *
- * @author EAMS Team
+ * @author Pancake
  * @since 2026-01-03
  */
 @Tag(name = "资产盘点管理")

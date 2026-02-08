@@ -9,7 +9,7 @@ import com.eams.lifecycle.vo.InventoryVO;
 /**
  * 资产盘点服务
  *
- * @author EAMS Team
+ * @author Pancake
  * @since 2026-01-03
  */
 public interface AssetInventoryService {

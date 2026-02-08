@@ -21,7 +21,7 @@ import java.io.IOException;
  * JWT 认证过滤器
  * 从请求头中提取 Token 并进行认证
  *
- * @author EAMS Team
+ * @author Pancake
  * @since 2026-01-03
  */
 @Slf4j

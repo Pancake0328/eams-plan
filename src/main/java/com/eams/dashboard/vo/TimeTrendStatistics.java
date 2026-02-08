@@ -7,7 +7,7 @@ import lombok.NoArgsConstructor;
 /**
  * 时间趋势统计VO
  *
- * @author EAMS Team
+ * @author Pancake
  * @since 2026-01-03
  */
 @Data

@@ -7,7 +7,7 @@ import org.springframework.stereotype.Component;
 /**
  * 权限校验辅助类
  *
- * @author EAMS Team
+ * @author Pancake
  * @since 2026-01-03
  */
 @Component("permissionChecker")

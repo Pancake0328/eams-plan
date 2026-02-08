@@ -18,7 +18,7 @@ import java.util.stream.Collectors;
 /**
  * 用户详情服务实现
  *
- * @author EAMS Team
+ * @author Pancake
  * @since 2026-01-03
  */
 @Service

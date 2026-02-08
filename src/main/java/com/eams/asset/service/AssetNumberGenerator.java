@@ -16,7 +16,7 @@ import java.time.format.DateTimeFormatter;
 /**
  * 资产编号生成器
  *
- * @author EAMS Team
+ * @author Pancake
  * @since 2026-01-08
  */
 @Component

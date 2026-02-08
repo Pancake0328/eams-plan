@@ -9,7 +9,7 @@ import java.io.Serializable;
 /**
  * 登录请求 DTO
  *
- * @author EAMS Team
+ * @author Pancake
  * @since 2026-01-03
  */
 @Data

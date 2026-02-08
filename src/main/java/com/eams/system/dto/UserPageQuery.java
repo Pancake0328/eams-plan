@@ -8,7 +8,7 @@ import java.io.Serializable;
 /**
  * 用户分页查询条件 DTO
  *
- * @author EAMS Team
+ * @author Pancake
  * @since 2026-01-03
  */
 @Data

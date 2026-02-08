@@ -9,7 +9,7 @@ import java.time.LocalDateTime;
 /**
  * 系统角色实体
  *
- * @author EAMS Team
+ * @author Pancake
  * @since 2026-01-03
  */
 @Data

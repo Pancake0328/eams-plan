@@ -13,7 +13,7 @@ import org.springframework.context.annotation.Configuration;
 /**
  * Swagger 3 (OpenAPI 3) 配置类
  *
- * @author EAMS Team
+ * @author Pancake
  * @since 2026-01-03
  */
 @Configuration
@@ -33,7 +33,7 @@ public class SwaggerConfig {
                         .description("提供企业资产全生命周期管理的 RESTful API 接口")
                         .version("v1.0.0")
                         .contact(new Contact()
-                                .name("EAMS Team")
+                                .name("Pancake Team")
                                 .email("eams@enterprise.com"))
                         .license(new License()
                                 .name("Apache 2.0")

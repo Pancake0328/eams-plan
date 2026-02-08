@@ -16,7 +16,7 @@ import java.io.IOException;
  * 认证入口点
  * 处理未认证的请求
  *
- * @author EAMS Team
+ * @author Pancake
  * @since 2026-01-03
  */
 @Slf4j

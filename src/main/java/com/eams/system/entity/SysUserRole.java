@@ -11,7 +11,7 @@ import java.time.LocalDateTime;
 /**
  * 用户角色关联实体
  *
- * @author EAMS Team
+ * @author Pancake
  * @since 2026-01-03
  */
 @Data

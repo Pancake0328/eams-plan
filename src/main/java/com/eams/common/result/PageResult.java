@@ -7,7 +7,7 @@ import java.util.List;
 /**
  * 分页结果封装
  *
- * @author EAMS Team
+ * @author Pancake
  * @since 2026-01-03
  */
 @Data

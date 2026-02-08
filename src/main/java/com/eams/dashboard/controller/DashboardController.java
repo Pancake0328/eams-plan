@@ -18,7 +18,7 @@ import java.util.List;
 /**
  * 仪表盘控制器
  *
- * @author EAMS Team
+ * @author Pancake
  * @since 2026-01-03
  */
 @Tag(name = "仪表盘管理")

@@ -16,7 +16,7 @@ import java.io.IOException;
  * 访问拒绝处理器
  * 处理权限不足的请求
  *
- * @author EAMS Team
+ * @author Pancake
  * @since 2026-01-03
  */
 @Slf4j

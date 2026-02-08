@@ -9,7 +9,7 @@ import com.eams.asset.vo.AssetVO;
 /**
  * 资产信息服务接口
  *
- * @author EAMS Team
+ * @author Pancake
  * @since 2026-01-03
  */
 public interface AssetInfoService {

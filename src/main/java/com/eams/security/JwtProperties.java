@@ -7,7 +7,7 @@ import org.springframework.stereotype.Component;
 /**
  * JWT 配置属性类
  *
- * @author EAMS Team
+ * @author Pancake
  * @since 2026-01-03
  */
 @Data

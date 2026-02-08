@@ -21,7 +21,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 /**
  * Spring Security 配置类
  *
- * @author EAMS Team
+ * @author Pancake
  * @since 2026-01-03
  */
 @Configuration

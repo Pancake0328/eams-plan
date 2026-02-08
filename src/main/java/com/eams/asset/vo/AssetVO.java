@@ -15,7 +15,7 @@ import java.time.LocalDateTime;
 /**
  * 资产信息视图对象 VO
  *
- * @author EAMS Team
+ * @author Pancake
  * @since 2026-01-03
  */
 @Data

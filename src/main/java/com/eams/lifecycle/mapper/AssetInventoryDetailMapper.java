@@ -11,7 +11,7 @@ import java.util.List;
 /**
  * 资产盘点明细Mapper
  *
- * @author EAMS Team
+ * @author Pancake
  * @since 2026-01-03
  */
 @Mapper

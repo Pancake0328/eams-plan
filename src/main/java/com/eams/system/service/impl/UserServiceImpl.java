@@ -24,7 +24,7 @@ import org.springframework.util.StringUtils;
 /**
  * 用户服务实现类
  *
- * @author EAMS Team
+ * @author Pancake
  * @since 2026-01-03
  */
 @Slf4j

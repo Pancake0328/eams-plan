@@ -11,7 +11,7 @@ import java.io.Serializable;
 /**
  * 登录响应 VO
  *
- * @author EAMS Team
+ * @author Pancake
  * @since 2026-01-03
  */
 @Data

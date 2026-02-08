@@ -3,7 +3,7 @@ package com.eams.common.constant;
 /**
  * 通用常量
  *
- * @author EAMS Team
+ * @author Pancake
  * @since 2026-01-03
  */
 public interface CommonConstant {

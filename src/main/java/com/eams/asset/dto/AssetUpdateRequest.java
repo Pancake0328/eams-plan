@@ -13,7 +13,7 @@ import java.time.LocalDate;
 /**
  * 更新资产请求 DTO
  *
- * @author EAMS Team
+ * @author Pancake
  * @since 2026-01-03
  */
 @Data

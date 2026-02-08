@@ -7,7 +7,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 /**
  * EAMS 系统主启动类
  *
- * @author EAMS Team
+ * @author Pancake
  * @since 2026-01-03
  */
 @SpringBootApplication

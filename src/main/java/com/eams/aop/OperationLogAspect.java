@@ -19,7 +19,7 @@ import java.lang.reflect.Method;
  * 操作日志切面
  * 用于记录标记了 @OperationLog 注解的方法的操作日志
  *
- * @author EAMS Team
+ * @author Pancake
  * @since 2026-01-03
  */
 @Slf4j

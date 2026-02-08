@@ -7,7 +7,7 @@ import java.math.BigDecimal;
 /**
  * 仪表盘统计数据VO
  *
- * @author EAMS Team
+ * @author Pancake
  * @since 2026-01-03
  */
 @Data

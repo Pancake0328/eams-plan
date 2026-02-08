@@ -10,7 +10,7 @@ import java.io.Serializable;
 /**
  * 更新资产分类请求 DTO
  *
- * @author EAMS Team
+ * @author Pancake
  * @since 2026-01-03
  */
 @Data

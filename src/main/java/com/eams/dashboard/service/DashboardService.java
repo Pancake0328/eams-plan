@@ -10,7 +10,7 @@ import java.util.List;
 /**
  * 仪表盘数据服务
  *
- * @author EAMS Team
+ * @author Pancake
  * @since 2026-01-03
  */
 public interface DashboardService {
