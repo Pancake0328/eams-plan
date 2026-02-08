@@ -86,7 +86,7 @@ INSERT INTO sys_menu (id, parent_id, menu_name, menu_type, permission_code, path
 
 -- 系统管理子菜单
 (8, 2, '角色管理', 'MENU', 'system:role:list', '/role', 'RoleManagement', 'UserFilled', 1),
-(11, 2, '权限管理', 'MENU', 'system:permission:list', '/permissions', 'PermissionManagement', 'Key', 2),
+(11, 2, '菜单管理', 'MENU', 'system:permission:list', '/permissions', 'PermissionManagement', 'Key', 2),
 
 -- 人员管理子菜单
 (9, 5, '用户管理', 'MENU', 'system:user:list', '/', 'UserManagement', 'User', 1),

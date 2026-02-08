@@ -25,7 +25,7 @@ VALUES
   (6, 0, '生命周期与盘点', 'DIR', NULL, '/lifecycle', NULL, 'Refresh', 6, 1, 1, NULL, 0),
 
   (8, 2, '角色管理', 'MENU', 'system:role:list', '/role', 'RoleManagement', 'UserFilled', 1, 1, 1, NULL, 0),
-  (11, 2, '权限管理', 'MENU', 'system:permission:list', '/permissions', 'PermissionManagement', 'Key', 2, 1, 1, NULL, 0),
+  (11, 2, '菜单管理', 'MENU', 'system:permission:list', '/permissions', 'PermissionManagement', 'Key', 2, 1, 1, NULL, 0),
 
   (9, 5, '用户管理', 'MENU', 'system:user:list', '/', 'UserManagement', 'User', 1, 1, 1, NULL, 0),
   (10, 5, '部门管理', 'MENU', 'system:department:list', '/departments', 'DepartmentManagement', 'OfficeBuilding', 2, 1, 1, NULL, 0),

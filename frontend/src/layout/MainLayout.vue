@@ -38,7 +38,7 @@
           </el-menu-item>
           <el-menu-item index="/permissions" v-permission="'system:permission:list'">
             <el-icon><Key /></el-icon>
-            <span>权限管理</span>
+            <span>菜单管理</span>
           </el-menu-item>
         </el-sub-menu>
         <el-sub-menu index="3" v-if="hasAnyPermission('asset:info:list','asset:category:list','asset:record:list')">
@@ -195,7 +195,7 @@ const breadcrumb = computed(() => {
     '/records': '流转记录',
     '/departments': '部门管理',
     '/roles': '角色管理',
-    '/permissions': '权限管理',
+    '/permissions': '菜单管理',
     '/asset-categories': '资产分类',
     '/role': '角色管理'
   }

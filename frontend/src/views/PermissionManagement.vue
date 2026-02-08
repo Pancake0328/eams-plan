@@ -1,14 +1,14 @@
 <template>
-  <div class="permission-management-page">
+  <div class="menu-management-page">
     <div class="page-header">
-      <h2>权限管理</h2>
-      <p>维护系统菜单与按钮权限</p>
+      <h2>菜单管理</h2>
+      <p>维护系统菜单与按钮权限结构</p>
     </div>
 
     <el-card class="tree-card" shadow="never">
       <div class="toolbar">
         <el-button type="primary" :icon="Plus" v-permission="'system:permission:add'" @click="handleAddRoot">
-          新增顶级权限
+          新增顶级菜单
         </el-button>
         <el-button :icon="Refresh" @click="loadMenuTree">刷新</el-button>
       </div>
@@ -60,9 +60,10 @@
               link
               :icon="Plus"
               v-permission="'system:permission:add'"
+              v-if="row.menuType !== 'BUTTON'"
               @click="handleAddChild(row)"
             >
-              新增子权限
+              {{ row.menuType === 'MENU' ? '新增按钮' : '新增子菜单' }}
             </el-button>
             <el-button
               type="primary"
@@ -96,13 +97,19 @@
       @close="handleDialogClose"
     >
       <el-form ref="formRef" :model="menuForm" :rules="formRules" label-width="100px">
-        <el-form-item label="上级权限">
-          <el-input :value="parentMenuName" disabled />
+        <el-form-item label="上级菜单" prop="parentId">
+          <el-tree-select
+            v-model="menuForm.parentId"
+            :data="parentTreeOptions"
+            :props="parentTreeProps"
+            check-strictly
+            default-expand-all
+          />
         </el-form-item>
-        <el-form-item label="权限名称" prop="menuName">
-          <el-input v-model="menuForm.menuName" placeholder="请输入权限名称" />
+        <el-form-item label="菜单名称" prop="menuName">
+          <el-input v-model="menuForm.menuName" placeholder="请输入菜单名称" />
         </el-form-item>
-        <el-form-item label="权限类型" prop="menuType">
+        <el-form-item label="菜单类型" prop="menuType">
           <el-select v-model="menuForm.menuType" placeholder="请选择类型">
             <el-option label="目录" value="DIR" />
             <el-option label="菜单" value="MENU" />
@@ -166,8 +173,7 @@ const dialogVisible = ref(false)
 const isEdit = ref(false)
 const submitLoading = ref(false)
 const formRef = ref<FormInstance>()
-const parentMenu = ref<Menu | null>(null)
-const dialogTitle = computed(() => (isEdit.value ? '编辑权限' : '新增权限'))
+const dialogTitle = computed(() => (isEdit.value ? '编辑菜单' : '新增菜单'))
 
 const menuForm = reactive<MenuCreateRequest & { id?: number }>({
   parentId: 0,
@@ -180,13 +186,6 @@ const menuForm = reactive<MenuCreateRequest & { id?: number }>({
   sortOrder: 0,
   status: 1,
   visible: 1
-})
-
-const parentMenuName = computed(() => {
-  if (menuForm.parentId === 0) {
-    return '顶级权限'
-  }
-  return parentMenu.value?.menuName || '未知权限'
 })
 
 const showPath = computed(() => menuForm.menuType !== 'BUTTON')
@@ -206,8 +205,20 @@ const validatePermissionCode = (_rule: any, value: string, callback: (error?: Er
 }
 
 const formRules: FormRules = {
-  menuName: [{ required: true, message: '请输入权限名称', trigger: 'blur' }],
-  menuType: [{ required: true, message: '请选择权限类型', trigger: 'change' }],
+  parentId: [
+    {
+      validator: (_rule, value, callback) => {
+        if (menuForm.menuType === 'BUTTON' && value === 0) {
+          callback(new Error('按钮必须选择上级菜单'))
+          return
+        }
+        callback()
+      },
+      trigger: 'change'
+    }
+  ],
+  menuName: [{ required: true, message: '请输入菜单名称', trigger: 'blur' }],
+  menuType: [{ required: true, message: '请选择菜单类型', trigger: 'change' }],
   permissionCode: [{ validator: validatePermissionCode, trigger: 'blur' }]
 }
 
@@ -254,7 +265,56 @@ const resetForm = () => {
   menuForm.status = 1
   menuForm.visible = 1
   menuForm.id = undefined
-  parentMenu.value = null
+}
+
+const collectDescendantIds = (node: Menu, ids: Set<number>) => {
+  if (!node.children || node.children.length === 0) {
+    return
+  }
+  node.children.forEach(child => {
+    ids.add(child.id)
+    collectDescendantIds(child, ids)
+  })
+}
+
+const buildParentTree = (nodes: Menu[], disabledIds: Set<number>) => {
+  return nodes.map(node => {
+    const disabledByType = node.menuType === 'BUTTON'
+      || (menuForm.menuType === 'BUTTON' && node.menuType !== 'MENU')
+    return {
+      ...node,
+      disabled: disabledIds.has(node.id) || disabledByType,
+      children: node.children ? buildParentTree(node.children, disabledIds) : []
+    }
+  })
+}
+
+const parentTreeOptions = computed(() => {
+  const disabledIds = new Set<number>()
+  if (menuForm.id) {
+    const current = findMenuById(menuTree.value, menuForm.id)
+    if (current) {
+      disabledIds.add(current.id)
+      collectDescendantIds(current, disabledIds)
+    }
+  }
+  const children = buildParentTree(menuTree.value, disabledIds)
+  return [
+    {
+      id: 0,
+      menuName: '顶级菜单',
+      menuType: 'DIR',
+      disabled: menuForm.menuType === 'BUTTON',
+      children
+    }
+  ]
+})
+
+const parentTreeProps = {
+  label: 'menuName',
+  value: 'id',
+  children: 'children',
+  disabled: 'disabled'
 }
 
 const findMenuById = (nodes: Menu[], id: number): Menu | null => {
@@ -278,7 +338,7 @@ const loadMenuTree = async () => {
     const res = await menuApi.getMenuTree()
     menuTree.value = res.data
   } catch (error) {
-    ElMessage.error('加载权限树失败')
+    ElMessage.error('加载菜单树失败')
   } finally {
     loading.value = false
   }
@@ -295,7 +355,6 @@ const handleAddChild = (row: Menu) => {
   resetForm()
   menuForm.parentId = row.id
   menuForm.menuType = row.menuType === 'MENU' ? 'BUTTON' : 'MENU'
-  parentMenu.value = row
   dialogVisible.value = true
 }
 
@@ -312,13 +371,12 @@ const handleEdit = (row: Menu) => {
   menuForm.status = row.status ?? 1
   menuForm.visible = row.visible ?? 1
   menuForm.id = row.id
-  parentMenu.value = row.parentId ? findMenuById(menuTree.value, row.parentId) : null
   dialogVisible.value = true
 }
 
 const handleDelete = async (row: Menu) => {
   try {
-    await ElMessageBox.confirm(`确定删除权限"${row.menuName}"吗？`, '提示', { type: 'warning' })
+    await ElMessageBox.confirm(`确定删除菜单"${row.menuName}"吗？`, '提示', { type: 'warning' })
     await menuApi.deleteMenu(row.id)
     ElMessage.success('删除成功')
     loadMenuTree()
@@ -363,7 +421,7 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.permission-management-page {
+.menu-management-page {
   padding: 20px;
 }
 

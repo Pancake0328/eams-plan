@@ -115,7 +115,7 @@ const routes: RouteRecordRaw[] = [
                 path: '/permissions',
                 name: 'PermissionManagement',
                 component: () => import('@/views/PermissionManagement.vue'),
-                meta: { requiresAuth: true, title: '权限管理', permission: 'system:permission:list' }
+                meta: { requiresAuth: true, title: '菜单管理', permission: 'system:permission:list' }
             },
             {
                 path: '/no-access',
