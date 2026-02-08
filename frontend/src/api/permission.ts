@@ -41,6 +41,21 @@ export interface Menu {
     children?: Menu[]
 }
 
+export interface MenuCreateRequest {
+    parentId: number
+    menuName: string
+    menuType: 'DIR' | 'MENU' | 'BUTTON'
+    permissionCode?: string
+    path?: string
+    component?: string
+    icon?: string
+    sortOrder?: number
+    status?: number
+    visible?: number
+}
+
+export interface MenuUpdateRequest extends MenuCreateRequest {}
+
 /**
  * 角色管理API
  */
@@ -158,5 +173,38 @@ export const permissionApi = {
      */
     getUserRoleIds(userId: number): Promise<Result<number[]>> {
         return request.get(`/permission/user/${userId}/role-ids`)
+    }
+}
+
+/**
+ * 菜单权限管理API
+ */
+export const menuApi = {
+    /**
+     * 获取菜单权限树
+     */
+    getMenuTree(): Promise<Result<Menu[]>> {
+        return request.get('/menus/tree')
+    },
+
+    /**
+     * 创建菜单权限
+     */
+    createMenu(data: MenuCreateRequest): Promise<Result<number>> {
+        return request.post('/menus', data)
+    },
+
+    /**
+     * 更新菜单权限
+     */
+    updateMenu(id: number, data: MenuUpdateRequest): Promise<Result<void>> {
+        return request.put(`/menus/${id}`, data)
+    },
+
+    /**
+     * 删除菜单权限
+     */
+    deleteMenu(id: number): Promise<Result<void>> {
+        return request.delete(`/menus/${id}`)
     }
 }

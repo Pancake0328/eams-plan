@@ -25,6 +25,7 @@ VALUES
   (6, 0, '生命周期与盘点', 'DIR', NULL, '/lifecycle', NULL, 'Refresh', 6, 1, 1, NULL, 0),
 
   (8, 2, '角色管理', 'MENU', 'system:role:list', '/role', 'RoleManagement', 'UserFilled', 1, 1, 1, NULL, 0),
+  (11, 2, '权限管理', 'MENU', 'system:permission:list', '/permissions', 'PermissionManagement', 'Key', 2, 1, 1, NULL, 0),
 
   (9, 5, '用户管理', 'MENU', 'system:user:list', '/', 'UserManagement', 'User', 1, 1, 1, NULL, 0),
   (10, 5, '部门管理', 'MENU', 'system:department:list', '/departments', 'DepartmentManagement', 'OfficeBuilding', 2, 1, 1, NULL, 0),
@@ -43,6 +44,10 @@ VALUES
   (23, 8, '分配权限', 'BUTTON', 'system:role:permission', NULL, NULL, NULL, 4, 1, 1, NULL, 0),
   (24, 8, '查看角色', 'BUTTON', 'system:role:view', NULL, NULL, NULL, 5, 1, 1, NULL, 0),
   (25, 8, '更新状态', 'BUTTON', 'system:role:status', NULL, NULL, NULL, 6, 1, 1, NULL, 0),
+
+  (37, 11, '新增权限', 'BUTTON', 'system:permission:add', NULL, NULL, NULL, 1, 1, 1, NULL, 0),
+  (38, 11, '编辑权限', 'BUTTON', 'system:permission:edit', NULL, NULL, NULL, 2, 1, 1, NULL, 0),
+  (39, 11, '删除权限', 'BUTTON', 'system:permission:delete', NULL, NULL, NULL, 3, 1, 1, NULL, 0),
 
   (26, 9, '新增用户', 'BUTTON', 'system:user:add', NULL, NULL, NULL, 1, 1, 1, NULL, 0),
   (27, 9, '编辑用户', 'BUTTON', 'system:user:edit', NULL, NULL, NULL, 2, 1, 1, NULL, 0),

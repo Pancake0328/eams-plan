@@ -86,6 +86,7 @@ INSERT INTO sys_menu (id, parent_id, menu_name, menu_type, permission_code, path
 
 -- 系统管理子菜单
 (8, 2, '角色管理', 'MENU', 'system:role:list', '/role', 'RoleManagement', 'UserFilled', 1),
+(11, 2, '权限管理', 'MENU', 'system:permission:list', '/permissions', 'PermissionManagement', 'Key', 2),
 
 -- 人员管理子菜单
 (9, 5, '用户管理', 'MENU', 'system:user:list', '/', 'UserManagement', 'User', 1),
@@ -108,6 +109,11 @@ INSERT INTO sys_menu (id, parent_id, menu_name, menu_type, permission_code, path
 (23, 8, '分配权限', 'BUTTON', 'system:role:permission', NULL, NULL, NULL, 4),
 (24, 8, '查看角色', 'BUTTON', 'system:role:view', NULL, NULL, NULL, 5),
 (25, 8, '更新状态', 'BUTTON', 'system:role:status', NULL, NULL, NULL, 6),
+
+-- 权限管理按钮权限
+(37, 11, '新增权限', 'BUTTON', 'system:permission:add', NULL, NULL, NULL, 1),
+(38, 11, '编辑权限', 'BUTTON', 'system:permission:edit', NULL, NULL, NULL, 2),
+(39, 11, '删除权限', 'BUTTON', 'system:permission:delete', NULL, NULL, NULL, 3),
 
 -- 用户管理按钮权限
 (26, 9, '新增用户', 'BUTTON', 'system:user:add', NULL, NULL, NULL, 1),

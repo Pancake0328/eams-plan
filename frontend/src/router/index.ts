@@ -112,6 +112,12 @@ const routes: RouteRecordRaw[] = [
                 meta: { requiresAuth: true, title: '角色管理', permission: 'system:role:list' }
             },
             {
+                path: '/permissions',
+                name: 'PermissionManagement',
+                component: () => import('@/views/PermissionManagement.vue'),
+                meta: { requiresAuth: true, title: '权限管理', permission: 'system:permission:list' }
+            },
+            {
                 path: '/no-access',
                 name: 'NoAccess',
                 component: () => import('@/views/NoAccess.vue'),
@@ -140,7 +146,8 @@ const homeRouteOrder = [
     '/lifecycle',
     '/inventory',
     '/repair',
-    '/role'
+    '/role',
+    '/permissions'
 ]
 
 const resolveFirstAccessiblePath = (permissionStore: ReturnType<typeof usePermissionStore>) => {

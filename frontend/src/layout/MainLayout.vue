@@ -27,7 +27,7 @@
 <!--          <el-menu-item index="/roles">角色管理</el-menu-item>-->
 <!--          <el-menu-item index="/permissions">权限管理</el-menu-item>-->
 <!--        </el-sub-menu>-->
-        <el-sub-menu index="system" v-if="hasAnyPermission('system:role:list')">
+        <el-sub-menu index="system" v-if="hasAnyPermission('system:role:list','system:permission:list')">
           <template #title>
             <el-icon><Setting /></el-icon>
             <span>系统管理</span>
@@ -35,6 +35,10 @@
           <el-menu-item index="/role" v-permission="'system:role:list'">
             <el-icon><UserFilled /></el-icon>
             <span>角色管理</span>
+          </el-menu-item>
+          <el-menu-item index="/permissions" v-permission="'system:permission:list'">
+            <el-icon><Key /></el-icon>
+            <span>权限管理</span>
           </el-menu-item>
         </el-sub-menu>
         <el-sub-menu index="3" v-if="hasAnyPermission('asset:info:list','asset:category:list','asset:record:list')">
@@ -152,7 +156,8 @@ import {
   Fold,
   ArrowDown,
   SwitchButton,
-  DataLine
+  DataLine,
+  Key
 } from '@element-plus/icons-vue'
 import { useUserStore } from '@/stores/user'
 import { usePermissionStore } from '@/stores/permission'
