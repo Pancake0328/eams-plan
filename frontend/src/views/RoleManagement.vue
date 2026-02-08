@@ -186,6 +186,8 @@ import { ref, reactive, computed, nextTick } from 'vue'
 import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'element-plus'
 import { Search, Refresh, Plus, Edit, Delete, Key, View } from '@element-plus/icons-vue'
 import { roleApi, permissionApi } from '@/api/permission'
+import { usePermissionStore } from '@/stores/permission'
+import { useUserStore } from '@/stores/user'
 import type { Role, RoleCreateRequest } from '@/api/permission'
 
 // 搜索表单
@@ -237,6 +239,15 @@ const viewMenuTree = ref<any[]>([])
 const viewCheckedMenuIds = ref<number[]>([])
 const viewTreeRef = ref()
 const viewTreeLoading = ref(false)
+
+const permissionStore = usePermissionStore()
+const userStore = useUserStore()
+
+const refreshCurrentUserPermissions = async () => {
+  if (userStore.userInfo?.id) {
+    await permissionStore.initializePermissions(userStore.userInfo.id)
+  }
+}
 
 const normalizeCheckedMenuIds = (nodes: any[], checkedIds: Set<number>) => {
   const dfs = (node: any) => {
@@ -456,6 +467,7 @@ const handleSavePermissions = async () => {
     })
     ElMessage.success('权限分配成功')
     permissionDialogVisible.value = false
+    await refreshCurrentUserPermissions()
   } catch (error) {
     ElMessage.error('权限分配失败')
   }

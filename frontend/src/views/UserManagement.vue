@@ -270,6 +270,7 @@ import { userApi } from '@/api/user'
 import { roleApi, permissionApi } from '@/api/permission'
 import { departmentApi } from '@/api/department'
 import { usePermissionStore } from '@/stores/permission'
+import { useUserStore } from '@/stores/user'
 import type { User, UserCreateRequest, UserUpdateRequest, UserPageQuery } from '@/types'
 import type { Role } from '@/api/permission'
 
@@ -288,6 +289,7 @@ const pagination = reactive({
 })
 
 const permissionStore = usePermissionStore()
+const userStore = useUserStore()
 const canLoadDepartment = computed(() => permissionStore.hasPermission('system:department:list'))
 
 // 表格数据
@@ -571,6 +573,9 @@ const handleSaveRoles = async () => {
     await permissionApi.assignRolesToUser(currentRoleUserId.value, selectedRoleIds.value)
     ElMessage.success('角色分配成功')
     roleDialogVisible.value = false
+    if (userStore.userInfo?.id === currentRoleUserId.value) {
+      await permissionStore.initializePermissions(userStore.userInfo.id)
+    }
   } catch (error) {
     console.error('角色分配失败:', error)
   }

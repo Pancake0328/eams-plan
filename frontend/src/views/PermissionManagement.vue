@@ -14,6 +14,7 @@
       </div>
 
       <el-table
+        :key="tableKey"
         :data="menuTree"
         v-loading="loading"
         row-key="id"
@@ -164,10 +165,16 @@ import { ref, reactive, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'element-plus'
 import { Plus, Edit, Delete, Refresh } from '@element-plus/icons-vue'
 import { menuApi } from '@/api/permission'
+import { usePermissionStore } from '@/stores/permission'
+import { useUserStore } from '@/stores/user'
 import type { Menu, MenuCreateRequest } from '@/api/permission'
 
 const menuTree = ref<Menu[]>([])
 const loading = ref(false)
+const tableKey = ref(0)
+
+const permissionStore = usePermissionStore()
+const userStore = useUserStore()
 
 const dialogVisible = ref(false)
 const isEdit = ref(false)
@@ -337,10 +344,17 @@ const loadMenuTree = async () => {
   try {
     const res = await menuApi.getMenuTree()
     menuTree.value = res.data
+    tableKey.value += 1
   } catch (error) {
     ElMessage.error('加载菜单树失败')
   } finally {
     loading.value = false
+  }
+}
+
+const refreshUserMenuTree = async () => {
+  if (userStore.userInfo?.id) {
+    await permissionStore.initializePermissions(userStore.userInfo.id)
   }
 }
 
@@ -379,7 +393,8 @@ const handleDelete = async (row: Menu) => {
     await ElMessageBox.confirm(`确定删除菜单"${row.menuName}"吗？`, '提示', { type: 'warning' })
     await menuApi.deleteMenu(row.id)
     ElMessage.success('删除成功')
-    loadMenuTree()
+    await loadMenuTree()
+    await refreshUserMenuTree()
   } catch (error: any) {
     if (error !== 'cancel') {
       ElMessage.error('删除失败')
@@ -401,7 +416,8 @@ const handleSubmit = async () => {
         ElMessage.success('创建成功')
       }
       dialogVisible.value = false
-      loadMenuTree()
+      await loadMenuTree()
+      await refreshUserMenuTree()
     } catch (error) {
       ElMessage.error(isEdit.value ? '更新失败' : '创建失败')
     } finally {

@@ -13,81 +13,7 @@
         :unique-opened="true"
         router
       >
-      <!-- 仪表盘 -->
-      <el-menu-item index="/dashboard" v-permission="'dashboard:view'">
-        <el-icon><DataLine /></el-icon>
-        <span>仪表盘</span>
-      </el-menu-item>
-        
-<!--        <el-sub-menu index="2">-->
-<!--          <template #title>-->
-<!--            <el-icon><Setting /></el-icon>-->
-<!--            <span>系统管理</span>-->
-<!--          </template>-->
-<!--          <el-menu-item index="/roles">角色管理</el-menu-item>-->
-<!--          <el-menu-item index="/permissions">权限管理</el-menu-item>-->
-<!--        </el-sub-menu>-->
-        <el-sub-menu index="system" v-if="hasAnyPermission('system:role:list','system:permission:list')">
-          <template #title>
-            <el-icon><Setting /></el-icon>
-            <span>系统管理</span>
-          </template>
-          <el-menu-item index="/role" v-permission="'system:role:list'">
-            <el-icon><UserFilled /></el-icon>
-            <span>角色管理</span>
-          </el-menu-item>
-          <el-menu-item index="/permissions" v-permission="'system:permission:list'">
-            <el-icon><Key /></el-icon>
-            <span>菜单管理</span>
-          </el-menu-item>
-        </el-sub-menu>
-        <el-sub-menu index="3" v-if="hasAnyPermission('asset:info:list','asset:category:list','asset:record:list')">
-          <template #title>
-            <el-icon><Grid /></el-icon>
-            <span>资产管理</span>
-          </template>
-          <el-menu-item index="/assets" v-permission="'asset:info:list'">资产列表</el-menu-item>
-          <el-menu-item index="/categories" v-permission="'asset:category:list'">资产分类</el-menu-item>
-          <el-menu-item index="/records" v-permission="'asset:record:list'">流转记录</el-menu-item>
-        </el-sub-menu>
-        <el-menu-item index="/purchase" v-permission="'purchase:list'">
-          <el-icon><ShoppingCart /></el-icon>
-          <span>采购管理</span>
-        </el-menu-item>
-        
-        <el-sub-menu index="4" v-if="hasAnyPermission('system:user:list','system:department:list')">
-          <template #title>
-            <el-icon><User /></el-icon>
-            <span>人员管理</span>
-          </template>
-          <el-menu-item index="/" v-permission="'system:user:list'">
-            <el-icon><UserFilled /></el-icon>
-            <span>用户管理</span>
-          </el-menu-item>
-          <el-menu-item index="/departments" v-permission="'system:department:list'">部门管理</el-menu-item>
-        </el-sub-menu>
-        
-        
-
-        <!-- 生命周期与盘点模块 -->
-        <el-sub-menu index="lifecycle-inventory" v-if="hasAnyPermission('lifecycle:list','inventory:list','repair:list')">
-          <template #title>
-            <el-icon><Refresh /></el-icon>
-            <span>生命周期与盘点</span>
-          </template>
-          <el-menu-item index="/lifecycle" v-permission="'lifecycle:list'">
-            <el-icon><Clock /></el-icon>
-            <span>生命周期管理</span>
-          </el-menu-item>
-          <el-menu-item index="/inventory" v-permission="'inventory:list'">
-            <el-icon><Checked /></el-icon>
-            <span>盘点管理</span>
-          </el-menu-item>
-          <el-menu-item index="/repair" v-permission="'repair:list'">
-            <el-icon><Tools /></el-icon>
-            <span>报修管理</span>
-          </el-menu-item>
-        </el-sub-menu>
+        <MenuTreeItem v-for="item in menuTree" :key="item.id" :item="item" />
       </el-menu>
     </aside>
 
@@ -148,19 +74,10 @@
 import { ref, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { ElMessageBox, ElMessage } from 'element-plus'
-import {
-  UserFilled,
-  Setting,
-  Grid,
-  Expand,
-  Fold,
-  ArrowDown,
-  SwitchButton,
-  DataLine,
-  Key
-} from '@element-plus/icons-vue'
+import { Expand, Fold, ArrowDown, SwitchButton } from '@element-plus/icons-vue'
 import { useUserStore } from '@/stores/user'
 import { usePermissionStore } from '@/stores/permission'
+import MenuTreeItem from '@/components/MenuTreeItem.vue'
 
 const router = useRouter()
 const route = useRoute()
@@ -173,7 +90,7 @@ const isCollapsed = ref(false)
 // 当前激活的菜单
 const activeMenu = computed(() => route.path)
 
-const hasAnyPermission = (...permissions: string[]) => permissionStore.hasAnyPermission(...permissions)
+const menuTree = computed(() => permissionStore.menuTree)
 
 // 面包屑
 const breadcrumb = computed(() => {
