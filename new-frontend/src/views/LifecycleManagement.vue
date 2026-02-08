@@ -1,0 +1,332 @@
+<template>
+  <div class="lifecycle-management">
+    <el-card>
+      <template #header>
+        <div class="card-header">
+          <span>资产生命周期管理</span>
+        </div>
+      </template>
+
+      <!-- 资产选择 -->
+      <el-form :model="queryForm" inline>
+        <el-form-item label="资产编号">
+          <el-input
+            v-model="queryForm.assetNumber"
+            placeholder="请输入资产编号"
+            clearable
+            style="width: 180px"
+          />
+        </el-form-item>
+        <el-form-item label="资产名称">
+          <el-input
+            v-model="queryForm.assetName"
+            placeholder="请输入资产名称"
+            clearable
+            style="width: 180px"
+          />
+        </el-form-item>
+        <el-form-item>
+          <el-button type="primary" @click="loadLifecycleHistory">查询</el-button>
+          <el-button @click="resetQuery">重置</el-button>
+        </el-form-item>
+      </el-form>
+
+      <!-- 当前阶段展示 -->
+      <el-divider content-position="left">当前阶段</el-divider>
+      <el-empty v-if="!currentLifecycle" description="请先选择资产查询生命周期" />
+        <el-descriptions v-else :column="3" border>
+          <el-descriptions-item label="资产编号">{{ currentLifecycle.assetNumber }}</el-descriptions-item>
+          <el-descriptions-item label="资产名称">{{ currentLifecycle.assetName }}</el-descriptions-item>
+          <el-descriptions-item label="当前阶段">
+            <el-tag :type="getStageType(currentLifecycle.stage)">
+              {{ currentLifecycle.stageText }}
+            </el-tag>
+          </el-descriptions-item>
+          <el-descriptions-item label="变更前部门">{{ currentLifecycle.fromDepartment || '-' }}</el-descriptions-item>
+          <el-descriptions-item label="变更前责任人">{{ currentLifecycle.fromCustodianName || currentLifecycle.fromCustodian || '-' }}</el-descriptions-item>
+          <el-descriptions-item label="变更后部门">{{ currentLifecycle.toDepartment || '-' }}</el-descriptions-item>
+          <el-descriptions-item label="变更后责任人">{{ currentLifecycle.toCustodianName || currentLifecycle.toCustodian || '-' }}</el-descriptions-item>
+          <el-descriptions-item label="变更日期">{{ currentLifecycle.stageDate }}</el-descriptions-item>
+          <el-descriptions-item label="操作人">{{ currentLifecycle.operatorName || currentLifecycle.operator }}</el-descriptions-item>
+          <el-descriptions-item label="变更原因">{{ currentLifecycle.reason }}</el-descriptions-item>
+        </el-descriptions>
+
+      <!-- 生命周期时间轴 -->
+      <el-divider content-position="left">生命周期历史</el-divider>
+      <el-empty v-if="lifecycleHistory.length === 0" description="暂无历史记录" />
+      <el-timeline v-else>
+        <el-timeline-item
+          v-for="item in lifecycleHistory"
+          :key="item.id"
+          :timestamp="item.stageDate"
+          placement="top"
+          :color="getStageColor(item.stage)"
+        >
+          <el-card class="lifecycle-card">
+            <el-descriptions :column="3" size="small" border>
+              <el-descriptions-item label="阶段">{{ item.stageText }}</el-descriptions-item>
+              <el-descriptions-item label="资产">{{ item.assetName }} ({{ item.assetNumber }})</el-descriptions-item>
+              <el-descriptions-item label="操作人">{{ item.operatorName || item.operator }}</el-descriptions-item>
+              <el-descriptions-item label="前一阶段">{{ item.previousStageText || '-' }}</el-descriptions-item>
+              <el-descriptions-item label="变更前部门">{{ item.fromDepartment || '-' }}</el-descriptions-item>
+              <el-descriptions-item label="变更后部门">{{ item.toDepartment || '-' }}</el-descriptions-item>
+              <el-descriptions-item label="变更前责任人">{{ item.fromCustodianName || item.fromCustodian || '-' }}</el-descriptions-item>
+              <el-descriptions-item label="变更后责任人">{{ item.toCustodianName || item.toCustodian || '-' }}</el-descriptions-item>
+              <el-descriptions-item label="变更原因" :span="3">{{ item.reason || '-' }}</el-descriptions-item>
+              <el-descriptions-item label="备注" :span="3">{{ item.remark || '-' }}</el-descriptions-item>
+            </el-descriptions>
+            <p class="time-text">{{ item.createTime }}</p>
+          </el-card>
+        </el-timeline-item>
+      </el-timeline>
+    </el-card>
+
+    <!-- 分页查询所有记录 -->
+    <el-card style="margin-top: 20px">
+      <template #header>
+        <span>生命周期记录列表</span>
+      </template>
+
+      <el-form :model="pageQuery" inline>
+        <el-form-item label="阶段筛选">
+          <el-select v-model="pageQuery.stage" placeholder="请选择" clearable>
+            <el-option label="购入" :value="1" />
+            <el-option label="使用中" :value="2" />
+            <el-option label="维修中" :value="3" />
+            <el-option label="闲置" :value="4" />
+            <el-option label="报废" :value="5" />
+            <el-option label="取消采购" :value="6" />
+          </el-select>
+        </el-form-item>
+        <el-form-item>
+          <el-button type="primary" @click="loadLifecyclePage">查询</el-button>
+        </el-form-item>
+      </el-form>
+
+        <el-table :data="lifecycleList" border stripe>
+          <el-table-column prop="assetNumber" label="资产编号" width="150" />
+          <el-table-column prop="assetName" label="资产名称" width="150" />
+          <el-table-column prop="stageText" label="当前阶段" width="100">
+            <template #default="{ row }">
+              <el-tag :type="getStageType(row.stage)">{{ row.stageText }}</el-tag>
+            </template>
+          </el-table-column>
+          <el-table-column prop="previousStageText" label="前一阶段" width="100" />
+          <el-table-column prop="fromDepartment" label="变更前部门" width="120" show-overflow-tooltip />
+          <el-table-column label="变更前责任人" width="120">
+            <template #default="{ row }">
+              {{ row.fromCustodianName || row.fromCustodian || '-' }}
+            </template>
+          </el-table-column>
+          <el-table-column prop="toDepartment" label="变更后部门" width="120" show-overflow-tooltip />
+          <el-table-column label="变更后责任人" width="120">
+            <template #default="{ row }">
+              {{ row.toCustodianName || row.toCustodian || '-' }}
+            </template>
+          </el-table-column>
+          <el-table-column prop="stageDate" label="变更日期" width="120" />
+          <el-table-column prop="reason" label="变更原因" min-width="200" show-overflow-tooltip />
+          <el-table-column label="操作人" width="100">
+            <template #default="{ row }">
+              {{ row.operatorName || row.operator || '-' }}
+            </template>
+          </el-table-column>
+          <el-table-column prop="createTime" label="创建时间" width="180" />
+        </el-table>
+
+      <el-pagination
+        v-model:current-page="pageQuery.current"
+        v-model:page-size="pageQuery.size"
+        :total="total"
+        :page-sizes="[10, 20, 50, 100]"
+        layout="total, sizes, prev, pager, next, jumper"
+        @current-change="loadLifecyclePage"
+        @size-change="loadLifecyclePage"
+        style="margin-top: 20px; justify-content: flex-end"
+      />
+    </el-card>
+
+  </div>
+</template>
+
+<script setup lang="ts">
+import { ref, reactive } from 'vue'
+import { ElMessage } from 'element-plus'
+import { lifecycleApi } from '@/api/lifecycle'
+import { assetApi } from '@/api/asset'
+import type { Asset, Lifecycle } from '@/types'
+
+// 查询表单
+const queryForm = reactive({
+  assetId: undefined as number | undefined,
+  assetNumber: '',
+  assetName: ''
+})
+
+// 当前生命周期
+const currentLifecycle = ref<Lifecycle | null>(null)
+
+// 生命周期历史
+const lifecycleHistory = ref<Lifecycle[]>([])
+
+// 分页查询
+const pageQuery = reactive({
+  current: 1,
+  size: 10,
+  stage: undefined as number | undefined
+})
+const lifecycleList = ref<Lifecycle[]>([])
+const total = ref(0)
+
+// 加载生命周期历史
+const resolveAssetId = async (): Promise<number | null> => {
+  const assetNumber = queryForm.assetNumber.trim()
+  const assetName = queryForm.assetName.trim()
+
+  if (!assetNumber && !assetName) {
+    if (!queryForm.assetId) {
+      ElMessage.warning('请输入资产编号或资产名称')
+      return null
+    }
+    return queryForm.assetId
+  }
+
+  const baseQuery = {
+    current: 1,
+    size: 2,
+    assetNumber: assetNumber || undefined,
+    assetName: assetName || undefined
+  }
+
+  let res = await assetApi.getAssetPage(baseQuery)
+  let records = res.data.records as Asset[]
+
+  if (records.length === 0) {
+    const purchaseRes = await assetApi.getAssetPage({ ...baseQuery, assetStatus: 0 })
+    records = purchaseRes.data.records as Asset[]
+  }
+
+  if (records.length === 0) {
+    ElMessage.warning('未找到匹配的资产')
+    return null
+  }
+  if (records.length > 1) {
+    ElMessage.warning('匹配到多条资产，请输入资产编号')
+    return null
+  }
+
+  const asset = records[0]
+  if (!asset) {
+     return null
+  }
+  queryForm.assetId = asset.id
+  if (!assetNumber) {
+    queryForm.assetNumber = asset.assetNumber || ''
+  }
+  if (!assetName) {
+    queryForm.assetName = asset.assetName || ''
+  }
+  return asset.id
+}
+
+const loadLifecycleHistory = async () => {
+  const assetId = await resolveAssetId()
+  if (!assetId) {
+    currentLifecycle.value = null
+    lifecycleHistory.value = []
+    return
+  }
+
+  try {
+    const res = await lifecycleApi.getAssetLifecycleHistory(assetId)
+    lifecycleHistory.value = res.data
+    
+    // 加载当前阶段
+    const currentRes = await lifecycleApi.getCurrentLifecycle(assetId)
+    currentLifecycle.value = currentRes.data
+  } catch (error) {
+    console.error('加载失败:', error)
+  }
+}
+
+// 重置查询
+const resetQuery = () => {
+  queryForm.assetId = undefined
+  queryForm.assetNumber = ''
+  queryForm.assetName = ''
+  currentLifecycle.value = null
+  lifecycleHistory.value = []
+}
+
+// 加载分页数据
+const loadLifecyclePage = async () => {
+  try {
+    const res = await lifecycleApi.getLifecyclePage({
+      current: pageQuery.current,
+      size: pageQuery.size,
+      stage: pageQuery.stage
+    })
+    lifecycleList.value = res.data.records
+    total.value = res.data.total
+  } catch (error) {
+    console.error('加载失败:', error)
+  }
+}
+
+// 获取阶段颜色
+const getStageColor = (stage: number): string => {
+  const colors: Record<number, string> = {
+    1: '#67C23A',
+    2: '#409EFF',
+    3: '#E6A23C',
+    4: '#909399',
+    5: '#F56C6C',
+    6: '#8E8E8E'
+  }
+  return colors[stage] || '#909399'
+}
+
+// 获取阶段标签类型
+const getStageType = (stage: number): 'success' | 'primary' | 'warning' | 'info' | 'danger' => {
+  const types: Record<number, 'success' | 'primary' | 'warning' | 'info' | 'danger'> = {
+    1: 'success',
+    2: 'primary',
+    3: 'warning',
+    4: 'info',
+    5: 'danger',
+    6: 'info'
+  }
+  return types[stage] || 'info'
+}
+
+// 初始化加载
+loadLifecyclePage()
+</script>
+
+<style scoped>
+.lifecycle-management {
+  padding: 20px;
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.time-text {
+  font-size: 12px;
+  color: #999;
+  margin-top: 10px;
+}
+
+.lifecycle-card :deep(.el-descriptions__cell) {
+  padding: 6px 10px;
+}
+
+:deep(.el-timeline-item__timestamp) {
+  font-size: 14px;
+  font-weight: 500;
+  color: #409EFF;
+}
+</style>
