@@ -18,6 +18,7 @@ import com.eams.system.entity.User;
 import com.eams.system.mapper.UserMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -86,6 +87,7 @@ public class AssetRepairServiceImpl implements AssetRepairService {
         if (originalStatus != 1 && originalStatus != 2) {
             throw new BusinessException("只有闲置或使用中的资产才能报修");
         }
+        ensureCanOperateOwnedAsset(asset);
 
         // 生成报修编号
         String repairNumber = generateRepairNumber();
@@ -400,6 +402,29 @@ public class AssetRepairServiceImpl implements AssetRepairService {
                 .orderByDesc(AssetLifecycle::getId)
                 .last("LIMIT 1"));
         return current != null ? current.getStage() : null;
+    }
+
+    private void ensureCanOperateOwnedAsset(AssetInfo asset) {
+        if (!isMyAssetOnlyMode()) {
+            return;
+        }
+        String currentUsername = getCurrentUsername();
+        if (!StringUtils.hasText(asset.getCustodian()) || !asset.getCustodian().equals(currentUsername)) {
+            throw new BusinessException("仅可为本人持有的资产发起报修");
+        }
+    }
+
+    private boolean isMyAssetOnlyMode() {
+        return hasAuthority("asset:info:my:list") && !hasAuthority("asset:info:list");
+    }
+
+    private boolean hasAuthority(String authority) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || authentication.getAuthorities() == null) {
+            return false;
+        }
+        return authentication.getAuthorities().stream()
+                .anyMatch(grantedAuthority -> authority.equals(grantedAuthority.getAuthority()));
     }
 
     private String getDepartmentName(Long departmentId) {

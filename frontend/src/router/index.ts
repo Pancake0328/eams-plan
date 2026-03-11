@@ -68,6 +68,16 @@ const routes: RouteRecordRaw[] = [
                     permission: 'asset:info:list'
                 }
             },
+            {
+                path: '/my-assets',
+                name: 'MyAssetManagement',
+                component: () => import('@/views/MyAssetManagement.vue'),
+                meta: {
+                    title: '持有资产',
+                    requiresAuth: true,
+                    permission: 'asset:info:my:list'
+                }
+            },
         {
           path: '/purchase',
           name: 'PurchaseManagement',
@@ -147,6 +157,7 @@ const homeRouteOrder = [
     '/welcome',
     '/dashboard',
     '/assets',
+    '/my-assets',
     '/purchase',
     '/categories',
     '/records',

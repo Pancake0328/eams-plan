@@ -16,6 +16,7 @@ import com.eams.common.result.ResultCode;
 import com.eams.exception.BusinessException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.eams.security.SecurityContextHolder;
@@ -137,6 +138,7 @@ public class AssetInfoServiceImpl implements AssetInfoService {
     @Override
     public AssetVO getAssetById(Long id) {
         AssetInfo asset = getAssetEntityById(id);
+        ensureCanAccessAsset(asset);
         return convertToVO(asset);
     }
 
@@ -148,6 +150,21 @@ public class AssetInfoServiceImpl implements AssetInfoService {
      */
     @Override
     public Page<AssetVO> getAssetPage(AssetPageQuery query) {
+        return loadAssetPage(query, null);
+    }
+
+    /**
+     * 分页查询当前用户持有资产
+     *
+     * @param query 查询条件
+     * @return 资产分页列表
+     */
+    @Override
+    public Page<AssetVO> getMyAssetPage(AssetPageQuery query) {
+        return loadAssetPage(query, getCurrentUsername());
+    }
+
+    private Page<AssetVO> loadAssetPage(AssetPageQuery query, String fixedCustodian) {
         // 构建查询条件
         LambdaQueryWrapper<AssetInfo> wrapper = new LambdaQueryWrapper<>();
 
@@ -171,8 +188,10 @@ public class AssetInfoServiceImpl implements AssetInfoService {
             wrapper.eq(AssetInfo::getDepartmentId, query.getDepartmentId());
         }
 
-        // 责任人模糊查询
-        if (StringUtils.hasText(query.getCustodian())) {
+        // 责任人查询
+        if (StringUtils.hasText(fixedCustodian)) {
+            wrapper.eq(AssetInfo::getCustodian, fixedCustodian);
+        } else if (StringUtils.hasText(query.getCustodian())) {
             wrapper.like(AssetInfo::getCustodian, query.getCustodian());
         }
 
@@ -318,6 +337,29 @@ public class AssetInfoServiceImpl implements AssetInfoService {
             throw new BusinessException("未获取到当前登录用户");
         }
         return username;
+    }
+
+    private void ensureCanAccessAsset(AssetInfo asset) {
+        if (!isMyAssetOnlyMode()) {
+            return;
+        }
+        if (!StringUtils.hasText(asset.getCustodian()) || !asset.getCustodian().equals(getCurrentUsername())) {
+            throw new BusinessException(ResultCode.FORBIDDEN);
+        }
+    }
+
+    private boolean isMyAssetOnlyMode() {
+        return hasAuthority("asset:info:my:list") && !hasAuthority("asset:info:list");
+    }
+
+    private boolean hasAuthority(String authority) {
+        Authentication authentication = org.springframework.security.core.context.SecurityContextHolder.getContext()
+                .getAuthentication();
+        if (authentication == null || authentication.getAuthorities() == null) {
+            return false;
+        }
+        return authentication.getAuthorities().stream()
+                .anyMatch(grantedAuthority -> authority.equals(grantedAuthority.getAuthority()));
     }
 
     private Long getCurrentUserDepartmentId() {

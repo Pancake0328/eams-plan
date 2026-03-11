@@ -110,6 +110,7 @@ const breadcrumb = computed(() => {
     '/no-access': '无权限访问',
     '/categories': '资产分类管理',
     '/assets': '资产信息管理',
+    '/my-assets': '持有资产',
     '/records': '流转记录',
     '/departments': '部门管理',
     '/roles': '角色管理',

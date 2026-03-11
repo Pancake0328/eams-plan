@@ -20,6 +20,13 @@ export const assetApi = {
     },
 
     /**
+     * 分页查询当前用户持有资产
+     */
+    getMyAssetPage(query: AssetPageQuery): Promise<Result<PageResult<Asset>>> {
+        return request.get('/assets/my', { params: query })
+    },
+
+    /**
      * 获取资产详情
      */
     getAssetById(id: number): Promise<Result<Asset>> {

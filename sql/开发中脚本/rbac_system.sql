@@ -89,13 +89,14 @@ INSERT INTO sys_menu (id, parent_id, menu_name, menu_type, permission_code, path
 (11, 2, '菜单管理', 'MENU', 'system:permission:list', '/permissions', 'PermissionManagement', 'Key', 2),
 
 -- 人员管理子菜单
-(9, 5, '用户管理', 'MENU', 'system:user:list', '/', 'UserManagement', 'User', 1),
+(9, 5, '用户管理', 'MENU', 'system:user:list', '/user', 'UserManagement', 'User', 1),
 (10, 5, '部门管理', 'MENU', 'system:department:list', '/departments', 'DepartmentManagement', 'OfficeBuilding', 2),
 
 -- 资产管理子菜单
 (13, 3, '资产信息管理', 'MENU', 'asset:info:list', '/assets', 'AssetManagement', 'List', 1),
-(14, 3, '资产分类管理', 'MENU', 'asset:category:list', '/categories', 'CategoryManagement', 'Files', 2),
-(15, 3, '流转记录', 'MENU', 'asset:record:list', '/records', 'RecordManagement', 'Document', 3),
+(95, 3, '持有资产', 'MENU', 'asset:info:my:list', '/my-assets', 'MyAssetManagement', 'List', 2),
+(14, 3, '资产分类管理', 'MENU', 'asset:category:list', '/categories', 'CategoryManagement', 'Files', 3),
+(15, 3, '流转记录', 'MENU', 'asset:record:list', '/records', 'RecordManagement', 'Document', 4),
 
 -- 生命周期与盘点子菜单
 (16, 6, '生命周期管理', 'MENU', 'lifecycle:list', '/lifecycle', 'LifecycleManagement', 'Clock', 1),
@@ -184,6 +185,16 @@ INSERT INTO sys_menu (id, parent_id, menu_name, menu_type, permission_code, path
 INSERT INTO sys_role_menu (role_id, menu_id)
 SELECT 1, id FROM sys_menu WHERE deleted = 0;
 
--- 为普通用户分配部分权限（仅查看权限）
+-- 为普通用户分配部分权限（持有资产能力）
 INSERT INTO sys_role_menu (role_id, menu_id)
-SELECT 2, id FROM sys_menu WHERE menu_type IN ('DIR', 'MENU') AND deleted = 0;
+SELECT 2, id
+FROM sys_menu
+WHERE menu_type IN ('DIR', 'MENU')
+  AND deleted = 0
+  AND id <> 13;
+
+INSERT INTO sys_role_menu (role_id, menu_id) VALUES
+(2, 49), -- 查看资产详情
+(2, 54), -- 归还资产
+(2, 56), -- 送修资产
+(2, 58); -- 查看流转历史

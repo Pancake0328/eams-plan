@@ -27,12 +27,13 @@ VALUES
   (8, 2, '角色管理', 'MENU', 'system:role:list', '/role', 'RoleManagement', 'UserFilled', 1, 1, 1, NULL, 0),
   (11, 2, '菜单管理', 'MENU', 'system:permission:list', '/permissions', 'PermissionManagement', 'Key', 2, 1, 1, NULL, 0),
 
-  (9, 5, '用户管理', 'MENU', 'system:user:list', '/', 'UserManagement', 'User', 1, 1, 1, NULL, 0),
+  (9, 5, '用户管理', 'MENU', 'system:user:list', '/user', 'UserManagement', 'User', 1, 1, 1, NULL, 0),
   (10, 5, '部门管理', 'MENU', 'system:department:list', '/departments', 'DepartmentManagement', 'OfficeBuilding', 2, 1, 1, NULL, 0),
 
   (13, 3, '资产信息管理', 'MENU', 'asset:info:list', '/assets', 'AssetManagement', 'List', 1, 1, 1, NULL, 0),
-  (14, 3, '资产分类管理', 'MENU', 'asset:category:list', '/categories', 'CategoryManagement', 'Files', 2, 1, 1, NULL, 0),
-  (15, 3, '流转记录', 'MENU', 'asset:record:list', '/records', 'RecordManagement', 'Document', 3, 1, 1, NULL, 0),
+  (95, 3, '持有资产', 'MENU', 'asset:info:my:list', '/my-assets', 'MyAssetManagement', 'List', 2, 1, 1, NULL, 0),
+  (14, 3, '资产分类管理', 'MENU', 'asset:category:list', '/categories', 'CategoryManagement', 'Files', 3, 1, 1, NULL, 0),
+  (15, 3, '流转记录', 'MENU', 'asset:record:list', '/records', 'RecordManagement', 'Document', 4, 1, 1, NULL, 0),
 
   (16, 6, '生命周期管理', 'MENU', 'lifecycle:list', '/lifecycle', 'LifecycleManagement', 'Clock', 1, 1, 1, NULL, 0),
   (17, 6, '盘点管理', 'MENU', 'inventory:list', '/inventory', 'InventoryManagement', 'Checked', 2, 1, 1, NULL, 0),
@@ -137,4 +138,21 @@ WHERE r.role_code = 'ADMIN'
   AND NOT EXISTS (
     SELECT 1 FROM sys_user_role ur
     WHERE ur.user_id = 1 AND ur.role_id = r.id
+  );
+
+-- 5) USER 角色默认持有资产权限（区分管理员与普通用户）
+DELETE rm
+FROM sys_role_menu rm
+JOIN sys_role r ON r.id = rm.role_id
+WHERE r.role_code = 'USER'
+  AND rm.menu_id IN (13, 47, 51, 52, 53, 55);
+
+INSERT INTO sys_role_menu (role_id, menu_id)
+SELECT r.id, m.id
+FROM sys_role r
+JOIN sys_menu m ON m.id IN (3, 95, 49, 54, 56, 58)
+WHERE r.role_code = 'USER'
+  AND NOT EXISTS (
+    SELECT 1 FROM sys_role_menu rm
+    WHERE rm.role_id = r.id AND rm.menu_id = m.id
   );

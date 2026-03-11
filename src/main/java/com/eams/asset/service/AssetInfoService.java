@@ -54,6 +54,14 @@ public interface AssetInfoService {
     Page<AssetVO> getAssetPage(AssetPageQuery query);
 
     /**
+     * 分页查询当前用户持有的资产
+     *
+     * @param query 查询条件
+     * @return 资产分页列表
+     */
+    Page<AssetVO> getMyAssetPage(AssetPageQuery query);
+
+    /**
      * 更新资产状态
      *
      * @param id     资产ID

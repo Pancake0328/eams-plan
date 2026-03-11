@@ -16,6 +16,7 @@ import com.eams.lifecycle.entity.AssetLifecycle;
 import com.eams.lifecycle.mapper.AssetLifecycleMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -204,6 +205,7 @@ public class AssetRecordServiceImpl implements AssetRecordService {
     @Transactional(rollbackFor = Exception.class)
     public Long returnAsset(RecordCreateRequest request) {
         AssetInfo asset = getAssetEntityById(request.getAssetId());
+        ensureCanOperateOwnedAsset(asset, "归还");
         Long fromDepartmentId = asset.getDepartmentId();
         String fromCustodian = asset.getCustodian();
         String operator = getCurrentUsername();
@@ -289,6 +291,7 @@ public class AssetRecordServiceImpl implements AssetRecordService {
     @Transactional(rollbackFor = Exception.class)
     public Long sendForRepair(RecordCreateRequest request) {
         AssetInfo asset = getAssetEntityById(request.getAssetId());
+        ensureCanOperateOwnedAsset(asset, "送修");
         Long fromDepartmentId = asset.getDepartmentId();
         String fromCustodian = asset.getCustodian();
 
@@ -412,6 +415,9 @@ public class AssetRecordServiceImpl implements AssetRecordService {
      */
     @Override
     public List<RecordVO> getAssetRecordHistory(Long assetId) {
+        AssetInfo asset = getAssetEntityById(assetId);
+        ensureCanOperateOwnedAsset(asset, "查看流转历史");
+
         List<AssetRecord> records = recordMapper.selectList(
                 new LambdaQueryWrapper<AssetRecord>()
                         .eq(AssetRecord::getAssetId, assetId)
@@ -484,6 +490,29 @@ public class AssetRecordServiceImpl implements AssetRecordService {
         } catch (Exception e) {
             return "系统";
         }
+    }
+
+    private void ensureCanOperateOwnedAsset(AssetInfo asset, String action) {
+        if (!isMyAssetOnlyMode()) {
+            return;
+        }
+        String currentUsername = getCurrentUsername();
+        if (!StringUtils.hasText(asset.getCustodian()) || !asset.getCustodian().equals(currentUsername)) {
+            throw new BusinessException("仅可" + action + "本人持有的资产");
+        }
+    }
+
+    private boolean isMyAssetOnlyMode() {
+        return hasAuthority("asset:info:my:list") && !hasAuthority("asset:info:list");
+    }
+
+    private boolean hasAuthority(String authority) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || authentication.getAuthorities() == null) {
+            return false;
+        }
+        return authentication.getAuthorities().stream()
+                .anyMatch(grantedAuthority -> authority.equals(grantedAuthority.getAuthority()));
     }
 
     private void recordLifecycle(Long assetId, Integer stage, String reason, String remark,
