@@ -59,7 +59,12 @@ const iconMap: Record<string, any> = {
 }
 
 const hasChildren = computed(() => props.item.children && props.item.children.length > 0)
-const menuIndex = computed(() => props.item.path || `menu-${props.item.id}`)
+const menuIndex = computed(() => {
+  if (props.item.path === '/') {
+    return '/user'
+  }
+  return props.item.path || `menu-${props.item.id}`
+})
 const menuDisabled = computed(() => !props.item.path)
 const subMenuIndex = computed(() => `menu-${props.item.id}`)
 const resolvedIcon = computed(() => iconMap[props.item.icon || ''] || MenuIcon)

@@ -96,12 +96,12 @@ const menuTree = computed(() => permissionStore.menuTree)
 const breadcrumb = computed(() => {
   const path = route.path
   const breadcrumbMap: Record<string, string> = {
-    '/': '用户管理',
+    '/': '欢迎页',
     '/welcome': '欢迎页',
     '/dashboard': '仪表盘',
     '/asset': '资产管理',
     '/category': '分类管理',
-    '/user': '人员管理',
+    '/user': '用户管理',
     '/department': '部门管理',
     '/record': '使用记录',
     '/lifecycle': '生命周期管理',

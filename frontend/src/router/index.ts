@@ -39,7 +39,7 @@ const routes: RouteRecordRaw[] = [
                 meta: { requiresAuth: true, title: '仪表盘', permission: 'dashboard:view' }
             },
             {
-                path: '',
+                path: '/user',
                 name: 'UserManagement',
                 component: UserManagement,
                 meta: {
