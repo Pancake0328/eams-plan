@@ -97,6 +97,7 @@ const breadcrumb = computed(() => {
   const path = route.path
   const breadcrumbMap: Record<string, string> = {
     '/': '用户管理',
+    '/welcome': '欢迎页',
     '/dashboard': '首页',
     '/asset': '资产管理',
     '/category': '分类管理',

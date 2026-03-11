@@ -4,6 +4,7 @@ import { usePermissionStore } from '@/stores/permission'
 import Login from '@/views/Login.vue'
 import MainLayout from '@/layout/MainLayout.vue'
 import UserManagement from '@/views/UserManagement.vue'
+import Welcome from '@/views/Welcome.vue'
 
 /**
  * 路由配置
@@ -25,6 +26,12 @@ const routes: RouteRecordRaw[] = [
             requiresAuth: true
         },
         children: [
+            {
+                path: '/welcome',
+                name: 'Welcome',
+                component: Welcome,
+                meta: { requiresAuth: true, title: '欢迎页' }
+            },
             {
                 path: '/dashboard',
                 name: 'Dashboard',
@@ -137,6 +144,7 @@ const router = createRouter({
 })
 
 const homeRouteOrder = [
+    '/welcome',
     '/dashboard',
     '/assets',
     '/purchase',
@@ -167,7 +175,7 @@ const resolveFirstAccessiblePath = (permissionStore: ReturnType<typeof usePermis
 /**
  * 路由守卫 - 权限验证
  */
-router.beforeEach(async (to, _from, next) => {
+router.beforeEach(async (to, from, next) => {
     const userStore = useUserStore()
     const permissionStore = usePermissionStore()
 
@@ -187,6 +195,10 @@ router.beforeEach(async (to, _from, next) => {
     } else {
         if (userStore.isLoggedIn() && userStore.userInfo?.id && !permissionStore.loaded) {
             await permissionStore.initializePermissions(userStore.userInfo.id)
+        }
+        if (to.path === '/' && from.matched.length === 0) {
+            next('/welcome')
+            return
         }
         if (to.meta.permission && !permissionStore.hasPermission(to.meta.permission as string)) {
             const redirectPath = resolveFirstAccessiblePath(permissionStore)

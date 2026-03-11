@@ -42,7 +42,7 @@ npm run dev
 2. 使用以下账号登录：
    - 管理员：admin / 123456
    - 测试用户：test / 123456
-3. 登录成功后自动跳转到用户管理页面
+3. 登录成功后自动跳转到欢迎页
 
 1. 访问后端 Swagger：http://localhost:9998/api/swagger-ui.html
 2. 使用 `/api/auth/login` 接口登录
