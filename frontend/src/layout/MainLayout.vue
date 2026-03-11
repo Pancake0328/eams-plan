@@ -28,7 +28,7 @@
           </el-icon>
           
           <el-breadcrumb separator="/">
-            <el-breadcrumb-item :to="{ path: '/' }">首页</el-breadcrumb-item>
+            <el-breadcrumb-item :to="{ path: '/welcome' }">首页</el-breadcrumb-item>
             <el-breadcrumb-item v-if="breadcrumb">{{ breadcrumb }}</el-breadcrumb-item>
           </el-breadcrumb>
         </div>
@@ -98,7 +98,7 @@ const breadcrumb = computed(() => {
   const breadcrumbMap: Record<string, string> = {
     '/': '用户管理',
     '/welcome': '欢迎页',
-    '/dashboard': '首页',
+    '/dashboard': '仪表盘',
     '/asset': '资产管理',
     '/category': '分类管理',
     '/user': '人员管理',
