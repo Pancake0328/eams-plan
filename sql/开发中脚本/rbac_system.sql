@@ -102,6 +102,7 @@ INSERT INTO sys_menu (id, parent_id, menu_name, menu_type, permission_code, path
 (16, 6, '生命周期管理', 'MENU', 'lifecycle:list', '/lifecycle', 'LifecycleManagement', 'Clock', 1),
 (17, 6, '盘点管理', 'MENU', 'inventory:list', '/inventory', 'InventoryManagement', 'Checked', 2),
 (18, 6, '报修管理', 'MENU', 'repair:list', '/repair', 'RepairManagement', 'Tools', 3),
+(96, 6, '我的报修', 'MENU', 'repair:own:list', '/my-repairs', 'RepairManagement', 'Tools', 4),
 
 -- 角色管理按钮权限
 (20, 8, '新增角色', 'BUTTON', 'system:role:add', NULL, NULL, NULL, 1),
@@ -191,7 +192,7 @@ SELECT 2, id
 FROM sys_menu
 WHERE menu_type IN ('DIR', 'MENU')
   AND deleted = 0
-  AND id <> 13;
+  AND id NOT IN (13, 18);
 
 INSERT INTO sys_role_menu (role_id, menu_id) VALUES
 (2, 49), -- 查看资产详情

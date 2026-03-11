@@ -107,6 +107,7 @@ const breadcrumb = computed(() => {
     '/lifecycle': '生命周期管理',
     '/inventory': '盘点管理',
     '/repair': '报修管理',
+    '/my-repairs': '我的报修',
     '/no-access': '无权限访问',
     '/categories': '资产分类管理',
     '/assets': '资产信息管理',

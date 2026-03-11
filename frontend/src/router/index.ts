@@ -123,6 +123,12 @@ const routes: RouteRecordRaw[] = [
                 meta: { requiresAuth: true, title: '报修管理', permission: 'repair:list' }
             },
             {
+                path: '/my-repairs',
+                name: 'MyRepairManagement',
+                component: () => import('@/views/RepairManagement.vue'),
+                meta: { requiresAuth: true, title: '我的报修', permission: 'repair:own:list' }
+            },
+            {
                 path: '/role',
                 name: 'RoleManagement',
                 component: () => import('@/views/RoleManagement.vue'),
@@ -165,6 +171,7 @@ const homeRouteOrder = [
     '/lifecycle',
     '/inventory',
     '/repair',
+    '/my-repairs',
     '/role',
     '/permissions'
 ]

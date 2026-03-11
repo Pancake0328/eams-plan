@@ -38,6 +38,7 @@ VALUES
   (16, 6, '生命周期管理', 'MENU', 'lifecycle:list', '/lifecycle', 'LifecycleManagement', 'Clock', 1, 1, 1, NULL, 0),
   (17, 6, '盘点管理', 'MENU', 'inventory:list', '/inventory', 'InventoryManagement', 'Checked', 2, 1, 1, NULL, 0),
   (18, 6, '报修管理', 'MENU', 'repair:list', '/repair', 'RepairManagement', 'Tools', 3, 1, 1, NULL, 0),
+  (96, 6, '我的报修', 'MENU', 'repair:own:list', '/my-repairs', 'RepairManagement', 'Tools', 4, 1, 1, NULL, 0),
 
   (20, 8, '新增角色', 'BUTTON', 'system:role:add', NULL, NULL, NULL, 1, 1, 1, NULL, 0),
   (21, 8, '编辑角色', 'BUTTON', 'system:role:edit', NULL, NULL, NULL, 2, 1, 1, NULL, 0),
@@ -145,12 +146,12 @@ DELETE rm
 FROM sys_role_menu rm
 JOIN sys_role r ON r.id = rm.role_id
 WHERE r.role_code = 'USER'
-  AND rm.menu_id IN (13, 47, 51, 52, 53, 55);
+  AND rm.menu_id IN (13, 18, 47, 51, 52, 53, 55, 74, 75, 76);
 
 INSERT INTO sys_role_menu (role_id, menu_id)
 SELECT r.id, m.id
 FROM sys_role r
-JOIN sys_menu m ON m.id IN (3, 95, 49, 54, 56, 58)
+JOIN sys_menu m ON m.id IN (3, 6, 95, 96, 49, 54, 56, 58)
 WHERE r.role_code = 'USER'
   AND NOT EXISTS (
     SELECT 1 FROM sys_role_menu rm

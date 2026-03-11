@@ -163,5 +163,12 @@ export const repairApi = {
      */
     getRepairPage(params: any): Promise<Result<PageResult<Repair>>> {
         return request.get('/repair', { params })
+    },
+
+    /**
+     * 分页查询当前用户报修记录
+     */
+    getMyRepairPage(params: any): Promise<Result<PageResult<Repair>>> {
+        return request.get('/repair/my', { params })
     }
 }
