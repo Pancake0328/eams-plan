@@ -11,6 +11,7 @@ import com.eams.system.entity.SysRoleMenu;
 import com.eams.system.mapper.SysMenuMapper;
 import com.eams.system.mapper.SysRoleMapper;
 import com.eams.system.mapper.SysRoleMenuMapper;
+import com.eams.system.service.PermissionService;
 import com.eams.system.service.RoleService;
 import com.eams.system.vo.RoleVO;
 import lombok.RequiredArgsConstructor;
@@ -37,6 +38,7 @@ public class RoleServiceImpl implements RoleService {
     private final SysRoleMenuMapper roleMenuMapper;
     private final SysMenuMapper menuMapper;
     private final MybatisBatchExecutor batchExecutor;
+    private final PermissionService permissionService;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -63,6 +65,7 @@ public class RoleServiceImpl implements RoleService {
     @Transactional(rollbackFor = Exception.class)
     public void deleteRole(Long id) {
         roleMapper.deleteById(id);
+        permissionService.evictUserPermissionCacheByRoleId(id);
     }
 
     @Override
@@ -104,6 +107,7 @@ public class RoleServiceImpl implements RoleService {
         if (role != null) {
             role.setStatus(status);
             roleMapper.updateById(role);
+            permissionService.evictUserPermissionCacheByRoleId(id);
         }
     }
 
@@ -117,6 +121,7 @@ public class RoleServiceImpl implements RoleService {
 
         // 添加新的权限
         if (request.getMenuIds() == null || request.getMenuIds().isEmpty()) {
+            permissionService.evictUserPermissionCacheByRoleId(request.getRoleId());
             return;
         }
 
@@ -128,6 +133,7 @@ public class RoleServiceImpl implements RoleService {
             roleMenus.add(roleMenu);
         }
         batchExecutor.execute(roleMenus, roleMenuMapper::insertBatch);
+        permissionService.evictUserPermissionCacheByRoleId(request.getRoleId());
     }
 
     @Override
