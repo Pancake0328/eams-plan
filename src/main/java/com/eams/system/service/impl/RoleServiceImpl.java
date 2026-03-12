@@ -2,6 +2,7 @@ package com.eams.system.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.eams.common.util.MybatisBatchExecutor;
 import com.eams.system.dto.AssignPermissionRequest;
 import com.eams.system.dto.RoleCreateRequest;
 import com.eams.system.entity.SysMenu;
@@ -17,6 +18,7 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -34,6 +36,7 @@ public class RoleServiceImpl implements RoleService {
     private final SysRoleMapper roleMapper;
     private final SysRoleMenuMapper roleMenuMapper;
     private final SysMenuMapper menuMapper;
+    private final MybatisBatchExecutor batchExecutor;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -113,12 +116,18 @@ public class RoleServiceImpl implements RoleService {
         roleMenuMapper.delete(wrapper);
 
         // 添加新的权限
+        if (request.getMenuIds() == null || request.getMenuIds().isEmpty()) {
+            return;
+        }
+
+        List<SysRoleMenu> roleMenus = new ArrayList<>(request.getMenuIds().size());
         for (Long menuId : request.getMenuIds()) {
             SysRoleMenu roleMenu = new SysRoleMenu();
             roleMenu.setRoleId(request.getRoleId());
             roleMenu.setMenuId(menuId);
-            roleMenuMapper.insert(roleMenu);
+            roleMenus.add(roleMenu);
         }
+        batchExecutor.execute(roleMenus, roleMenuMapper::insertBatch);
     }
 
     @Override

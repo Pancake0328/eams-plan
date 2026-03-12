@@ -28,6 +28,10 @@ public interface AssetNumberSequenceMapper extends BaseMapper<AssetNumberSequenc
             "WHERE prefix = #{prefix} AND (date_part = #{datePart} OR (date_part IS NULL AND #{datePart} IS NULL))")
     int incrementSequence(@Param("prefix") String prefix, @Param("datePart") String datePart);
 
+    @Update("UPDATE asset_number_sequence SET current_number = current_number + #{step} " +
+            "WHERE prefix = #{prefix} AND (date_part = #{datePart} OR (date_part IS NULL AND #{datePart} IS NULL))")
+    int incrementSequenceBy(@Param("prefix") String prefix, @Param("datePart") String datePart, @Param("step") int step);
+
     /**
      * 初始化序列（若已存在则忽略）
      */

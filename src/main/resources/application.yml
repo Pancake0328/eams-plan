@@ -1,6 +1,6 @@
 # 服务器配置
 server:
-  port: 9998
+  port: ${SERVER_PORT:9998}
   servlet:
     context-path: /api
 

@@ -1,6 +1,7 @@
 package com.eams.system.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.eams.common.util.MybatisBatchExecutor;
 import com.eams.system.entity.SysMenu;
 import com.eams.system.entity.SysRoleMenu;
 import com.eams.system.entity.SysUserRole;
@@ -14,7 +15,11 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -30,6 +35,7 @@ public class PermissionServiceImpl implements PermissionService {
     private final SysUserRoleMapper userRoleMapper;
     private final SysRoleMenuMapper roleMenuMapper;
     private final SysMenuMapper menuMapper;
+    private final MybatisBatchExecutor batchExecutor;
 
     @Override
     public Set<String> getUserPermissions(Long userId) {
@@ -111,12 +117,18 @@ public class PermissionServiceImpl implements PermissionService {
         userRoleMapper.delete(wrapper);
 
         // 添加新的角色关联
+        if (roleIds == null || roleIds.isEmpty()) {
+            return;
+        }
+
+        List<SysUserRole> userRoles = new ArrayList<>(roleIds.size());
         for (Long roleId : roleIds) {
             SysUserRole userRole = new SysUserRole();
             userRole.setUserId(userId);
             userRole.setRoleId(roleId);
-            userRoleMapper.insert(userRole);
+            userRoles.add(userRole);
         }
+        batchExecutor.execute(userRoles, userRoleMapper::insertBatch);
     }
 
     @Override

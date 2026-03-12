@@ -7,6 +7,7 @@ import com.eams.asset.entity.AssetInfo;
 import com.eams.asset.mapper.AssetCategoryMapper;
 import com.eams.asset.mapper.AssetInfoMapper;
 import com.eams.asset.service.AssetNumberGenerator;
+import com.eams.common.util.MybatisBatchExecutor;
 import com.eams.exception.BusinessException;
 import com.eams.lifecycle.entity.AssetLifecycle;
 import com.eams.lifecycle.mapper.AssetLifecycleMapper;
@@ -36,13 +37,14 @@ import org.springframework.util.StringUtils;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -58,9 +60,11 @@ public class PurchaseServiceImpl implements PurchaseService {
     private final com.eams.system.mapper.DepartmentMapper departmentMapper;
     private final UserMapper userMapper;
     private final AssetNumberGenerator numberGenerator;
+    private final MybatisBatchExecutor batchExecutor;
 
     private static final Map<Integer, String> PURCHASE_STATUS_MAP = new HashMap<>();
     private static final Map<Integer, String> DETAIL_STATUS_MAP = new HashMap<>();
+    private static final int BATCH_SIZE = 500;
 
     static {
         PURCHASE_STATUS_MAP.put(1, "待入库");
@@ -104,7 +108,22 @@ public class PurchaseServiceImpl implements PurchaseService {
 
         purchaseMapper.insert(purchase);
 
+        String targetDepartmentName = getDepartmentName(applicant.getDepartmentId());
+        Map<Long, AssetCategory> categoryCache = new HashMap<>();
+        List<AssetInfo> assetsToCreate = new ArrayList<>();
         for (PurchaseCreateRequest.PurchaseDetailRequest detail : request.getDetails()) {
+            if (detail.getCategoryId() == null) {
+                throw new BusinessException("资产分类不能为空");
+            }
+            AssetCategory category = categoryCache.get(detail.getCategoryId());
+            if (category == null) {
+                category = categoryMapper.selectById(detail.getCategoryId());
+                if (category == null) {
+                    throw new BusinessException("资产分类不存在");
+                }
+                categoryCache.put(detail.getCategoryId(), category);
+            }
+
             PurchaseOrderDetail purchaseDetail = new PurchaseOrderDetail();
             purchaseDetail.setPurchaseId(purchase.getId());
             purchaseDetail.setAssetName(detail.getAssetName());
@@ -122,17 +141,11 @@ public class PurchaseServiceImpl implements PurchaseService {
             detailMapper.insert(purchaseDetail);
 
             // 创建采购阶段资产信息（先不展示，入库时继续使用）
-            for (int i = 0; i < detail.getQuantity(); i++) {
-                if (detail.getCategoryId() == null) {
-                    throw new BusinessException("资产分类不能为空");
-                }
-                AssetCategory category = categoryMapper.selectById(detail.getCategoryId());
-                if (category == null) {
-                    throw new BusinessException("资产分类不存在");
-                }
-
+            List<String> assetNumbers = numberGenerator.generateAssetNumbers(resolveCategoryPrefix(category),
+                    detail.getQuantity());
+            for (String assetNumber : assetNumbers) {
                 AssetInfo asset = new AssetInfo();
-                asset.setAssetNumber(numberGenerator.generateAssetNumber(resolveCategoryPrefix(category)));
+                asset.setAssetNumber(assetNumber);
                 asset.setAssetName(detail.getAssetName());
                 asset.setCategoryId(category.getId());
                 asset.setPurchaseDetailId(purchaseDetail.getId());
@@ -144,24 +157,35 @@ public class PurchaseServiceImpl implements PurchaseService {
                 asset.setCustodian(currentUsername);
                 asset.setDepartmentId(applicant.getDepartmentId());
                 asset.setAssetStatus(0);
-                assetInfoMapper.insert(asset);
-
-                AssetLifecycle lifecycle = new AssetLifecycle();
-                lifecycle.setAssetId(asset.getId());
-                lifecycle.setStage(1);
-                lifecycle.setStageDate(request.getPurchaseDate());
-                lifecycle.setReason("采购创建");
-                lifecycle.setOperator(currentUsername);
-                lifecycle.setRemark("采购单创建生成");
-                lifecycle.setFromDepartmentId(null);
-                lifecycle.setFromDepartment(null);
-                lifecycle.setFromCustodian(null);
-                lifecycle.setToDepartmentId(applicant.getDepartmentId());
-                lifecycle.setToDepartment(getDepartmentName(applicant.getDepartmentId()));
-                lifecycle.setToCustodian(currentUsername);
-                lifecycleMapper.insert(lifecycle);
+                assetsToCreate.add(asset);
             }
         }
+
+        batchExecutor.execute(assetsToCreate, BATCH_SIZE, assetInfoMapper::insertBatch);
+
+        Map<String, Long> assetIdMap = loadAssetIdsByNumbers(assetsToCreate);
+        List<AssetLifecycle> lifecycleList = new ArrayList<>(assetsToCreate.size());
+        for (AssetInfo asset : assetsToCreate) {
+            Long assetId = assetIdMap.get(asset.getAssetNumber());
+            if (assetId == null) {
+                throw new BusinessException("采购资产创建失败，请重试");
+            }
+            AssetLifecycle lifecycle = new AssetLifecycle();
+            lifecycle.setAssetId(assetId);
+            lifecycle.setStage(1);
+            lifecycle.setStageDate(request.getPurchaseDate());
+            lifecycle.setReason("采购创建");
+            lifecycle.setOperator(currentUsername);
+            lifecycle.setRemark("采购单创建生成");
+            lifecycle.setFromDepartmentId(null);
+            lifecycle.setFromDepartment(null);
+            lifecycle.setFromCustodian(null);
+            lifecycle.setToDepartmentId(applicant.getDepartmentId());
+            lifecycle.setToDepartment(targetDepartmentName);
+            lifecycle.setToCustodian(currentUsername);
+            lifecycleList.add(lifecycle);
+        }
+        batchExecutor.execute(lifecycleList, BATCH_SIZE, lifecycleMapper::insertBatch);
 
         log.info("创建采购成功，采购单号: {}, 申请人: {}", purchaseNumber, applicant.getUsername());
         return purchase.getId();
@@ -226,38 +250,55 @@ public class PurchaseServiceImpl implements PurchaseService {
         String currentUsername = authentication.getName();
 
         PurchaseOrder purchase = purchaseMapper.selectById(id);
-        if (purchase != null) {
-            purchase.setPurchaseStatus(4);
-            purchaseMapper.updateById(purchase);
-
-            List<PurchaseOrderDetail> details = detailMapper.selectList(
-                    new LambdaQueryWrapper<PurchaseOrderDetail>()
-                            .eq(PurchaseOrderDetail::getPurchaseId, id));
-            for (PurchaseOrderDetail detail : details) {
-                List<AssetInfo> assets = assetInfoMapper.selectList(new LambdaQueryWrapper<AssetInfo>()
-                        .eq(AssetInfo::getPurchaseDetailId, detail.getId())
-                        .eq(AssetInfo::getAssetStatus, 0));
-                for (AssetInfo asset : assets) {
-                    AssetLifecycle lifecycle = new AssetLifecycle();
-                    lifecycle.setAssetId(asset.getId());
-                    lifecycle.setStage(6);
-                    lifecycle.setStageDate(LocalDate.now());
-                    lifecycle.setReason("取消采购");
-                    lifecycle.setOperator(currentUsername);
-                    lifecycle.setRemark("采购单取消");
-                    lifecycle.setPreviousStage(getLatestLifecycleStage(asset.getId()));
-                    lifecycle.setFromDepartmentId(asset.getDepartmentId());
-                    lifecycle.setFromDepartment(getDepartmentName(asset.getDepartmentId()));
-                    lifecycle.setFromCustodian(asset.getCustodian());
-                    lifecycle.setToDepartmentId(asset.getDepartmentId());
-                    lifecycle.setToDepartment(getDepartmentName(asset.getDepartmentId()));
-                    lifecycle.setToCustodian(asset.getCustodian());
-                    lifecycleMapper.insert(lifecycle);
-                    asset.setAssetStatus(6);
-                    assetInfoMapper.updateById(asset);
-                }
-            }
+        if (purchase == null) {
+            return;
         }
+
+        purchase.setPurchaseStatus(4);
+        purchaseMapper.updateById(purchase);
+
+        List<PurchaseOrderDetail> details = detailMapper.selectList(
+                new LambdaQueryWrapper<PurchaseOrderDetail>()
+                        .eq(PurchaseOrderDetail::getPurchaseId, id));
+        if (details.isEmpty()) {
+            return;
+        }
+
+        List<Long> detailIds = details.stream().map(PurchaseOrderDetail::getId).collect(Collectors.toList());
+        List<AssetInfo> assets = assetInfoMapper.selectList(new LambdaQueryWrapper<AssetInfo>()
+                .in(AssetInfo::getPurchaseDetailId, detailIds)
+                .eq(AssetInfo::getAssetStatus, 0));
+        if (assets.isEmpty()) {
+            return;
+        }
+
+        List<Long> assetIds = assets.stream().map(AssetInfo::getId).collect(Collectors.toList());
+        Map<Long, Integer> latestStageMap = getLatestLifecycleStageMap(assetIds);
+        Map<Long, String> departmentNameCache = new HashMap<>();
+        List<AssetLifecycle> lifecycleList = new ArrayList<>(assets.size());
+        for (AssetInfo asset : assets) {
+            Long departmentId = asset.getDepartmentId();
+            String departmentName = departmentNameCache.computeIfAbsent(departmentId, this::getDepartmentName);
+
+            AssetLifecycle lifecycle = new AssetLifecycle();
+            lifecycle.setAssetId(asset.getId());
+            lifecycle.setStage(6);
+            lifecycle.setStageDate(LocalDate.now());
+            lifecycle.setReason("取消采购");
+            lifecycle.setOperator(currentUsername);
+            lifecycle.setRemark("采购单取消");
+            lifecycle.setPreviousStage(latestStageMap.get(asset.getId()));
+            lifecycle.setFromDepartmentId(departmentId);
+            lifecycle.setFromDepartment(departmentName);
+            lifecycle.setFromCustodian(asset.getCustodian());
+            lifecycle.setToDepartmentId(departmentId);
+            lifecycle.setToDepartment(departmentName);
+            lifecycle.setToCustodian(asset.getCustodian());
+            lifecycleList.add(lifecycle);
+        }
+
+        batchExecutor.execute(lifecycleList, BATCH_SIZE, lifecycleMapper::insertBatch);
+        batchExecutor.execute(assetIds, BATCH_SIZE, ids -> assetInfoMapper.updateAssetStatusByIds(ids, 6));
     }
 
     @Override
@@ -295,17 +336,47 @@ public class PurchaseServiceImpl implements PurchaseService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public List<Long> inboundAsset(AssetInboundRequest request) {
-        // 获取当前登录用户
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String currentUsername = authentication.getName();
+        String currentUsername = getCurrentUsername();
+        User currentUser = getCurrentUser(currentUsername);
+        return inboundAsset(request, currentUser, currentUsername, null);
+    }
 
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public List<Long> batchInbound(BatchInboundRequest request) {
+        String currentUsername = getCurrentUsername();
+        User currentUser = getCurrentUser(currentUsername);
+        List<Long> allAssetIds = new ArrayList<>();
+        Set<Long> purchaseIdsToRefresh = new HashSet<>();
+
+        for (AssetInboundRequest inboundRequest : request.getInboundList()) {
+            List<Long> assetIds = inboundAsset(inboundRequest, currentUser, currentUsername, purchaseIdsToRefresh);
+            allAssetIds.addAll(assetIds);
+        }
+        for (Long purchaseId : purchaseIdsToRefresh) {
+            updatePurchaseStatus(purchaseId);
+        }
+
+        return allAssetIds;
+    }
+
+    private String getCurrentUsername() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        return authentication.getName();
+    }
+
+    private User getCurrentUser(String currentUsername) {
         LambdaQueryWrapper<User> userWrapper = new LambdaQueryWrapper<>();
         userWrapper.eq(User::getUsername, currentUsername);
         User currentUser = userMapper.selectOne(userWrapper);
         if (currentUser == null) {
             throw new BusinessException("当前用户不存在");
         }
+        return currentUser;
+    }
 
+    private List<Long> inboundAsset(AssetInboundRequest request, User currentUser, String currentUsername,
+            Set<Long> purchaseIdsToRefresh) {
         PurchaseOrderDetail detail = detailMapper.selectById(request.getDetailId());
         if (detail == null) {
             throw new RuntimeException("采购明细不存在");
@@ -320,18 +391,23 @@ public class PurchaseServiceImpl implements PurchaseService {
             throw new RuntimeException("入库数量超过剩余可入库数量");
         }
 
-        List<Long> assetIds = new ArrayList<>();
+        LambdaQueryWrapper<AssetInfo> assetWrapper = new LambdaQueryWrapper<>();
+        assetWrapper.eq(AssetInfo::getPurchaseDetailId, detail.getId())
+                .eq(AssetInfo::getAssetStatus, 0)
+                .orderByAsc(AssetInfo::getId)
+                .last("LIMIT " + request.getQuantity());
+        List<AssetInfo> assets = assetInfoMapper.selectList(assetWrapper);
+        if (assets.size() < request.getQuantity()) {
+            throw new BusinessException("可入库资产不足");
+        }
 
-        // 循环入库更新资产
-        for (int i = 0; i < request.getQuantity(); i++) {
-            AssetInfo asset = assetInfoMapper.selectOne(new LambdaQueryWrapper<AssetInfo>()
-                    .eq(AssetInfo::getPurchaseDetailId, detail.getId())
-                    .eq(AssetInfo::getAssetStatus, 0)
-                    .last("LIMIT 1"));
-            if (asset == null) {
-                throw new BusinessException("可入库资产不足");
-            }
+        List<Long> assetIds = assets.stream().map(AssetInfo::getId).collect(Collectors.toList());
+        Map<Long, Integer> latestStageMap = getLatestLifecycleStageMap(assetIds);
+        String toDepartmentName = getDepartmentName(currentUser.getDepartmentId());
+        Map<Long, String> departmentNameCache = new HashMap<>();
+        List<AssetLifecycle> lifecycleList = new ArrayList<>(assets.size());
 
+        for (AssetInfo asset : assets) {
             Long fromDepartmentId = asset.getDepartmentId();
             String fromCustodian = asset.getCustodian();
 
@@ -339,50 +415,73 @@ public class PurchaseServiceImpl implements PurchaseService {
             asset.setCustodian(currentUser.getUsername());
             asset.setAssetStatus(1);
             asset.setRemark(request.getRemark());
-            assetInfoMapper.updateById(asset);
-            assetIds.add(asset.getId());
 
             AssetLifecycle lifecycle = new AssetLifecycle();
             lifecycle.setAssetId(asset.getId());
             lifecycle.setStage(4);
-            lifecycle.setStageDate(LocalDateTime.now().toLocalDate());
+            lifecycle.setStageDate(LocalDate.now());
             lifecycle.setReason("采购入库");
             lifecycle.setOperator(currentUsername);
             lifecycle.setRemark("从采购单入库：" + detail.getAssetName());
-            lifecycle.setPreviousStage(getLatestLifecycleStage(asset.getId()));
+            lifecycle.setPreviousStage(latestStageMap.get(asset.getId()));
             lifecycle.setFromDepartmentId(fromDepartmentId);
-            lifecycle.setFromDepartment(getDepartmentName(fromDepartmentId));
+            lifecycle.setFromDepartment(departmentNameCache.computeIfAbsent(fromDepartmentId, this::getDepartmentName));
             lifecycle.setFromCustodian(fromCustodian);
             lifecycle.setToDepartmentId(currentUser.getDepartmentId());
-            lifecycle.setToDepartment(getDepartmentName(currentUser.getDepartmentId()));
+            lifecycle.setToDepartment(toDepartmentName);
             lifecycle.setToCustodian(currentUser.getUsername());
-            lifecycleMapper.insert(lifecycle);
+            lifecycleList.add(lifecycle);
         }
 
-        // 更新采购明细入库数量
+        batchExecutor.execute(assetIds, BATCH_SIZE, ids -> assetInfoMapper.inboundBatchUpdate(ids,
+                currentUser.getDepartmentId(), currentUser.getUsername(), request.getRemark()));
+        batchExecutor.execute(lifecycleList, BATCH_SIZE, lifecycleMapper::insertBatch);
+
         detail.setInboundQuantity(detail.getInboundQuantity() + request.getQuantity());
         if (detail.getInboundQuantity().equals(detail.getQuantity())) {
             detail.setDetailStatus(2);
         }
         detailMapper.updateById(detail);
 
-        // 更新采购单状态
-        updatePurchaseStatus(detail.getPurchaseId());
-
+        if (purchaseIdsToRefresh != null) {
+            purchaseIdsToRefresh.add(detail.getPurchaseId());
+        } else {
+            updatePurchaseStatus(detail.getPurchaseId());
+        }
         return assetIds;
     }
 
-    @Override
-    @Transactional(rollbackFor = Exception.class)
-    public List<Long> batchInbound(BatchInboundRequest request) {
-        List<Long> allAssetIds = new ArrayList<>();
-
-        for (AssetInboundRequest inboundRequest : request.getInboundList()) {
-            List<Long> assetIds = inboundAsset(inboundRequest);
-            allAssetIds.addAll(assetIds);
+    private Map<String, Long> loadAssetIdsByNumbers(List<AssetInfo> assets) {
+        Map<String, Long> assetIdMap = new HashMap<>();
+        if (assets == null || assets.isEmpty()) {
+            return assetIdMap;
         }
 
-        return allAssetIds;
+        List<String> assetNumbers = assets.stream().map(AssetInfo::getAssetNumber).collect(Collectors.toList());
+        for (int i = 0; i < assetNumbers.size(); i += BATCH_SIZE) {
+            int end = Math.min(i + BATCH_SIZE, assetNumbers.size());
+            List<AssetInfo> persistedAssets = assetInfoMapper.selectByAssetNumbers(assetNumbers.subList(i, end));
+            for (AssetInfo persistedAsset : persistedAssets) {
+                assetIdMap.put(persistedAsset.getAssetNumber(), persistedAsset.getId());
+            }
+        }
+        return assetIdMap;
+    }
+
+    private Map<Long, Integer> getLatestLifecycleStageMap(List<Long> assetIds) {
+        Map<Long, Integer> stageMap = new HashMap<>();
+        if (assetIds == null || assetIds.isEmpty()) {
+            return stageMap;
+        }
+
+        for (int i = 0; i < assetIds.size(); i += BATCH_SIZE) {
+            int end = Math.min(i + BATCH_SIZE, assetIds.size());
+            List<AssetLifecycle> latestStages = lifecycleMapper.selectLatestStagesByAssetIds(assetIds.subList(i, end));
+            for (AssetLifecycle latestStage : latestStages) {
+                stageMap.put(latestStage.getAssetId(), latestStage.getStage());
+            }
+        }
+        return stageMap;
     }
 
     @Override
@@ -513,12 +612,4 @@ public class PurchaseServiceImpl implements PurchaseService {
         return department != null ? department.getDeptName() : null;
     }
 
-    private Integer getLatestLifecycleStage(Long assetId) {
-        AssetLifecycle current = lifecycleMapper.selectOne(new LambdaQueryWrapper<AssetLifecycle>()
-                .eq(AssetLifecycle::getAssetId, assetId)
-                .orderByDesc(AssetLifecycle::getCreateTime)
-                .orderByDesc(AssetLifecycle::getId)
-                .last("LIMIT 1"));
-        return current != null ? current.getStage() : null;
-    }
 }
