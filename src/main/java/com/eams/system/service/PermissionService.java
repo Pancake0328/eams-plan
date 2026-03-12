@@ -37,4 +37,19 @@ public interface PermissionService {
      * 获取用户角色ID列表
      */
     List<Long> getUserRoleIds(Long userId);
+
+    /**
+     * 清理指定用户的权限缓存
+     */
+    void evictUserPermissionCache(Long userId);
+
+    /**
+     * 按角色清理关联用户的权限缓存
+     */
+    void evictUserPermissionCacheByRoleId(Long roleId);
+
+    /**
+     * 按菜单清理关联用户的权限缓存
+     */
+    void evictUserPermissionCacheByMenuId(Long menuId);
 }

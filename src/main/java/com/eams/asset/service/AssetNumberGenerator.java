@@ -10,6 +10,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
@@ -25,7 +27,6 @@ public class AssetNumberGenerator {
 
     private final PurchaseOrderMapper purchaseOrderMapper;
     private final AssetNumberSequenceMapper assetNumberSequenceMapper;
-    private final com.eams.asset.mapper.AssetInfoMapper assetInfoMapper;
 
     /**
      * 生成资产编号
@@ -33,7 +34,7 @@ public class AssetNumberGenerator {
      */
     @Transactional(rollbackFor = Exception.class)
     public String generateAssetNumber() {
-        return generateAssetNumber("AST");
+        return generateAssetNumbers("AST", 1).get(0);
     }
 
     /**
@@ -42,26 +43,35 @@ public class AssetNumberGenerator {
      */
     @Transactional(rollbackFor = Exception.class)
     public String generateAssetNumber(String prefix) {
+        return generateAssetNumbers(prefix, 1).get(0);
+    }
+
+    /**
+     * 批量生成资产编号（指定前缀）
+     */
+    @Transactional(rollbackFor = Exception.class)
+    public List<String> generateAssetNumbers(String prefix, int count) {
+        if (count <= 0) {
+            throw new IllegalArgumentException("批量生成数量必须大于0");
+        }
         String date = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"));
         String normalizedPrefix = StringUtils.hasText(prefix) ? prefix.trim().toUpperCase() : "AST";
 
         assetNumberSequenceMapper.insertIgnore(normalizedPrefix, date);
 
-        for (int i = 0; i < 5; i++) {
-            AssetNumberSequence sequence = assetNumberSequenceMapper.selectForUpdate(normalizedPrefix, date);
-            if (sequence == null) {
-                throw new IllegalStateException("资产编号序列初始化失败");
-            }
-            int nextNumber = sequence.getCurrentNumber() + 1;
-            assetNumberSequenceMapper.incrementSequence(normalizedPrefix, date);
-
-            String assetNumber = String.format("%s-%s-%04d", normalizedPrefix, date, nextNumber);
-            if (assetInfoMapper.countByAssetNumber(assetNumber) == 0) {
-                return assetNumber;
-            }
+        AssetNumberSequence sequence = assetNumberSequenceMapper.selectForUpdate(normalizedPrefix, date);
+        if (sequence == null) {
+            throw new IllegalStateException("资产编号序列初始化失败");
         }
 
-        throw new IllegalStateException("资产编号生成失败，请重试");
+        int startNumber = sequence.getCurrentNumber() + 1;
+        assetNumberSequenceMapper.incrementSequenceBy(normalizedPrefix, date, count);
+
+        List<String> assetNumbers = new ArrayList<>(count);
+        for (int i = 0; i < count; i++) {
+            assetNumbers.add(String.format("%s-%s-%04d", normalizedPrefix, date, startNumber + i));
+        }
+        return assetNumbers;
     }
 
     /**

@@ -6,6 +6,7 @@ import com.eams.system.dto.MenuUpdateRequest;
 import com.eams.system.entity.SysMenu;
 import com.eams.system.mapper.SysMenuMapper;
 import com.eams.system.service.MenuService;
+import com.eams.system.service.PermissionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
@@ -22,6 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class MenuServiceImpl implements MenuService {
 
     private final SysMenuMapper menuMapper;
+    private final PermissionService permissionService;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -49,6 +51,7 @@ public class MenuServiceImpl implements MenuService {
         menu.setId(id);
         applyDefaults(menu);
         menuMapper.updateById(menu);
+        permissionService.evictUserPermissionCacheByMenuId(id);
     }
 
     @Override
@@ -59,6 +62,7 @@ public class MenuServiceImpl implements MenuService {
         if (menuMapper.selectCount(wrapper) > 0) {
             throw new RuntimeException("存在子菜单，无法删除");
         }
+        permissionService.evictUserPermissionCacheByMenuId(id);
         menuMapper.deleteById(id);
     }
 

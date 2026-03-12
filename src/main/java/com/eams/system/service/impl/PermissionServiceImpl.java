@@ -1,6 +1,7 @@
 package com.eams.system.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.eams.common.util.MybatisBatchExecutor;
 import com.eams.system.entity.SysMenu;
 import com.eams.system.entity.SysRoleMenu;
 import com.eams.system.entity.SysUserRole;
@@ -14,7 +15,14 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.stream.Collectors;
 
 /**
@@ -30,9 +38,26 @@ public class PermissionServiceImpl implements PermissionService {
     private final SysUserRoleMapper userRoleMapper;
     private final SysRoleMenuMapper roleMenuMapper;
     private final SysMenuMapper menuMapper;
+    private final MybatisBatchExecutor batchExecutor;
+    private final ConcurrentMap<Long, Set<String>> userPermissionCache = new ConcurrentHashMap<>();
 
     @Override
     public Set<String> getUserPermissions(Long userId) {
+        if (userId == null) {
+            return new HashSet<>();
+        }
+        Set<String> cached = userPermissionCache.get(userId);
+        if (cached != null) {
+            return cached;
+        }
+
+        Set<String> permissions = loadUserPermissionsFromDatabase(userId);
+        Set<String> immutablePermissions = Collections.unmodifiableSet(new HashSet<>(permissions));
+        Set<String> oldPermissions = userPermissionCache.putIfAbsent(userId, immutablePermissions);
+        return oldPermissions != null ? oldPermissions : immutablePermissions;
+    }
+
+    private Set<String> loadUserPermissionsFromDatabase(Long userId) {
         // 1. 查询用户的角色ID列表
         List<Long> roleIds = getUserRoleIds(userId);
         if (roleIds.isEmpty()) {
@@ -111,12 +136,20 @@ public class PermissionServiceImpl implements PermissionService {
         userRoleMapper.delete(wrapper);
 
         // 添加新的角色关联
+        if (roleIds == null || roleIds.isEmpty()) {
+            evictUserPermissionCache(userId);
+            return;
+        }
+
+        List<SysUserRole> userRoles = new ArrayList<>(roleIds.size());
         for (Long roleId : roleIds) {
             SysUserRole userRole = new SysUserRole();
             userRole.setUserId(userId);
             userRole.setRoleId(roleId);
-            userRoleMapper.insert(userRole);
+            userRoles.add(userRole);
         }
+        batchExecutor.execute(userRoles, userRoleMapper::insertBatch);
+        evictUserPermissionCache(userId);
     }
 
     @Override
@@ -127,6 +160,63 @@ public class PermissionServiceImpl implements PermissionService {
         return userRoles.stream()
                 .map(SysUserRole::getRoleId)
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public void evictUserPermissionCache(Long userId) {
+        if (userId == null) {
+            return;
+        }
+        userPermissionCache.remove(userId);
+    }
+
+    @Override
+    public void evictUserPermissionCacheByRoleId(Long roleId) {
+        if (roleId == null) {
+            return;
+        }
+        LambdaQueryWrapper<SysUserRole> userRoleWrapper = new LambdaQueryWrapper<>();
+        userRoleWrapper.eq(SysUserRole::getRoleId, roleId);
+        List<SysUserRole> userRoles = userRoleMapper.selectList(userRoleWrapper);
+        if (userRoles.isEmpty()) {
+            return;
+        }
+        userRoles.stream()
+                .map(SysUserRole::getUserId)
+                .distinct()
+                .forEach(this::evictUserPermissionCache);
+    }
+
+    @Override
+    public void evictUserPermissionCacheByMenuId(Long menuId) {
+        if (menuId == null) {
+            return;
+        }
+        LambdaQueryWrapper<SysRoleMenu> roleMenuWrapper = new LambdaQueryWrapper<>();
+        roleMenuWrapper.eq(SysRoleMenu::getMenuId, menuId);
+        List<SysRoleMenu> roleMenus = roleMenuMapper.selectList(roleMenuWrapper);
+        if (roleMenus.isEmpty()) {
+            return;
+        }
+
+        List<Long> roleIds = roleMenus.stream()
+                .map(SysRoleMenu::getRoleId)
+                .distinct()
+                .collect(Collectors.toList());
+        if (roleIds.isEmpty()) {
+            return;
+        }
+
+        LambdaQueryWrapper<SysUserRole> userRoleWrapper = new LambdaQueryWrapper<>();
+        userRoleWrapper.in(SysUserRole::getRoleId, roleIds);
+        List<SysUserRole> userRoles = userRoleMapper.selectList(userRoleWrapper);
+        if (userRoles.isEmpty()) {
+            return;
+        }
+        userRoles.stream()
+                .map(SysUserRole::getUserId)
+                .distinct()
+                .forEach(this::evictUserPermissionCache);
     }
 
     /**

@@ -2,6 +2,7 @@ package com.eams.system.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.eams.common.util.MybatisBatchExecutor;
 import com.eams.system.dto.AssignPermissionRequest;
 import com.eams.system.dto.RoleCreateRequest;
 import com.eams.system.entity.SysMenu;
@@ -10,6 +11,7 @@ import com.eams.system.entity.SysRoleMenu;
 import com.eams.system.mapper.SysMenuMapper;
 import com.eams.system.mapper.SysRoleMapper;
 import com.eams.system.mapper.SysRoleMenuMapper;
+import com.eams.system.service.PermissionService;
 import com.eams.system.service.RoleService;
 import com.eams.system.vo.RoleVO;
 import lombok.RequiredArgsConstructor;
@@ -17,6 +19,7 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -34,6 +37,8 @@ public class RoleServiceImpl implements RoleService {
     private final SysRoleMapper roleMapper;
     private final SysRoleMenuMapper roleMenuMapper;
     private final SysMenuMapper menuMapper;
+    private final MybatisBatchExecutor batchExecutor;
+    private final PermissionService permissionService;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -60,6 +65,7 @@ public class RoleServiceImpl implements RoleService {
     @Transactional(rollbackFor = Exception.class)
     public void deleteRole(Long id) {
         roleMapper.deleteById(id);
+        permissionService.evictUserPermissionCacheByRoleId(id);
     }
 
     @Override
@@ -101,6 +107,7 @@ public class RoleServiceImpl implements RoleService {
         if (role != null) {
             role.setStatus(status);
             roleMapper.updateById(role);
+            permissionService.evictUserPermissionCacheByRoleId(id);
         }
     }
 
@@ -113,12 +120,20 @@ public class RoleServiceImpl implements RoleService {
         roleMenuMapper.delete(wrapper);
 
         // 添加新的权限
+        if (request.getMenuIds() == null || request.getMenuIds().isEmpty()) {
+            permissionService.evictUserPermissionCacheByRoleId(request.getRoleId());
+            return;
+        }
+
+        List<SysRoleMenu> roleMenus = new ArrayList<>(request.getMenuIds().size());
         for (Long menuId : request.getMenuIds()) {
             SysRoleMenu roleMenu = new SysRoleMenu();
             roleMenu.setRoleId(request.getRoleId());
             roleMenu.setMenuId(menuId);
-            roleMenuMapper.insert(roleMenu);
+            roleMenus.add(roleMenu);
         }
+        batchExecutor.execute(roleMenus, roleMenuMapper::insertBatch);
+        permissionService.evictUserPermissionCacheByRoleId(request.getRoleId());
     }
 
     @Override
