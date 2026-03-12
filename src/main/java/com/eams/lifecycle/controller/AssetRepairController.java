@@ -86,7 +86,7 @@ public class AssetRepairController {
 
     @Operation(summary = "获取报修详情")
     @GetMapping("/{repairId}")
-    @PreAuthorize("hasAuthority('repair:view')")
+    @PreAuthorize("hasAuthority('repair:view') or hasAuthority('repair:own:list')")
     public Result<RepairVO> getRepairDetail(@PathVariable Long repairId) {
         log.info("获取报修详情，repairId={}", repairId);
         RepairVO vo = repairService.getRepairDetail(repairId);
@@ -103,6 +103,20 @@ public class AssetRepairController {
             @RequestParam(required = false) Long assetId) {
         log.info("分页查询报修记录，current={}，size={}，status={}，assetId={}", current, size, status, assetId);
         Page<RepairVO> page = repairService.getRepairPage(current, size, status, assetId);
+        PageResult<RepairVO> result = PageResult.of(page.getRecords(), page.getTotal());
+        return Result.success(result);
+    }
+
+    @Operation(summary = "分页查询当前用户报修记录")
+    @GetMapping("/my")
+    @PreAuthorize("hasAuthority('repair:own:list')")
+    public Result<PageResult<RepairVO>> getMyRepairPage(
+            @RequestParam(defaultValue = "1") Integer current,
+            @RequestParam(defaultValue = "10") Integer size,
+            @RequestParam(required = false) Integer status,
+            @RequestParam(required = false) Long assetId) {
+        log.info("分页查询当前用户报修记录，current={}，size={}，status={}，assetId={}", current, size, status, assetId);
+        Page<RepairVO> page = repairService.getMyRepairPage(current, size, status, assetId);
         PageResult<RepairVO> result = PageResult.of(page.getRecords(), page.getTotal());
         return Result.success(result);
     }

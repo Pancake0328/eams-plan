@@ -66,4 +66,15 @@ public interface AssetRepairService {
      * @return 分页结果
      */
     Page<RepairVO> getRepairPage(Integer current, Integer size, Integer status, Long assetId);
+
+    /**
+     * 分页查询当前用户报修记录
+     *
+     * @param current 当前页
+     * @param size    每页大小
+     * @param status  状态筛选
+     * @param assetId 资产ID筛选
+     * @return 分页结果
+     */
+    Page<RepairVO> getMyRepairPage(Integer current, Integer size, Integer status, Long assetId);
 }

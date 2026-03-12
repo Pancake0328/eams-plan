@@ -18,6 +18,7 @@ import com.eams.system.entity.User;
 import com.eams.system.mapper.UserMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -86,6 +87,7 @@ public class AssetRepairServiceImpl implements AssetRepairService {
         if (originalStatus != 1 && originalStatus != 2) {
             throw new BusinessException("只有闲置或使用中的资产才能报修");
         }
+        ensureCanOperateOwnedAsset(asset);
 
         // 生成报修编号
         String repairNumber = generateRepairNumber();
@@ -134,6 +136,7 @@ public class AssetRepairServiceImpl implements AssetRepairService {
         if (repair == null) {
             throw new BusinessException("报修记录不存在");
         }
+        ensureCanAccessRepair(repair);
 
         if (repair.getRepairStatus() != 1) {
             throw new BusinessException("只有待审批的报修才能审批");
@@ -184,6 +187,7 @@ public class AssetRepairServiceImpl implements AssetRepairService {
         if (repair == null) {
             throw new BusinessException("报修记录不存在");
         }
+        ensureCanAccessRepair(repair);
 
         if (repair.getRepairStatus() != 2) {
             throw new BusinessException("只有已审批的报修才能开始维修");
@@ -213,6 +217,7 @@ public class AssetRepairServiceImpl implements AssetRepairService {
         if (repair == null) {
             throw new BusinessException("报修记录不存在");
         }
+        ensureCanAccessRepair(repair);
 
         if (repair.getRepairStatus() != 3) {
             throw new BusinessException("只有维修中的报修才能完成");
@@ -256,17 +261,28 @@ public class AssetRepairServiceImpl implements AssetRepairService {
         if (repair == null) {
             throw new BusinessException("报修记录不存在");
         }
+        ensureCanAccessRepair(repair);
 
         return convertToVO(repair);
     }
 
     @Override
     public Page<RepairVO> getRepairPage(Integer current, Integer size, Integer status, Long assetId) {
+        return loadRepairPage(current, size, status, assetId, null);
+    }
+
+    @Override
+    public Page<RepairVO> getMyRepairPage(Integer current, Integer size, Integer status, Long assetId) {
+        return loadRepairPage(current, size, status, assetId, getCurrentUsername());
+    }
+
+    private Page<RepairVO> loadRepairPage(Integer current, Integer size, Integer status, Long assetId, String fixedReporter) {
         Page<AssetRepair> page = new Page<>(current, size);
 
         LambdaQueryWrapper<AssetRepair> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(status != null, AssetRepair::getRepairStatus, status);
         wrapper.eq(assetId != null, AssetRepair::getAssetId, assetId);
+        wrapper.eq(StringUtils.hasText(fixedReporter), AssetRepair::getReporter, fixedReporter);
         wrapper.orderByDesc(AssetRepair::getReportTime);
 
         Page<AssetRepair> repairPage = repairMapper.selectPage(page, wrapper);
@@ -400,6 +416,39 @@ public class AssetRepairServiceImpl implements AssetRepairService {
                 .orderByDesc(AssetLifecycle::getId)
                 .last("LIMIT 1"));
         return current != null ? current.getStage() : null;
+    }
+
+    private void ensureCanOperateOwnedAsset(AssetInfo asset) {
+        if (!isOwnRepairOnlyMode()) {
+            return;
+        }
+        String currentUsername = getCurrentUsername();
+        if (!StringUtils.hasText(asset.getCustodian()) || !asset.getCustodian().equals(currentUsername)) {
+            throw new BusinessException("仅可为本人持有的资产发起报修");
+        }
+    }
+
+    private void ensureCanAccessRepair(AssetRepair repair) {
+        if (!isOwnRepairOnlyMode()) {
+            return;
+        }
+        String currentUsername = getCurrentUsername();
+        if (!StringUtils.hasText(repair.getReporter()) || !repair.getReporter().equals(currentUsername)) {
+            throw new BusinessException("仅可查看自己的报修记录");
+        }
+    }
+
+    private boolean isOwnRepairOnlyMode() {
+        return hasAuthority("repair:own:list") && !hasAuthority("repair:list");
+    }
+
+    private boolean hasAuthority(String authority) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || authentication.getAuthorities() == null) {
+            return false;
+        }
+        return authentication.getAuthorities().stream()
+                .anyMatch(grantedAuthority -> authority.equals(grantedAuthority.getAuthority()));
     }
 
     private String getDepartmentName(Long departmentId) {

@@ -3,7 +3,7 @@
     <el-card>
       <template #header>
         <div class="card-header">
-          <span>资产报修管理</span>
+          <span>{{ pageTitle }}</span>
         </div>
       </template>
 
@@ -52,7 +52,7 @@
         <el-table-column prop="reportTime" label="报修时间" width="180" />
         <el-table-column label="操作" width="280" fixed="right">
           <template #default="{ row }">
-            <el-button link type="primary" v-permission="'repair:view'" @click="viewDetail(row.id)">详情</el-button>
+            <el-button link type="primary" v-if="canViewDetail" @click="viewDetail(row.id)">详情</el-button>
             <el-button link type="success" v-permission="'repair:approve'" v-if="row.repairStatus === 1" @click="approveRepair(row.id, true)">审批通过</el-button>
             <el-button link type="danger" v-permission="'repair:approve'" v-if="row.repairStatus === 1" @click="approveRepair(row.id, false)">拒绝</el-button>
             <el-button link type="primary" v-permission="'repair:start'" v-if="row.repairStatus === 2" @click="startRepair(row)">开始维修</el-button>
@@ -119,10 +119,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive } from 'vue'
+import { computed, ref, reactive } from 'vue'
+import { useRoute } from 'vue-router'
 import { ElMessage, ElMessageBox, type FormInstance } from 'element-plus'
 import { repairApi } from '@/api/lifecycle'
 import { useUserStore } from '@/stores/user'
+import { usePermissionStore } from '@/stores/permission'
 import type { Repair } from '@/types'
 
 // 查询表单
@@ -136,7 +138,14 @@ const queryForm = reactive({
 const repairList = ref<Repair[]>([])
 const total = ref(0)
 
+const route = useRoute()
 const userStore = useUserStore()
+const permissionStore = usePermissionStore()
+const isOwnRepairPage = computed(() => route.path === '/my-repairs')
+const pageTitle = computed(() => isOwnRepairPage.value ? '我的报修' : '资产报修管理')
+const canViewDetail = computed(() =>
+  permissionStore.hasPermission('repair:view') || permissionStore.hasPermission('repair:own:list')
+)
 
 // 详情对话框
 const detailDialogVisible = ref(false)
@@ -154,12 +163,15 @@ const completeForm = reactive({
 // 加载报修列表
 const loadRepairList = async () => {
   try {
-    const res = await repairApi.getRepairPage({
+    const params = {
       current: queryForm.current,
       size: queryForm.size,
       status: queryForm.status,
       assetId: queryForm.assetId
-    })
+    }
+    const res = isOwnRepairPage.value
+      ? await repairApi.getMyRepairPage(params)
+      : await repairApi.getRepairPage(params)
     repairList.value = res.data.records
     total.value = res.data.total
   } catch (error) {

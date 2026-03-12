@@ -68,6 +68,16 @@ const routes: RouteRecordRaw[] = [
                     permission: 'asset:info:list'
                 }
             },
+            {
+                path: '/my-assets',
+                name: 'MyAssetManagement',
+                component: () => import('@/views/MyAssetManagement.vue'),
+                meta: {
+                    title: '持有资产',
+                    requiresAuth: true,
+                    permission: 'asset:info:my:list'
+                }
+            },
         {
           path: '/purchase',
           name: 'PurchaseManagement',
@@ -113,6 +123,12 @@ const routes: RouteRecordRaw[] = [
                 meta: { requiresAuth: true, title: '报修管理', permission: 'repair:list' }
             },
             {
+                path: '/my-repairs',
+                name: 'MyRepairManagement',
+                component: () => import('@/views/RepairManagement.vue'),
+                meta: { requiresAuth: true, title: '我的报修', permission: 'repair:own:list' }
+            },
+            {
                 path: '/role',
                 name: 'RoleManagement',
                 component: () => import('@/views/RoleManagement.vue'),
@@ -147,6 +163,7 @@ const homeRouteOrder = [
     '/welcome',
     '/dashboard',
     '/assets',
+    '/my-assets',
     '/purchase',
     '/categories',
     '/records',
@@ -154,6 +171,7 @@ const homeRouteOrder = [
     '/lifecycle',
     '/inventory',
     '/repair',
+    '/my-repairs',
     '/role',
     '/permissions'
 ]
