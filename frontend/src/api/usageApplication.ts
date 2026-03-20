@@ -27,6 +27,13 @@ export const usageApplicationApi = {
   },
 
   /**
+   * 分页查询我的资产使用申请
+   */
+  getMyApplicationPage(params: UsageApplicationPageQuery): Promise<Result<PageResult<UsageApplication>>> {
+    return request.get('/asset-usage-applications/my', { params })
+  },
+
+  /**
    * 审核资产使用申请
    */
   auditApplication(id: number, data: UsageApplicationAuditRequest): Promise<Result<void>> {

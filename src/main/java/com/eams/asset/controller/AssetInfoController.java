@@ -102,6 +102,21 @@ public class AssetInfoController {
     }
 
     /**
+     * 分页查询员工自助端可见资产
+     *
+     * @param query 查询条件
+     * @return 资产分页列表
+     */
+    @GetMapping("/portal")
+    @Operation(summary = "分页查询自助端资产", description = "员工自助端浏览公司资产列表")
+    @PreAuthorize("hasAuthority('asset:portal:view')")
+    public Result<Page<AssetVO>> getPortalAssetPage(AssetPageQuery query) {
+        log.info("分页查询自助端资产，query={}", query);
+        Page<AssetVO> page = assetInfoService.getPortalAssetPage(query);
+        return Result.success(page);
+    }
+
+    /**
      * 获取资产详情
      *
      * @param id 资产ID

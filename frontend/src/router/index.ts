@@ -3,6 +3,7 @@ import { useUserStore } from '@/stores/user'
 import { usePermissionStore } from '@/stores/permission'
 import Login from '@/views/Login.vue'
 import MainLayout from '@/layout/MainLayout.vue'
+import PortalLayout from '@/layout/PortalLayout.vue'
 import UserManagement from '@/views/UserManagement.vue'
 import Welcome from '@/views/Welcome.vue'
 
@@ -22,7 +23,7 @@ const routes: RouteRecordRaw[] = [
     {
         path: '/',
         component: MainLayout,
-        redirect: '/welcome',
+        redirect: '/portal/home',
         meta: {
             requiresAuth: true
         },
@@ -168,6 +169,86 @@ const routes: RouteRecordRaw[] = [
         ]
     },
     {
+        path: '/portal',
+        component: PortalLayout,
+        redirect: '/portal/home',
+        meta: {
+            requiresAuth: true,
+            portalOnly: true
+        },
+        children: [
+            {
+                path: 'home',
+                name: 'PortalHome',
+                component: () => import('@/views/portal/PortalHome.vue'),
+                meta: {
+                    title: '自助首页',
+                    requiresAuth: true,
+                    permission: ['asset:portal:view', 'asset:info:list', 'asset:info:my:list'],
+                    portalOnly: true
+                }
+            },
+            {
+                path: 'assets',
+                name: 'PortalAssetCenter',
+                component: () => import('@/views/portal/PortalAssetCenter.vue'),
+                meta: {
+                    title: '公司资产',
+                    requiresAuth: true,
+                    permission: ['asset:portal:view', 'asset:info:list', 'asset:info:my:list'],
+                    portalOnly: true
+                }
+            },
+            {
+                path: 'my-assets',
+                name: 'PortalMyAssets',
+                component: () => import('@/views/portal/PortalMyAssets.vue'),
+                meta: {
+                    title: '我的资产',
+                    requiresAuth: true,
+                    permission: ['asset:info:my:list', 'asset:info:list'],
+                    portalOnly: true
+                }
+            },
+            {
+                path: 'my-applications',
+                name: 'PortalMyApplications',
+                component: () => import('@/views/portal/PortalMyApplications.vue'),
+                meta: {
+                    title: '我的申请',
+                    requiresAuth: true,
+                    permission: ['asset:usage:my:list', 'asset:usage:apply', 'asset:usage:list'],
+                    portalOnly: true
+                }
+            },
+            {
+                path: 'my-repairs',
+                name: 'PortalMyRepairs',
+                component: () => import('@/views/portal/PortalMyRepairs.vue'),
+                meta: {
+                    title: '我的报修',
+                    requiresAuth: true,
+                    permission: ['repair:own:list', 'repair:list'],
+                    portalOnly: true
+                }
+            },
+            {
+                path: 'no-access',
+                name: 'PortalNoAccess',
+                component: () => import('@/views/NoAccess.vue'),
+                meta: {
+                    title: '无权限访问',
+                    requiresAuth: true,
+                    portalOnly: true
+                }
+            }
+        ]
+    },
+    {
+        path: '/self-service',
+        redirect: '/portal/home'
+    },
+    {
         path: '/:pathMatch(.*)*',
         redirect: '/no-access'
     }
@@ -181,7 +262,7 @@ const router = createRouter({
     routes
 })
 
-const homeRouteOrder = [
+const adminHomeRouteOrder = [
     '/welcome',
     '/dashboard',
     '/user',
@@ -200,16 +281,83 @@ const homeRouteOrder = [
     '/lifecycle'
 ]
 
-const resolveFirstAccessiblePath = (permissionStore: ReturnType<typeof usePermissionStore>) => {
-    for (const path of homeRouteOrder) {
+const portalHomeRouteOrder = [
+    '/portal/home',
+    '/portal/assets',
+    '/portal/my-assets',
+    '/portal/my-applications',
+    '/portal/my-repairs'
+]
+
+const portalIndicatorPermissions = [
+    'asset:portal:view',
+    'asset:info:my:list',
+    'asset:usage:my:list',
+    'repair:own:list'
+]
+
+const adminIndicatorPermissions = [
+    'dashboard:view',
+    'system:user:list',
+    'system:role:list',
+    'system:permission:list',
+    'asset:info:list',
+    'asset:record:list',
+    'asset:usage:list',
+    'repair:list',
+    'purchase:list',
+    'inventory:list',
+    'lifecycle:list'
+]
+
+const hasRoutePermission = (
+    permissionStore: ReturnType<typeof usePermissionStore>,
+    routePermission: string | string[]
+) => {
+    if (Array.isArray(routePermission)) {
+        return routePermission.some(permission => permissionStore.hasPermission(permission))
+    }
+    return permissionStore.hasPermission(routePermission)
+}
+
+const resolveFirstAccessiblePathByOrder = (
+    permissionStore: ReturnType<typeof usePermissionStore>,
+    routeOrder: string[],
+    fallbackPath: string
+) => {
+    for (const path of routeOrder) {
         const resolved = router.resolve(path)
         if (!resolved.matched.length) {
             continue
         }
-        const permission = resolved.meta.permission as string | undefined
-        if (!permission || permissionStore.hasPermission(permission)) {
+        const permission = resolved.meta.permission as string | string[] | undefined
+        if (!permission || hasRoutePermission(permissionStore, permission)) {
             return path
         }
+    }
+    return fallbackPath
+}
+
+const isPortalOnlyUser = (permissionStore: ReturnType<typeof usePermissionStore>) => {
+    const hasPortalCapability = portalIndicatorPermissions.some(permission =>
+        permissionStore.hasPermission(permission)
+    )
+    if (!hasPortalCapability) {
+        return false
+    }
+    return !adminIndicatorPermissions.some(permission => permissionStore.hasPermission(permission))
+}
+
+const resolveFirstAccessiblePath = (permissionStore: ReturnType<typeof usePermissionStore>) => {
+    if (isPortalOnlyUser(permissionStore)) {
+        return resolveFirstAccessiblePathByOrder(permissionStore, portalHomeRouteOrder, '/portal/no-access')
+    }
+    const adminPath = resolveFirstAccessiblePathByOrder(permissionStore, adminHomeRouteOrder, '')
+    if (adminPath) {
+        return adminPath
+    }
+    if (portalIndicatorPermissions.some(permission => permissionStore.hasPermission(permission))) {
+        return resolveFirstAccessiblePathByOrder(permissionStore, portalHomeRouteOrder, '/portal/no-access')
     }
     return '/no-access'
 }
@@ -229,20 +377,29 @@ router.beforeEach(async (to, _from, next) => {
         // 未登录，跳转到登录页
         next('/login')
     } else if (to.path === '/login' && userStore.isLoggedIn()) {
-        // 已登录，访问登录页时跳转到首页
+        // 已登录，访问登录页时统一进入自助首页
         if (userStore.userInfo?.id && !permissionStore.loaded) {
             await permissionStore.initializePermissions(userStore.userInfo.id)
         }
-        next(resolveFirstAccessiblePath(permissionStore))
+        next('/portal/home')
     } else {
         if (userStore.isLoggedIn() && userStore.userInfo?.id && !permissionStore.loaded) {
             await permissionStore.initializePermissions(userStore.userInfo.id)
         }
         if (to.path === '/') {
+            next('/portal/home')
+            return
+        }
+        if (isPortalOnlyUser(permissionStore) && !to.path.startsWith('/portal')) {
             next(resolveFirstAccessiblePath(permissionStore))
             return
         }
-        if (to.meta.permission && !permissionStore.hasPermission(to.meta.permission as string)) {
+        const routePermission = to.meta.permission as string | string[] | undefined
+        if (routePermission && !hasRoutePermission(permissionStore, routePermission)) {
+            if (to.path.startsWith('/portal')) {
+                next(resolveFirstAccessiblePathByOrder(permissionStore, portalHomeRouteOrder, '/portal/no-access'))
+                return
+            }
             const redirectPath = resolveFirstAccessiblePath(permissionStore)
             if (redirectPath === to.path) {
                 next()

@@ -110,8 +110,8 @@ const handleLogin = async () => {
       
       ElMessage.success('登录成功')
       
-      // 跳转到首页
-      router.push('/')
+      // 登录后统一进入员工自助首页
+      router.push('/portal/home')
     } catch (error) {
       console.error('登录失败:', error)
     } finally {

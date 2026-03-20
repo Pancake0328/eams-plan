@@ -153,6 +153,11 @@ public class AssetInfoServiceImpl implements AssetInfoService {
         return loadAssetPage(query, null);
     }
 
+    @Override
+    public Page<AssetVO> getPortalAssetPage(AssetPageQuery query) {
+        return loadPortalAssetPage(query);
+    }
+
     /**
      * 分页查询当前用户持有资产
      *
@@ -216,6 +221,37 @@ public class AssetInfoServiceImpl implements AssetInfoService {
                 .collect(Collectors.toList());
         voPage.setRecords(voList);
 
+        return voPage;
+    }
+
+    private Page<AssetVO> loadPortalAssetPage(AssetPageQuery query) {
+        LambdaQueryWrapper<AssetInfo> wrapper = new LambdaQueryWrapper<>();
+
+        if (StringUtils.hasText(query.getAssetNumber())) {
+            wrapper.like(AssetInfo::getAssetNumber, query.getAssetNumber());
+        }
+        if (StringUtils.hasText(query.getAssetName())) {
+            wrapper.like(AssetInfo::getAssetName, query.getAssetName());
+        }
+        if (query.getCategoryId() != null) {
+            wrapper.eq(AssetInfo::getCategoryId, query.getCategoryId());
+        }
+        if (query.getAssetStatus() != null) {
+            wrapper.eq(AssetInfo::getAssetStatus, query.getAssetStatus());
+        } else {
+            wrapper.in(AssetInfo::getAssetStatus, 1, 2, 3);
+        }
+
+        wrapper.orderByDesc(AssetInfo::getCreateTime);
+
+        Page<AssetInfo> page = new Page<>(query.getCurrent(), query.getSize());
+        page = assetInfoMapper.selectPage(page, wrapper);
+
+        Page<AssetVO> voPage = new Page<>(page.getCurrent(), page.getSize(), page.getTotal());
+        List<AssetVO> voList = page.getRecords().stream()
+                .map(this::convertToVO)
+                .collect(Collectors.toList());
+        voPage.setRecords(voList);
         return voPage;
     }
 

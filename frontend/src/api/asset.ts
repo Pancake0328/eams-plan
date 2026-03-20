@@ -20,6 +20,13 @@ export const assetApi = {
     },
 
     /**
+     * 分页查询员工自助端可见资产
+     */
+    getPortalAssetPage(query: AssetPageQuery): Promise<Result<PageResult<Asset>>> {
+        return request.get('/assets/portal', { params: query })
+    },
+
+    /**
      * 分页查询当前用户持有资产
      */
     getMyAssetPage(query: AssetPageQuery): Promise<Result<PageResult<Asset>>> {

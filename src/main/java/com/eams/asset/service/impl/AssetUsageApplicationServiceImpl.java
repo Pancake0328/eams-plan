@@ -125,6 +125,23 @@ public class AssetUsageApplicationServiceImpl implements AssetUsageApplicationSe
     }
 
     @Override
+    public Page<UsageApplicationVO> getMyApplicationPage(UsageApplicationPageQuery query) {
+        Page<AssetUsageApplication> page = new Page<>(query.getCurrent(), query.getSize());
+        LambdaQueryWrapper<AssetUsageApplication> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(AssetUsageApplication::getApplicant, getCurrentUsername())
+                .eq(query.getApplyStatus() != null, AssetUsageApplication::getApplyStatus, query.getApplyStatus())
+                .like(StringUtils.hasText(query.getAssetNumber()), AssetUsageApplication::getAssetNumber, query.getAssetNumber())
+                .like(StringUtils.hasText(query.getAssetName()), AssetUsageApplication::getAssetName, query.getAssetName())
+                .orderByDesc(AssetUsageApplication::getCreateTime);
+        Page<AssetUsageApplication> dataPage = applicationMapper.selectPage(page, wrapper);
+
+        Page<UsageApplicationVO> voPage = new Page<>(dataPage.getCurrent(), dataPage.getSize(), dataPage.getTotal());
+        List<UsageApplicationVO> records = dataPage.getRecords().stream().map(this::convertToVO).collect(Collectors.toList());
+        voPage.setRecords(records);
+        return voPage;
+    }
+
+    @Override
     @Transactional(rollbackFor = Exception.class)
     public void auditApplication(Long id, UsageApplicationAuditRequest request) {
         AssetUsageApplication application = applicationMapper.selectById(id);

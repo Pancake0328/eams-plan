@@ -46,6 +46,14 @@ public class AssetUsageApplicationController {
         return Result.success(applicationService.getApplicationPage(query));
     }
 
+    @Operation(summary = "分页查询我的资产使用申请")
+    @GetMapping("/my")
+    @PreAuthorize("hasAuthority('asset:usage:my:list')")
+    public Result<Page<UsageApplicationVO>> getMyApplicationPage(UsageApplicationPageQuery query) {
+        log.info("分页查询我的资产使用申请，query={}", query);
+        return Result.success(applicationService.getMyApplicationPage(query));
+    }
+
     @Operation(summary = "审核资产使用申请")
     @PutMapping("/{id}/audit")
     @OperationLog(module = "资产申请", action = "审核申请")

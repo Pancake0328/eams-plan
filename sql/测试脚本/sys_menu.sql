@@ -50,7 +50,7 @@ CREATE TABLE `sys_menu` (
   KEY `idx_parent_id` (`parent_id`),
   KEY `idx_menu_type` (`menu_type`),
   KEY `idx_status` (`status`)
-) ENGINE=InnoDB AUTO_INCREMENT=98 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='菜单权限表';
+) ENGINE=InnoDB AUTO_INCREMENT=108 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='菜单权限表';
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -63,7 +63,14 @@ INSERT INTO `sys_menu` VALUES (1,0,'仪表盘','MENU','dashboard:view','/dashboa
 INSERT INTO `sys_menu` VALUES
 (98,3,'申请审核管理','MENU','asset:usage:list','/usage-applications','UsageApplicationManagement','List',4,1,1,'资产管理-申请审核管理',0,'2026-03-20 21:30:00','2026-03-20 21:30:00'),
 (99,13,'申请使用','BUTTON','asset:usage:apply',NULL,NULL,NULL,12,1,1,'全部资产-申请使用',0,'2026-03-20 21:30:00','2026-03-20 21:30:00'),
-(100,98,'审核申请','BUTTON','asset:usage:audit',NULL,NULL,NULL,1,1,1,'申请审核管理-审核申请',0,'2026-03-20 21:30:00','2026-03-20 21:30:00');
+(100,98,'审核申请','BUTTON','asset:usage:audit',NULL,NULL,NULL,1,1,1,'申请审核管理-审核申请',0,'2026-03-20 21:30:00','2026-03-20 21:30:00'),
+(101,0,'员工自助','DIR',NULL,'/portal',NULL,'User',8,1,1,'员工资产自助入口',0,'2026-03-20 22:35:00','2026-03-20 22:35:00'),
+(102,101,'自助首页','MENU','asset:portal:view','/portal/home','portal/PortalHome','DataLine',1,1,1,'员工自助-首页',0,'2026-03-20 22:35:00','2026-03-20 22:35:00'),
+(103,101,'公司资产','MENU','asset:portal:view','/portal/assets','portal/PortalAssetCenter','List',2,1,1,'员工自助-公司资产',0,'2026-03-20 22:35:00','2026-03-20 22:35:00'),
+(104,101,'我的申请','MENU','asset:usage:my:list','/portal/my-applications','portal/PortalMyApplications','Document',3,1,1,'员工自助-我的申请',0,'2026-03-20 22:35:00','2026-03-20 22:35:00'),
+(105,103,'申请使用','BUTTON','asset:usage:apply',NULL,NULL,NULL,1,1,1,'员工自助-公司资产-申请使用',0,'2026-03-20 22:35:00','2026-03-20 22:35:00'),
+(106,101,'我的资产','MENU','asset:info:my:list','/portal/my-assets','portal/PortalMyAssets','Files',4,1,1,'员工自助-我的资产',0,'2026-03-20 22:35:00','2026-03-20 22:35:00'),
+(107,101,'我的报修','MENU','repair:own:list','/portal/my-repairs','portal/PortalMyRepairs','Tools',5,1,1,'员工自助-我的报修',0,'2026-03-20 22:35:00','2026-03-20 22:35:00');
 /*!40000 ALTER TABLE `sys_menu` ENABLE KEYS */;
 UNLOCK TABLES;
 SET @@SESSION.SQL_LOG_BIN = @MYSQLDUMP_TEMP_LOG_BIN;
