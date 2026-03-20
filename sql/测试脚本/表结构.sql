@@ -327,6 +327,39 @@ CREATE TABLE `asset_repair` (
 -- Table structure for table `sys_dept`
 --
 
+--
+-- Table structure for table `asset_usage_application`
+--
+
+DROP TABLE IF EXISTS `asset_usage_application`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `asset_usage_application` (
+  `id` bigint NOT NULL AUTO_INCREMENT COMMENT '主键ID',
+  `application_number` varchar(50) NOT NULL COMMENT '申请单号',
+  `asset_id` bigint NOT NULL COMMENT '资产ID',
+  `asset_number` varchar(50) NOT NULL COMMENT '资产编号',
+  `asset_name` varchar(100) NOT NULL COMMENT '资产名称',
+  `applicant` varchar(50) NOT NULL COMMENT '申请人',
+  `applicant_department_id` bigint NOT NULL COMMENT '申请人部门ID',
+  `applicant_department` varchar(100) NOT NULL COMMENT '申请人部门',
+  `apply_reason` varchar(500) NOT NULL COMMENT '申请原因',
+  `apply_status` tinyint NOT NULL DEFAULT '1' COMMENT '申请状态：1-待审核 2-已通过 3-已拒绝',
+  `auditor` varchar(50) DEFAULT NULL COMMENT '审核人',
+  `audit_time` datetime DEFAULT NULL COMMENT '审核时间',
+  `audit_remark` varchar(500) DEFAULT NULL COMMENT '审核备注',
+  `deleted` tinyint NOT NULL DEFAULT '0' COMMENT '逻辑删除：0-未删除 1-已删除',
+  `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_application_number` (`application_number`),
+  KEY `idx_asset_id` (`asset_id`),
+  KEY `idx_apply_status` (`apply_status`),
+  KEY `idx_applicant` (`applicant`),
+  KEY `idx_create_time` (`create_time`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='资产使用申请表';
+/*!40101 SET character_set_client = @saved_cs_client */;
+
 DROP TABLE IF EXISTS `sys_dept`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;

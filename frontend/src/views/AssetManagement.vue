@@ -152,6 +152,9 @@
                   <el-dropdown-item v-if="canAllocate" command="allocate" :disabled="row.assetStatus !== 1">
                     <el-icon><UserFilled /></el-icon> 分配
                   </el-dropdown-item>
+                  <el-dropdown-item v-if="canApply" command="apply" :disabled="row.assetStatus !== 1">
+                    <el-icon><Plus /></el-icon> 申请使用
+                  </el-dropdown-item>
                   <el-dropdown-item v-if="canTransfer" command="transfer" :disabled="row.assetStatus !== 2">
                     <el-icon><Switch /></el-icon> 调拨
                   </el-dropdown-item>
@@ -488,6 +491,14 @@
         <el-form-item label="报修人" v-if="showRepairFields" prop="reporter">
           <el-input v-model="operationForm.reporter" disabled />
         </el-form-item>
+        <el-form-item label="申请原因" v-if="showApplyReasonField" prop="applyReason">
+          <el-input
+            v-model="operationForm.applyReason"
+            type="textarea"
+            :rows="3"
+            placeholder="请输入申请使用原因"
+          />
+        </el-form-item>
         <el-form-item label="备注" prop="remark">
           <el-input
             v-model="operationForm.remark"
@@ -552,6 +563,7 @@ import { assetApi } from '@/api/asset'
 import { categoryApi } from '@/api/category'
 import { recordApi } from '@/api/record'
 import { repairApi } from '@/api/lifecycle'
+import { usageApplicationApi } from '@/api/usageApplication'
 import { userApi } from '@/api/user'
 import { departmentApi } from '@/api/department'
 import { purchaseApi } from '@/api/purchase'
@@ -652,10 +664,11 @@ const operationFormRef = ref<FormInstance>()
 const operationLoading = ref(false)
 
 // 操作表单
-const operationForm = reactive<RecordCreateRequest & Partial<RepairCreateRequest>>({
+const operationForm = reactive<RecordCreateRequest & Partial<RepairCreateRequest> & { applyReason: string }>({
   assetId: 0,
   toCustodian: '',
   remark: '',
+  applyReason: '',
   repairType: 2,
   repairPriority: 2,
   faultDescription: '',
@@ -681,6 +694,7 @@ const canBatchScrap = computed(() =>
 
 const canInbound = computed(() => permissionStore.hasPermission('asset:record:in'))
 const canAllocate = computed(() => permissionStore.hasPermission('asset:record:allocate'))
+const canApply = computed(() => permissionStore.hasPermission('asset:usage:apply'))
 const canTransfer = computed(() => permissionStore.hasPermission('asset:record:transfer'))
 const canReturn = computed(() => permissionStore.hasPermission('asset:record:return'))
 const canRepair = computed(() => permissionStore.hasPermission('asset:record:repair'))
@@ -688,6 +702,7 @@ const canScrap = computed(() => permissionStore.hasPermission('asset:record:scra
 const canHistory = computed(() => permissionStore.hasPermission('asset:record:history'))
 
 const canShowMoreActions = computed(() =>
+  canApply.value ||
   canAllocate.value ||
   canTransfer.value ||
   canReturn.value ||
@@ -715,6 +730,10 @@ const showCustodianField = computed(() => {
   return ['allocate', 'transfer'].includes(operationType.value)
 })
 
+const showApplyReasonField = computed(() => {
+  return operationType.value === 'apply'
+})
+
 const showRepairFields = computed(() => {
   return operationType.value === 'repair'
 })
@@ -733,6 +752,19 @@ const operationRules: FormRules = {
       trigger: 'change'
     },
     { max: 50, message: '责任人长度不能超过50个字符', trigger: 'blur' }
+  ],
+  applyReason: [
+    {
+      validator: (_rule, value, callback) => {
+        if (showApplyReasonField.value && !value) {
+          callback(new Error('请输入申请原因'))
+        } else {
+          callback()
+        }
+      },
+      trigger: 'blur'
+    },
+    { max: 500, message: '申请原因长度不能超过500个字符', trigger: 'blur' }
   ],
   faultDescription: [
     {
@@ -1112,6 +1144,7 @@ const handleOperation = async (command: string, row: Asset) => {
   // 设置对话框标题
   const titleMap: Record<string, string> = {
     allocate: '分配资产',
+    apply: '申请使用',
     transfer: '调拨资产',
     return: '归还资产',
     scrap: '报废资产',
@@ -1123,6 +1156,7 @@ const handleOperation = async (command: string, row: Asset) => {
   operationForm.assetId = row.id
   operationForm.toCustodian = ''
   operationForm.remark = ''
+  operationForm.applyReason = ''
   operationForm.faultDescription = ''
   operationForm.repairType = 2
   operationForm.repairPriority = 2
@@ -1168,6 +1202,7 @@ const handleBatchOperation = (command: string) => {
   operationForm.assetId = selectedAssets.value[0].id
   operationForm.toCustodian = ''
   operationForm.remark = ''
+  operationForm.applyReason = ''
   operationForm.faultDescription = ''
   operationForm.repairType = 2
   operationForm.repairPriority = 2
@@ -1212,6 +1247,18 @@ const handleOperationSubmit = async () => {
           remark: operationForm.remark
         })
         ElMessage.success('送修成功，已生成报修记录')
+        operationVisible.value = false
+        loadAssetList()
+        return
+      }
+
+      if (operationType.value === 'apply') {
+        const target = targets[0]
+        await usageApplicationApi.createApplication({
+          assetId: target.id,
+          applyReason: operationForm.applyReason || ''
+        })
+        ElMessage.success('申请提交成功，等待审核')
         operationVisible.value = false
         loadAssetList()
         return
@@ -1276,6 +1323,7 @@ const handleOperationClose = () => {
   currentAsset.value = null
   operationType.value = ''
   operationTargets.value = []
+  operationForm.applyReason = ''
   operationForm.faultDescription = ''
   operationForm.repairType = 2
   operationForm.repairPriority = 2

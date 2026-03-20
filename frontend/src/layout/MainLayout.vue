@@ -107,6 +107,8 @@ const breadcrumb = computed(() => {
     '/my-assets': '持有资产',
     '/categories': '资产分类',
     '/records': '流转记录',
+    '/usage-applications': '申请审核管理',
+    '/usage-application': '申请审核管理',
     '/purchase': '采购管理',
     '/repair': '全部报修',
     '/my-repairs': '我的报修',

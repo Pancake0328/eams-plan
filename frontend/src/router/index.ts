@@ -96,6 +96,23 @@ const routes: RouteRecordRaw[] = [
                 }
             },
             {
+                path: '/usage-applications',
+                name: 'UsageApplicationManagement',
+                component: () => import('@/views/UsageApplicationManagement.vue'),
+                meta: {
+                    title: '申请审核管理',
+                    requiresAuth: true,
+                    permission: 'asset:usage:list'
+                }
+            },
+            {
+                path: '/usage-application',
+                redirect: '/usage-applications',
+                meta: {
+                    requiresAuth: true
+                }
+            },
+            {
                 path: '/departments',
                 name: 'DepartmentManagement',
                 component: () => import('@/views/DepartmentManagement.vue'),
@@ -149,6 +166,10 @@ const routes: RouteRecordRaw[] = [
             },
             
         ]
+    },
+    {
+        path: '/:pathMatch(.*)*',
+        redirect: '/no-access'
     }
 ]
 
@@ -171,6 +192,7 @@ const homeRouteOrder = [
     '/my-assets',
     '/categories',
     '/records',
+    '/usage-applications',
     '/purchase',
     '/repair',
     '/my-repairs',
