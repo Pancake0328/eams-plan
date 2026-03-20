@@ -22,6 +22,11 @@ public interface AssetUsageApplicationService {
     Page<UsageApplicationVO> getApplicationPage(UsageApplicationPageQuery query);
 
     /**
+     * 分页查询当前用户申请
+     */
+    Page<UsageApplicationVO> getMyApplicationPage(UsageApplicationPageQuery query);
+
+    /**
      * 审核申请（通过/拒绝）
      */
     void auditApplication(Long id, UsageApplicationAuditRequest request);

@@ -3,6 +3,7 @@ import { useUserStore } from '@/stores/user'
 import { usePermissionStore } from '@/stores/permission'
 import Login from '@/views/Login.vue'
 import MainLayout from '@/layout/MainLayout.vue'
+import PortalLayout from '@/layout/PortalLayout.vue'
 import UserManagement from '@/views/UserManagement.vue'
 import Welcome from '@/views/Welcome.vue'
 
@@ -168,6 +169,86 @@ const routes: RouteRecordRaw[] = [
         ]
     },
     {
+        path: '/portal',
+        component: PortalLayout,
+        redirect: '/portal/home',
+        meta: {
+            requiresAuth: true,
+            portalOnly: true
+        },
+        children: [
+            {
+                path: 'home',
+                name: 'PortalHome',
+                component: () => import('@/views/portal/PortalHome.vue'),
+                meta: {
+                    title: '自助首页',
+                    requiresAuth: true,
+                    permission: 'asset:portal:view',
+                    portalOnly: true
+                }
+            },
+            {
+                path: 'assets',
+                name: 'PortalAssetCenter',
+                component: () => import('@/views/portal/PortalAssetCenter.vue'),
+                meta: {
+                    title: '公司资产',
+                    requiresAuth: true,
+                    permission: 'asset:portal:view',
+                    portalOnly: true
+                }
+            },
+            {
+                path: 'my-assets',
+                name: 'PortalMyAssets',
+                component: () => import('@/views/portal/PortalMyAssets.vue'),
+                meta: {
+                    title: '我的资产',
+                    requiresAuth: true,
+                    permission: 'asset:info:my:list',
+                    portalOnly: true
+                }
+            },
+            {
+                path: 'my-applications',
+                name: 'PortalMyApplications',
+                component: () => import('@/views/portal/PortalMyApplications.vue'),
+                meta: {
+                    title: '我的申请',
+                    requiresAuth: true,
+                    permission: 'asset:usage:my:list',
+                    portalOnly: true
+                }
+            },
+            {
+                path: 'my-repairs',
+                name: 'PortalMyRepairs',
+                component: () => import('@/views/portal/PortalMyRepairs.vue'),
+                meta: {
+                    title: '我的报修',
+                    requiresAuth: true,
+                    permission: 'repair:own:list',
+                    portalOnly: true
+                }
+            },
+            {
+                path: 'no-access',
+                name: 'PortalNoAccess',
+                component: () => import('@/views/NoAccess.vue'),
+                meta: {
+                    title: '无权限访问',
+                    requiresAuth: true,
+                    portalOnly: true
+                }
+            }
+        ]
+    },
+    {
+        path: '/self-service',
+        redirect: '/portal/home'
+    },
+    {
         path: '/:pathMatch(.*)*',
         redirect: '/no-access'
     }
@@ -181,7 +262,7 @@ const router = createRouter({
     routes
 })
 
-const homeRouteOrder = [
+const adminHomeRouteOrder = [
     '/welcome',
     '/dashboard',
     '/user',
@@ -200,8 +281,34 @@ const homeRouteOrder = [
     '/lifecycle'
 ]
 
-const resolveFirstAccessiblePath = (permissionStore: ReturnType<typeof usePermissionStore>) => {
-    for (const path of homeRouteOrder) {
+const portalHomeRouteOrder = [
+    '/portal/home',
+    '/portal/assets',
+    '/portal/my-assets',
+    '/portal/my-applications',
+    '/portal/my-repairs'
+]
+
+const adminIndicatorPermissions = [
+    'dashboard:view',
+    'system:user:list',
+    'system:role:list',
+    'system:permission:list',
+    'asset:info:list',
+    'asset:record:list',
+    'asset:usage:list',
+    'repair:list',
+    'purchase:list',
+    'inventory:list',
+    'lifecycle:list'
+]
+
+const resolveFirstAccessiblePathByOrder = (
+    permissionStore: ReturnType<typeof usePermissionStore>,
+    routeOrder: string[],
+    fallbackPath: string
+) => {
+    for (const path of routeOrder) {
         const resolved = router.resolve(path)
         if (!resolved.matched.length) {
             continue
@@ -210,6 +317,27 @@ const resolveFirstAccessiblePath = (permissionStore: ReturnType<typeof usePermis
         if (!permission || permissionStore.hasPermission(permission)) {
             return path
         }
+    }
+    return fallbackPath
+}
+
+const isPortalOnlyUser = (permissionStore: ReturnType<typeof usePermissionStore>) => {
+    if (!permissionStore.hasPermission('asset:portal:view')) {
+        return false
+    }
+    return !adminIndicatorPermissions.some(permission => permissionStore.hasPermission(permission))
+}
+
+const resolveFirstAccessiblePath = (permissionStore: ReturnType<typeof usePermissionStore>) => {
+    if (isPortalOnlyUser(permissionStore)) {
+        return resolveFirstAccessiblePathByOrder(permissionStore, portalHomeRouteOrder, '/portal/no-access')
+    }
+    const adminPath = resolveFirstAccessiblePathByOrder(permissionStore, adminHomeRouteOrder, '')
+    if (adminPath) {
+        return adminPath
+    }
+    if (permissionStore.hasPermission('asset:portal:view')) {
+        return resolveFirstAccessiblePathByOrder(permissionStore, portalHomeRouteOrder, '/portal/no-access')
     }
     return '/no-access'
 }
@@ -239,6 +367,14 @@ router.beforeEach(async (to, _from, next) => {
             await permissionStore.initializePermissions(userStore.userInfo.id)
         }
         if (to.path === '/') {
+            next(resolveFirstAccessiblePath(permissionStore))
+            return
+        }
+        if (isPortalOnlyUser(permissionStore) && !to.path.startsWith('/portal')) {
+            next(resolveFirstAccessiblePath(permissionStore))
+            return
+        }
+        if (to.meta.portalOnly && !permissionStore.hasPermission('asset:portal:view')) {
             next(resolveFirstAccessiblePath(permissionStore))
             return
         }
