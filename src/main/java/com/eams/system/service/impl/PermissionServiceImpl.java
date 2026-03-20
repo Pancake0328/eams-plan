@@ -3,9 +3,11 @@ package com.eams.system.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.eams.common.util.MybatisBatchExecutor;
 import com.eams.system.entity.SysMenu;
+import com.eams.system.entity.SysRole;
 import com.eams.system.entity.SysRoleMenu;
 import com.eams.system.entity.SysUserRole;
 import com.eams.system.mapper.SysMenuMapper;
+import com.eams.system.mapper.SysRoleMapper;
 import com.eams.system.mapper.SysRoleMenuMapper;
 import com.eams.system.mapper.SysUserRoleMapper;
 import com.eams.system.service.PermissionService;
@@ -18,8 +20,11 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -36,6 +41,7 @@ import java.util.stream.Collectors;
 public class PermissionServiceImpl implements PermissionService {
 
     private final SysUserRoleMapper userRoleMapper;
+    private final SysRoleMapper roleMapper;
     private final SysRoleMenuMapper roleMenuMapper;
     private final SysMenuMapper menuMapper;
     private final MybatisBatchExecutor batchExecutor;
@@ -79,7 +85,10 @@ public class PermissionServiceImpl implements PermissionService {
         }
 
         // 3. 查询菜单的权限标识
-        List<SysMenu> menus = menuMapper.selectBatchIds(menuIds);
+        LambdaQueryWrapper<SysMenu> menuWrapper = new LambdaQueryWrapper<>();
+        menuWrapper.in(SysMenu::getId, menuIds);
+        menuWrapper.eq(SysMenu::getStatus, 1);
+        List<SysMenu> menus = menuMapper.selectList(menuWrapper);
         return menus.stream()
                 .map(SysMenu::getPermissionCode)
                 .filter(code -> code != null && !code.isEmpty())
@@ -107,13 +116,37 @@ public class PermissionServiceImpl implements PermissionService {
             return new ArrayList<>();
         }
 
-        // 2. 查询菜单（只查询DIR和MENU类型）
-        LambdaQueryWrapper<SysMenu> menuWrapper = new LambdaQueryWrapper<>();
-        menuWrapper.in(SysMenu::getId, menuIds);
-        menuWrapper.in(SysMenu::getMenuType, Arrays.asList("DIR", "MENU"));
-        menuWrapper.eq(SysMenu::getStatus, 1);
-        menuWrapper.orderByAsc(SysMenu::getSortOrder);
-        List<SysMenu> menus = menuMapper.selectList(menuWrapper);
+        // 2. 加载启用菜单，用于从授权菜单向上回溯父级链路
+        LambdaQueryWrapper<SysMenu> enabledWrapper = new LambdaQueryWrapper<>();
+        enabledWrapper.eq(SysMenu::getStatus, 1);
+        List<SysMenu> enabledMenus = menuMapper.selectList(enabledWrapper);
+        if (enabledMenus.isEmpty()) {
+            return new ArrayList<>();
+        }
+
+        Set<Long> grantedMenuIds = new HashSet<>(menuIds);
+        Map<Long, SysMenu> menuById = enabledMenus.stream()
+                .collect(Collectors.toMap(SysMenu::getId, menu -> menu));
+        Set<Long> displayMenuIds = new HashSet<>();
+
+        for (Long menuId : grantedMenuIds) {
+            SysMenu current = menuById.get(menuId);
+            while (current != null) {
+                displayMenuIds.add(current.getId());
+                Long parentId = current.getParentId();
+                if (parentId == null || parentId == 0L) {
+                    break;
+                }
+                current = menuById.get(parentId);
+            }
+        }
+
+        List<SysMenu> menus = enabledMenus.stream()
+                .filter(menu -> Arrays.asList("DIR", "MENU").contains(menu.getMenuType()))
+                .filter(menu -> menu.getVisible() != null && menu.getVisible() == 1)
+                .filter(menu -> displayMenuIds.contains(menu.getId()))
+                .sorted(Comparator.comparing(SysMenu::getSortOrder, Comparator.nullsLast(Integer::compareTo)))
+                .collect(Collectors.toList());
 
         // 3. 构建菜单树
         return buildMenuTree(menus, 0L);
@@ -157,8 +190,16 @@ public class PermissionServiceImpl implements PermissionService {
         LambdaQueryWrapper<SysUserRole> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(SysUserRole::getUserId, userId);
         List<SysUserRole> userRoles = userRoleMapper.selectList(wrapper);
-        return userRoles.stream()
+        List<Long> roleIds = userRoles.stream()
                 .map(SysUserRole::getRoleId)
+                .distinct()
+                .collect(Collectors.toList());
+        if (roleIds.isEmpty()) {
+            return new ArrayList<>();
+        }
+        return roleMapper.selectBatchIds(roleIds).stream()
+                .filter(role -> role.getStatus() != null && role.getStatus() == 1)
+                .map(SysRole::getId)
                 .collect(Collectors.toList());
     }
 
@@ -226,7 +267,7 @@ public class PermissionServiceImpl implements PermissionService {
         List<MenuTreeVO> tree = new ArrayList<>();
 
         for (SysMenu menu : menus) {
-            if (menu.getParentId().equals(parentId)) {
+            if (Objects.equals(menu.getParentId(), parentId)) {
                 MenuTreeVO node = new MenuTreeVO();
                 BeanUtils.copyProperties(menu, node);
 

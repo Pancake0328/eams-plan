@@ -3,7 +3,7 @@
     <el-card>
       <template #header>
         <div class="card-header">
-          <span>资产生命周期管理</span>
+          <span>资产生命周期</span>
         </div>
       </template>
 

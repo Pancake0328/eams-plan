@@ -2,7 +2,7 @@
   <div class="asset-management-page">
     <!-- 页面标题 -->
     <div class="page-header">
-      <h2>资产信息管理</h2>
+      <h2>全部资产</h2>
       <p>管理企业资产基础信息</p>
     </div>
 

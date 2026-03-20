@@ -2,7 +2,7 @@
   <div class="category-management-page">
     <!-- 页面标题 -->
     <div class="page-header">
-      <h2>资产分类管理</h2>
+      <h2>资产分类</h2>
       <p>管理资产分类树形结构</p>
     </div>
 
