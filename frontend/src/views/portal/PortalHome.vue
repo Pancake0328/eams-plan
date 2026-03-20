@@ -7,6 +7,7 @@
         <div class="quick-actions">
           <el-button type="primary" @click="router.push('/portal/assets')">查看公司资产</el-button>
           <el-button @click="router.push('/portal/my-applications')">我的申请记录</el-button>
+          <el-button @click="router.push('/portal/my-repairs')">维修进度</el-button>
         </div>
       </div>
       <div class="hero-right">
@@ -40,8 +41,20 @@
         </el-col>
         <el-col :xs="12" :md="6">
           <el-card shadow="hover" class="stat-item">
-            <div class="label">我的报修</div>
+            <div class="label">维修工单总数</div>
             <div class="value">{{ summary.myRepairs }}</div>
+          </el-card>
+        </el-col>
+        <el-col :xs="12" :md="6">
+          <el-card shadow="hover" class="stat-item">
+            <div class="label">维修中</div>
+            <div class="value warning">{{ summary.repairingRepairs }}</div>
+          </el-card>
+        </el-col>
+        <el-col :xs="12" :md="6">
+          <el-card shadow="hover" class="stat-item">
+            <div class="label">待审批报修</div>
+            <div class="value">{{ summary.pendingRepairs }}</div>
           </el-card>
         </el-col>
       </el-row>
@@ -90,6 +103,31 @@
           </el-card>
         </el-col>
       </el-row>
+
+      <el-row :gutter="16" style="margin-top: 16px">
+        <el-col :xs="24">
+          <el-card shadow="never">
+            <template #header>
+              <div class="card-header">
+                <span>最近维修动态</span>
+                <el-button link type="primary" @click="router.push('/portal/my-repairs')">查看全部</el-button>
+              </div>
+            </template>
+            <el-table :data="recentRepairs" v-loading="loading.repairs" size="small" stripe>
+              <el-table-column prop="repairNumber" label="报修编号" width="180" />
+              <el-table-column prop="assetName" label="资产名称" min-width="130" />
+              <el-table-column prop="repairTypeText" label="报修类型" width="110" />
+              <el-table-column prop="repairStatusText" label="状态" width="110">
+                <template #default="{ row }">
+                  <el-tag :type="getRepairStatusType(row.repairStatus)">{{ row.repairStatusText }}</el-tag>
+                </template>
+              </el-table-column>
+              <el-table-column prop="faultDescription" label="故障描述" min-width="200" show-overflow-tooltip />
+              <el-table-column prop="reportTime" label="报修时间" width="165" />
+            </el-table>
+          </el-card>
+        </el-col>
+      </el-row>
     </section>
   </div>
 </template>
@@ -101,13 +139,14 @@ import { assetApi } from '@/api/asset'
 import { usageApplicationApi } from '@/api/usageApplication'
 import { repairApi } from '@/api/lifecycle'
 import { useUserStore } from '@/stores/user'
-import type { Asset, UsageApplication } from '@/types'
+import type { Asset, Repair, UsageApplication } from '@/types'
 
 const router = useRouter()
 const userStore = useUserStore()
 
 const loading = reactive({
-  applications: false
+  applications: false,
+  repairs: false
 })
 
 const summary = reactive({
@@ -115,11 +154,14 @@ const summary = reactive({
   myAssets: 0,
   pendingApplications: 0,
   approvedApplications: 0,
-  myRepairs: 0
+  myRepairs: 0,
+  pendingRepairs: 0,
+  repairingRepairs: 0
 })
 
 const recentApplications = ref<UsageApplication[]>([])
 const myAssets = ref<Asset[]>([])
+const recentRepairs = ref<Repair[]>([])
 
 const getStatusType = (status: number) => {
   const map: Record<number, string> = {
@@ -130,13 +172,26 @@ const getStatusType = (status: number) => {
   return map[status] || 'info'
 }
 
+const getRepairStatusType = (status: number) => {
+  const map: Record<number, string> = {
+    1: 'warning',
+    2: 'primary',
+    3: 'warning',
+    4: 'success',
+    5: 'danger'
+  }
+  return map[status] || 'info'
+}
+
 const loadSummary = async () => {
-  const [portalAssets, ownedAssets, pendingApply, approvedApply, repairs] = await Promise.all([
+  const [portalAssets, ownedAssets, pendingApply, approvedApply, repairs, pendingRepairs, repairingRepairs] = await Promise.all([
     assetApi.getPortalAssetPage({ current: 1, size: 1 }),
     assetApi.getMyAssetPage({ current: 1, size: 6 }),
     usageApplicationApi.getMyApplicationPage({ current: 1, size: 1, applyStatus: 1 }),
     usageApplicationApi.getMyApplicationPage({ current: 1, size: 1, applyStatus: 2 }),
-    repairApi.getMyRepairPage({ current: 1, size: 1 })
+    repairApi.getMyRepairPage({ current: 1, size: 1 }),
+    repairApi.getMyRepairPage({ current: 1, size: 1, status: 1 }),
+    repairApi.getMyRepairPage({ current: 1, size: 1, status: 3 })
   ])
 
   summary.totalAssets = portalAssets.data.total
@@ -144,6 +199,8 @@ const loadSummary = async () => {
   summary.pendingApplications = pendingApply.data.total
   summary.approvedApplications = approvedApply.data.total
   summary.myRepairs = repairs.data.total
+  summary.pendingRepairs = pendingRepairs.data.total
+  summary.repairingRepairs = repairingRepairs.data.total
   myAssets.value = ownedAssets.data.records
 }
 
@@ -162,8 +219,23 @@ const loadRecentApplications = async () => {
   }
 }
 
+const loadRecentRepairs = async () => {
+  loading.repairs = true
+  try {
+    const res = await repairApi.getMyRepairPage({
+      current: 1,
+      size: 5
+    })
+    recentRepairs.value = res.data.records
+  } catch (error) {
+    console.error('加载最近维修动态失败:', error)
+  } finally {
+    loading.repairs = false
+  }
+}
+
 onMounted(async () => {
-  await Promise.all([loadSummary(), loadRecentApplications()])
+  await Promise.all([loadSummary(), loadRecentApplications(), loadRecentRepairs()])
 })
 </script>
 

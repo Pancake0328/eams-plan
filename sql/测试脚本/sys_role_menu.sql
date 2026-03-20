@@ -39,7 +39,7 @@ CREATE TABLE `sys_role_menu` (
   UNIQUE KEY `uk_role_menu` (`role_id`,`menu_id`),
   KEY `idx_role_id` (`role_id`),
   KEY `idx_menu_id` (`menu_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=333 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='角色菜单关联表';
+) ENGINE=InnoDB AUTO_INCREMENT=334 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='角色菜单关联表';
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -73,6 +73,7 @@ INSERT INTO `sys_role_menu` VALUES
 (321,2,105,'2026-03-20 22:35:00'),
 (329,2,106,'2026-03-20 22:35:00'),
 (330,2,107,'2026-03-20 22:35:00'),
+(333,2,73,'2026-03-20 23:28:00'),
 (322,4,101,'2026-03-20 22:35:00'),
 (323,4,102,'2026-03-20 22:35:00'),
 (324,4,103,'2026-03-20 22:35:00'),
