@@ -184,7 +184,7 @@ const routes: RouteRecordRaw[] = [
                 meta: {
                     title: '自助首页',
                     requiresAuth: true,
-                    permission: 'asset:portal:view',
+                    permission: ['asset:portal:view', 'asset:info:list', 'asset:info:my:list'],
                     portalOnly: true
                 }
             },
@@ -195,7 +195,7 @@ const routes: RouteRecordRaw[] = [
                 meta: {
                     title: '公司资产',
                     requiresAuth: true,
-                    permission: 'asset:portal:view',
+                    permission: ['asset:portal:view', 'asset:info:list', 'asset:info:my:list'],
                     portalOnly: true
                 }
             },
@@ -206,7 +206,7 @@ const routes: RouteRecordRaw[] = [
                 meta: {
                     title: '我的资产',
                     requiresAuth: true,
-                    permission: 'asset:info:my:list',
+                    permission: ['asset:info:my:list', 'asset:info:list'],
                     portalOnly: true
                 }
             },
@@ -217,7 +217,7 @@ const routes: RouteRecordRaw[] = [
                 meta: {
                     title: '我的申请',
                     requiresAuth: true,
-                    permission: 'asset:usage:my:list',
+                    permission: ['asset:usage:my:list', 'asset:usage:apply', 'asset:usage:list'],
                     portalOnly: true
                 }
             },
@@ -228,7 +228,7 @@ const routes: RouteRecordRaw[] = [
                 meta: {
                     title: '我的报修',
                     requiresAuth: true,
-                    permission: 'repair:own:list',
+                    permission: ['repair:own:list', 'repair:list'],
                     portalOnly: true
                 }
             },
@@ -289,6 +289,13 @@ const portalHomeRouteOrder = [
     '/portal/my-repairs'
 ]
 
+const portalIndicatorPermissions = [
+    'asset:portal:view',
+    'asset:info:my:list',
+    'asset:usage:my:list',
+    'repair:own:list'
+]
+
 const adminIndicatorPermissions = [
     'dashboard:view',
     'system:user:list',
@@ -303,6 +310,16 @@ const adminIndicatorPermissions = [
     'lifecycle:list'
 ]
 
+const hasRoutePermission = (
+    permissionStore: ReturnType<typeof usePermissionStore>,
+    routePermission: string | string[]
+) => {
+    if (Array.isArray(routePermission)) {
+        return routePermission.some(permission => permissionStore.hasPermission(permission))
+    }
+    return permissionStore.hasPermission(routePermission)
+}
+
 const resolveFirstAccessiblePathByOrder = (
     permissionStore: ReturnType<typeof usePermissionStore>,
     routeOrder: string[],
@@ -313,8 +330,8 @@ const resolveFirstAccessiblePathByOrder = (
         if (!resolved.matched.length) {
             continue
         }
-        const permission = resolved.meta.permission as string | undefined
-        if (!permission || permissionStore.hasPermission(permission)) {
+        const permission = resolved.meta.permission as string | string[] | undefined
+        if (!permission || hasRoutePermission(permissionStore, permission)) {
             return path
         }
     }
@@ -322,7 +339,10 @@ const resolveFirstAccessiblePathByOrder = (
 }
 
 const isPortalOnlyUser = (permissionStore: ReturnType<typeof usePermissionStore>) => {
-    if (!permissionStore.hasPermission('asset:portal:view')) {
+    const hasPortalCapability = portalIndicatorPermissions.some(permission =>
+        permissionStore.hasPermission(permission)
+    )
+    if (!hasPortalCapability) {
         return false
     }
     return !adminIndicatorPermissions.some(permission => permissionStore.hasPermission(permission))
@@ -336,7 +356,7 @@ const resolveFirstAccessiblePath = (permissionStore: ReturnType<typeof usePermis
     if (adminPath) {
         return adminPath
     }
-    if (permissionStore.hasPermission('asset:portal:view')) {
+    if (portalIndicatorPermissions.some(permission => permissionStore.hasPermission(permission))) {
         return resolveFirstAccessiblePathByOrder(permissionStore, portalHomeRouteOrder, '/portal/no-access')
     }
     return '/no-access'
@@ -374,11 +394,12 @@ router.beforeEach(async (to, _from, next) => {
             next(resolveFirstAccessiblePath(permissionStore))
             return
         }
-        if (to.meta.portalOnly && !permissionStore.hasPermission('asset:portal:view')) {
-            next(resolveFirstAccessiblePath(permissionStore))
-            return
-        }
-        if (to.meta.permission && !permissionStore.hasPermission(to.meta.permission as string)) {
+        const routePermission = to.meta.permission as string | string[] | undefined
+        if (routePermission && !hasRoutePermission(permissionStore, routePermission)) {
+            if (to.path.startsWith('/portal')) {
+                next(resolveFirstAccessiblePathByOrder(permissionStore, portalHomeRouteOrder, '/portal/no-access'))
+                return
+            }
             const redirectPath = resolveFirstAccessiblePath(permissionStore)
             if (redirectPath === to.path) {
                 next()
