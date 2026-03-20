@@ -8,9 +8,11 @@ import com.eams.system.dto.RoleCreateRequest;
 import com.eams.system.entity.SysMenu;
 import com.eams.system.entity.SysRole;
 import com.eams.system.entity.SysRoleMenu;
+import com.eams.system.entity.SysUserRole;
 import com.eams.system.mapper.SysMenuMapper;
 import com.eams.system.mapper.SysRoleMapper;
 import com.eams.system.mapper.SysRoleMenuMapper;
+import com.eams.system.mapper.SysUserRoleMapper;
 import com.eams.system.service.PermissionService;
 import com.eams.system.service.RoleService;
 import com.eams.system.vo.RoleVO;
@@ -36,6 +38,7 @@ public class RoleServiceImpl implements RoleService {
 
     private final SysRoleMapper roleMapper;
     private final SysRoleMenuMapper roleMenuMapper;
+    private final SysUserRoleMapper userRoleMapper;
     private final SysMenuMapper menuMapper;
     private final MybatisBatchExecutor batchExecutor;
     private final PermissionService permissionService;
@@ -64,8 +67,23 @@ public class RoleServiceImpl implements RoleService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void deleteRole(Long id) {
+        List<Long> relatedUserIds = userRoleMapper.selectList(
+                        new LambdaQueryWrapper<SysUserRole>().eq(SysUserRole::getRoleId, id))
+                .stream()
+                .map(SysUserRole::getUserId)
+                .distinct()
+                .collect(Collectors.toList());
+
+        LambdaQueryWrapper<SysRoleMenu> roleMenuWrapper = new LambdaQueryWrapper<>();
+        roleMenuWrapper.eq(SysRoleMenu::getRoleId, id);
+        roleMenuMapper.delete(roleMenuWrapper);
+
+        LambdaQueryWrapper<SysUserRole> userRoleWrapper = new LambdaQueryWrapper<>();
+        userRoleWrapper.eq(SysUserRole::getRoleId, id);
+        userRoleMapper.delete(userRoleWrapper);
+
         roleMapper.deleteById(id);
-        permissionService.evictUserPermissionCacheByRoleId(id);
+        relatedUserIds.forEach(permissionService::evictUserPermissionCache);
     }
 
     @Override
@@ -155,6 +173,7 @@ public class RoleServiceImpl implements RoleService {
 
         List<SysMenu> menus = menuMapper.selectBatchIds(menuIds);
         return menus.stream()
+                .filter(menu -> menu.getStatus() != null && menu.getStatus() == 1)
                 .map(SysMenu::getPermissionCode)
                 .filter(code -> code != null && !code.isEmpty())
                 .collect(Collectors.toSet());

@@ -489,3 +489,47 @@ export interface RepairCreateRequest {
   reporter: string
   remark?: string
 }
+
+// ================================================================
+// 资产使用申请类型
+// ================================================================
+
+export interface UsageApplication {
+  id: number
+  applicationNumber: string
+  assetId: number
+  assetNumber?: string
+  assetName?: string
+  applicant: string
+  applicantName?: string
+  applicantDepartmentId: number
+  applicantDepartment?: string
+  applyReason: string
+  applyStatus: number
+  applyStatusText?: string
+  auditor?: string
+  auditorName?: string
+  auditTime?: string
+  auditRemark?: string
+  createTime: string
+  updateTime: string
+}
+
+export interface UsageApplicationCreateRequest {
+  assetId: number
+  applyReason: string
+}
+
+export interface UsageApplicationAuditRequest {
+  approved: boolean
+  auditRemark?: string
+}
+
+export interface UsageApplicationPageQuery {
+  current?: number
+  size?: number
+  applyStatus?: number
+  assetNumber?: string
+  assetName?: string
+  applicant?: string
+}

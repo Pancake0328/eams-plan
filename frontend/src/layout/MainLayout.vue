@@ -74,7 +74,7 @@
 import { ref, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { ElMessageBox, ElMessage } from 'element-plus'
-import { Expand, Fold, ArrowDown, SwitchButton } from '@element-plus/icons-vue'
+import { Expand, Fold, ArrowDown, SwitchButton, User, Setting } from '@element-plus/icons-vue'
 import { useUserStore } from '@/stores/user'
 import { usePermissionStore } from '@/stores/permission'
 import MenuTreeItem from '@/components/MenuTreeItem.vue'
@@ -99,25 +99,22 @@ const breadcrumb = computed(() => {
     '/': '欢迎页',
     '/welcome': '欢迎页',
     '/dashboard': '仪表盘',
-    '/asset': '资产管理',
-    '/category': '分类管理',
     '/user': '用户管理',
-    '/department': '部门管理',
-    '/record': '使用记录',
-    '/lifecycle': '生命周期管理',
-    '/inventory': '盘点管理',
-    '/repair': '报修管理',
-    '/my-repairs': '我的报修',
-    '/no-access': '无权限访问',
-    '/categories': '资产分类管理',
-    '/assets': '资产信息管理',
-    '/my-assets': '持有资产',
-    '/records': '流转记录',
     '/departments': '部门管理',
-    '/roles': '角色管理',
+    '/role': '角色管理',
     '/permissions': '菜单管理',
-    '/asset-categories': '资产分类',
-    '/role': '角色管理'
+    '/assets': '全部资产',
+    '/my-assets': '持有资产',
+    '/categories': '资产分类',
+    '/records': '流转记录',
+    '/usage-applications': '申请审核管理',
+    '/usage-application': '申请审核管理',
+    '/purchase': '采购管理',
+    '/repair': '全部报修',
+    '/my-repairs': '我的报修',
+    '/inventory': '盘点管理',
+    '/lifecycle': '资产生命周期',
+    '/no-access': '无权限访问',
   }
   return breadcrumbMap[path] || ''
 })

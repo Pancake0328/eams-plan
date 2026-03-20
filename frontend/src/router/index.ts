@@ -22,6 +22,7 @@ const routes: RouteRecordRaw[] = [
     {
         path: '/',
         component: MainLayout,
+        redirect: '/welcome',
         meta: {
             requiresAuth: true
         },
@@ -53,7 +54,7 @@ const routes: RouteRecordRaw[] = [
                 name: 'CategoryManagement',
                 component: () => import('@/views/CategoryManagement.vue'),
                 meta: {
-                    title: '资产分类管理',
+                    title: '资产分类',
                     requiresAuth: true,
                     permission: 'asset:category:list'
                 }
@@ -63,7 +64,7 @@ const routes: RouteRecordRaw[] = [
                 name: 'AssetManagement',
                 component: () => import('@/views/AssetManagement.vue'),
                 meta: {
-                    title: '资产信息管理',
+                    title: '全部资产',
                     requiresAuth: true,
                     permission: 'asset:info:list'
                 }
@@ -95,6 +96,23 @@ const routes: RouteRecordRaw[] = [
                 }
             },
             {
+                path: '/usage-applications',
+                name: 'UsageApplicationManagement',
+                component: () => import('@/views/UsageApplicationManagement.vue'),
+                meta: {
+                    title: '申请审核管理',
+                    requiresAuth: true,
+                    permission: 'asset:usage:list'
+                }
+            },
+            {
+                path: '/usage-application',
+                redirect: '/usage-applications',
+                meta: {
+                    requiresAuth: true
+                }
+            },
+            {
                 path: '/departments',
                 name: 'DepartmentManagement',
                 component: () => import('@/views/DepartmentManagement.vue'),
@@ -108,7 +126,7 @@ const routes: RouteRecordRaw[] = [
                 path: '/lifecycle',
                 name: 'LifecycleManagement',
                 component: () => import('@/views/LifecycleManagement.vue'),
-                meta: { requiresAuth: true, title: '生命周期管理', permission: 'lifecycle:list' }
+                meta: { requiresAuth: true, title: '资产生命周期', permission: 'lifecycle:list' }
             },
             {
                 path: '/inventory',
@@ -120,7 +138,7 @@ const routes: RouteRecordRaw[] = [
                 path: '/repair',
                 name: 'RepairManagement',
                 component: () => import('@/views/RepairManagement.vue'),
-                meta: { requiresAuth: true, title: '报修管理', permission: 'repair:list' }
+                meta: { requiresAuth: true, title: '全部报修', permission: 'repair:list' }
             },
             {
                 path: '/my-repairs',
@@ -148,6 +166,10 @@ const routes: RouteRecordRaw[] = [
             },
             
         ]
+    },
+    {
+        path: '/:pathMatch(.*)*',
+        redirect: '/no-access'
     }
 ]
 
@@ -162,18 +184,20 @@ const router = createRouter({
 const homeRouteOrder = [
     '/welcome',
     '/dashboard',
+    '/user',
+    '/departments',
+    '/role',
+    '/permissions',
     '/assets',
     '/my-assets',
-    '/purchase',
     '/categories',
     '/records',
-    '/departments',
-    '/lifecycle',
-    '/inventory',
+    '/usage-applications',
+    '/purchase',
     '/repair',
     '/my-repairs',
-    '/role',
-    '/permissions'
+    '/inventory',
+    '/lifecycle'
 ]
 
 const resolveFirstAccessiblePath = (permissionStore: ReturnType<typeof usePermissionStore>) => {
@@ -193,7 +217,7 @@ const resolveFirstAccessiblePath = (permissionStore: ReturnType<typeof usePermis
 /**
  * 路由守卫 - 权限验证
  */
-router.beforeEach(async (to, from, next) => {
+router.beforeEach(async (to, _from, next) => {
     const userStore = useUserStore()
     const permissionStore = usePermissionStore()
 
@@ -214,8 +238,8 @@ router.beforeEach(async (to, from, next) => {
         if (userStore.isLoggedIn() && userStore.userInfo?.id && !permissionStore.loaded) {
             await permissionStore.initializePermissions(userStore.userInfo.id)
         }
-        if (to.path === '/' && from.matched.length === 0) {
-            next('/welcome')
+        if (to.path === '/') {
+            next(resolveFirstAccessiblePath(permissionStore))
             return
         }
         if (to.meta.permission && !permissionStore.hasPermission(to.meta.permission as string)) {

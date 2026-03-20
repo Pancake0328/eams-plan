@@ -142,7 +142,7 @@ const route = useRoute()
 const userStore = useUserStore()
 const permissionStore = usePermissionStore()
 const isOwnRepairPage = computed(() => route.path === '/my-repairs')
-const pageTitle = computed(() => isOwnRepairPage.value ? '我的报修' : '资产报修管理')
+const pageTitle = computed(() => isOwnRepairPage.value ? '我的报修' : '全部报修')
 const canViewDetail = computed(() =>
   permissionStore.hasPermission('repair:view') || permissionStore.hasPermission('repair:own:list')
 )

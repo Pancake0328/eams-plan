@@ -1,16 +1,23 @@
 package com.eams.system.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.eams.common.util.MybatisBatchExecutor;
 import com.eams.system.dto.MenuCreateRequest;
 import com.eams.system.dto.MenuUpdateRequest;
 import com.eams.system.entity.SysMenu;
+import com.eams.system.entity.SysRoleMenu;
 import com.eams.system.mapper.SysMenuMapper;
+import com.eams.system.mapper.SysRoleMenuMapper;
 import com.eams.system.service.MenuService;
 import com.eams.system.service.PermissionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * 菜单权限服务实现
@@ -23,6 +30,8 @@ import org.springframework.transaction.annotation.Transactional;
 public class MenuServiceImpl implements MenuService {
 
     private final SysMenuMapper menuMapper;
+    private final SysRoleMenuMapper roleMenuMapper;
+    private final MybatisBatchExecutor batchExecutor;
     private final PermissionService permissionService;
 
     @Override
@@ -33,6 +42,7 @@ public class MenuServiceImpl implements MenuService {
         validateParent(menu.getParentId(), menu.getMenuType(), null);
         applyDefaults(menu);
         menuMapper.insert(menu);
+        bindMenuToRoles(menu.getId(), menu.getParentId());
         return menu.getId();
     }
 
@@ -62,8 +72,18 @@ public class MenuServiceImpl implements MenuService {
         if (menuMapper.selectCount(wrapper) > 0) {
             throw new RuntimeException("存在子菜单，无法删除");
         }
-        permissionService.evictUserPermissionCacheByMenuId(id);
+
+        List<Long> relatedRoleIds = roleMenuMapper.selectList(
+                        new LambdaQueryWrapper<SysRoleMenu>().eq(SysRoleMenu::getMenuId, id))
+                .stream()
+                .map(SysRoleMenu::getRoleId)
+                .distinct()
+                .collect(Collectors.toList());
+
+        roleMenuMapper.delete(new LambdaQueryWrapper<SysRoleMenu>().eq(SysRoleMenu::getMenuId, id));
         menuMapper.deleteById(id);
+
+        relatedRoleIds.forEach(permissionService::evictUserPermissionCacheByRoleId);
     }
 
     private void applyDefaults(SysMenu menu) {
@@ -120,5 +140,62 @@ public class MenuServiceImpl implements MenuService {
         LambdaQueryWrapper<SysMenu> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(SysMenu::getParentId, id);
         return menuMapper.selectCount(wrapper) > 0;
+    }
+
+    private void bindMenuToRoles(Long menuId, Long parentId) {
+        Set<Long> roleIds = resolveInheritedRoleIds(parentId);
+        if (roleIds.isEmpty()) {
+            return;
+        }
+
+        List<Long> roleIdList = roleIds.stream().toList();
+        Set<Long> existsRoleIds = roleMenuMapper.selectList(
+                        new LambdaQueryWrapper<SysRoleMenu>()
+                                .eq(SysRoleMenu::getMenuId, menuId)
+                                .in(SysRoleMenu::getRoleId, roleIdList))
+                .stream()
+                .map(SysRoleMenu::getRoleId)
+                .collect(Collectors.toSet());
+
+        List<SysRoleMenu> roleMenus = roleIds.stream()
+                .filter(roleId -> !existsRoleIds.contains(roleId))
+                .map(roleId -> {
+                    SysRoleMenu roleMenu = new SysRoleMenu();
+                    roleMenu.setRoleId(roleId);
+                    roleMenu.setMenuId(menuId);
+                    return roleMenu;
+                })
+                .collect(Collectors.toList());
+
+        batchExecutor.execute(roleMenus, roleMenuMapper::insertBatch);
+        roleIds.forEach(permissionService::evictUserPermissionCacheByRoleId);
+    }
+
+    private Set<Long> resolveInheritedRoleIds(Long parentId) {
+        if (parentId != null && parentId > 0) {
+            return roleMenuMapper.selectList(
+                            new LambdaQueryWrapper<SysRoleMenu>().eq(SysRoleMenu::getMenuId, parentId))
+                    .stream()
+                    .map(SysRoleMenu::getRoleId)
+                    .collect(Collectors.toSet());
+        }
+
+        List<Long> permissionMenuIds = menuMapper.selectList(
+                        new LambdaQueryWrapper<SysMenu>()
+                                .eq(SysMenu::getPermissionCode, "system:permission:add")
+                                .select(SysMenu::getId))
+                .stream()
+                .map(SysMenu::getId)
+                .toList();
+
+        if (permissionMenuIds.isEmpty()) {
+            return Set.of();
+        }
+
+        return roleMenuMapper.selectList(
+                        new LambdaQueryWrapper<SysRoleMenu>().in(SysRoleMenu::getMenuId, permissionMenuIds))
+                .stream()
+                .map(SysRoleMenu::getRoleId)
+                .collect(Collectors.toSet());
     }
 }
