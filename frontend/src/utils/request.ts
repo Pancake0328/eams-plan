@@ -1,6 +1,7 @@
 import axios, { AxiosInstance, InternalAxiosRequestConfig, AxiosResponse, AxiosError } from 'axios'
 import { ElMessage } from 'element-plus'
 import type { Result } from '@/types'
+import { useUserStore } from '@/stores/user'
 
 /**
  * 创建 Axios 实例
@@ -22,6 +23,8 @@ request.interceptors.request.use(
         const token = localStorage.getItem('token')
         if (token && config.headers) {
             config.headers.Authorization = `Bearer ${token}`
+            const userStore = useUserStore()
+            userStore.persistLastActiveAt()
         }
         return config
     },
@@ -57,9 +60,9 @@ request.interceptors.response.use(
             switch (status) {
                 case 401:
                     ElMessage.error('未认证，请先登录')
-                    // 清除 token
-                    localStorage.removeItem('token')
-                    localStorage.removeItem('userInfo')
+                    // 清理登录状态
+                    const userStore = useUserStore()
+                    userStore.logout()
                     // 跳转到登录页
                     window.location.href = '/login'
                     break
