@@ -23,7 +23,7 @@ const routes: RouteRecordRaw[] = [
     {
         path: '/',
         component: MainLayout,
-        redirect: '/welcome',
+        redirect: '/portal/home',
         meta: {
             requiresAuth: true
         },
@@ -377,17 +377,17 @@ router.beforeEach(async (to, _from, next) => {
         // 未登录，跳转到登录页
         next('/login')
     } else if (to.path === '/login' && userStore.isLoggedIn()) {
-        // 已登录，访问登录页时跳转到首页
+        // 已登录，访问登录页时统一进入自助首页
         if (userStore.userInfo?.id && !permissionStore.loaded) {
             await permissionStore.initializePermissions(userStore.userInfo.id)
         }
-        next(resolveFirstAccessiblePath(permissionStore))
+        next('/portal/home')
     } else {
         if (userStore.isLoggedIn() && userStore.userInfo?.id && !permissionStore.loaded) {
             await permissionStore.initializePermissions(userStore.userInfo.id)
         }
         if (to.path === '/') {
-            next(resolveFirstAccessiblePath(permissionStore))
+            next('/portal/home')
             return
         }
         if (isPortalOnlyUser(permissionStore) && !to.path.startsWith('/portal')) {

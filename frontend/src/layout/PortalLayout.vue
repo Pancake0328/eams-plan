@@ -39,6 +39,10 @@
         </div>
         <template #dropdown>
           <el-dropdown-menu>
+            <el-dropdown-item v-if="canAccessAdmin" command="admin">
+              <el-icon><Setting /></el-icon>
+              后台
+            </el-dropdown-item>
             <el-dropdown-item command="logout">
               <el-icon><SwitchButton /></el-icon>
               退出登录
@@ -58,7 +62,7 @@
 import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { ArrowDown, DataLine, Document, Files, List, SwitchButton, Tools } from '@element-plus/icons-vue'
+import { ArrowDown, DataLine, Document, Files, List, Setting, SwitchButton, Tools } from '@element-plus/icons-vue'
 import { usePermissionStore } from '@/stores/permission'
 import { useUserStore } from '@/stores/user'
 
@@ -68,6 +72,22 @@ const permissionStore = usePermissionStore()
 const userStore = useUserStore()
 
 const activeMenu = computed(() => route.path)
+
+const canAccessAdmin = computed(() =>
+  permissionStore.hasAnyPermission(
+    'dashboard:view',
+    'system:user:list',
+    'system:role:list',
+    'system:permission:list',
+    'asset:info:list',
+    'asset:record:list',
+    'asset:usage:list',
+    'repair:list',
+    'purchase:list',
+    'inventory:list',
+    'lifecycle:list'
+  )
+)
 
 const navItems = computed(() => {
   const items = [
@@ -81,20 +101,23 @@ const navItems = computed(() => {
 })
 
 const handleCommand = (command: string) => {
-  if (command !== 'logout') {
+  if (command === 'admin') {
+    router.push('/welcome')
     return
   }
-  ElMessageBox.confirm('确定要退出登录吗？', '提示', {
-    confirmButtonText: '确定',
-    cancelButtonText: '取消',
-    type: 'warning'
-  }).then(() => {
-    userStore.logout()
-    router.push('/login')
-    ElMessage.success('已退出登录')
-  }).catch(() => {
-    // 取消退出
-  })
+  if (command === 'logout') {
+    ElMessageBox.confirm('确定要退出登录吗？', '提示', {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'warning'
+    }).then(() => {
+      userStore.logout()
+      router.push('/login')
+      ElMessage.success('已退出登录')
+    }).catch(() => {
+      // 取消退出
+    })
+  }
 }
 </script>
 
